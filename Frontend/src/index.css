@@ -1,0 +1,110 @@
+@import "tailwindcss";
+@import "lenis/dist/lenis.css";
+
+@font-face {
+  font-family: 'Neuropol X';
+  src: url('/Font/Neuropol X Rg.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  src: url('/Font/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].ttf') format('truetype');
+  font-display: swap;
+}
+
+@theme {
+  --font-serif: 'Italiana', 'Cormorant Garamond', serif;
+  --font-italiana: 'Italiana', 'Cormorant Garamond', serif;
+  --font-cormorant: 'Cormorant Garamond', serif;
+  --font-display: 'Italiana', 'Cormorant Garamond', serif;
+  --font-sans: 'Italiana', 'Cormorant Garamond', serif;
+  --font-neuropol: 'Italiana', 'Cormorant Garamond', serif;
+  --font-symbols: 'Material Symbols Rounded', sans-serif;
+}
+
+.font-neuropol,
+.font-display,
+.neuropol-title {
+  font-family: 'Italiana', 'Cormorant Garamond', serif !important;
+}
+
+/* Global Heading & Typography */
+h1, h2, h3, h4, h5, h6,
+.font-display,
+.font-neuropol,
+.neuropol-title {
+  font-family: 'Italiana', 'Cormorant Garamond', serif !important;
+  letter-spacing: 0.025em;
+}
+
+/* Hide scrollbars globally across all browsers while preserving scrollability */
+::-webkit-scrollbar {
+  display: none;
+  width: 0px;
+  height: 0px;
+}
+
+html,
+body,
+#root {
+  font-family: 'Italiana', 'Cormorant Garamond', serif;
+  background-color: #050505;
+  color: #ffffff;
+  min-height: 100%;
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  scroll-behavior: auto !important;
+}
+
+/* Simple, clean sans-serif typography for Admin Portal & Dashboard */
+.admin-scope,
+.admin-scope * {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  letter-spacing: normal !important;
+}
+
+.admin-scope h1,
+.admin-scope h2,
+.admin-scope h3,
+.admin-scope h4,
+.admin-scope h5,
+.admin-scope h6,
+.admin-scope p,
+.admin-scope span,
+.admin-scope button,
+.admin-scope input,
+.admin-scope textarea,
+.admin-scope select,
+.admin-scope table,
+.admin-scope th,
+.admin-scope td {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  letter-spacing: normal !important;
+}
+
+/* Lenis Smooth Scroll Recommended Rules */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
