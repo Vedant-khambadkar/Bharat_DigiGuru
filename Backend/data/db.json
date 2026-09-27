@@ -9,50 +9,6 @@
   },
   "portfolio": [
     {
-      "title": "himalayas",
-      "subtitle": "",
-      "client": "",
-      "year": "2026",
-      "category": "Branding & Web",
-      "description": "",
-      "tags": [
-        "React",
-        "UI/UX",
-        "WebGL"
-      ],
-      "metrics": [
-        {
-          "label": "User Growth",
-          "value": "+240%"
-        }
-      ],
-      "image": "http://localhost:5000/uploads/img1-1790337676097-523241666.jpg",
-      "video": "",
-      "id": 1790337681678
-    },
-    {
-      "title": "Snowfall",
-      "subtitle": "",
-      "client": "",
-      "year": "2026",
-      "category": "Branding & Web",
-      "description": "",
-      "tags": [
-        "React",
-        "UI/UX",
-        "WebGL"
-      ],
-      "metrics": [
-        {
-          "label": "User Growth",
-          "value": "+240%"
-        }
-      ],
-      "image": "http://localhost:5000/uploads/img2-1790337649599-410577682.webp",
-      "video": "",
-      "id": 1790337663478
-    },
-    {
       "id": 1,
       "number": "(01)",
       "category": "3D & Architecture",

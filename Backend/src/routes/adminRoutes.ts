@@ -23,7 +23,11 @@ import {
   updateInquiryStatus,
   deleteInquiry,
 } from "../controllers/inquiriesController.js";
-import { uploadMedia } from "../controllers/uploadController.js";
+import {
+  uploadMedia,
+  getPresignedUrlHandler,
+  getPresignedUploadUrlHandler,
+} from "../controllers/uploadController.js";
 import { authenticateAdmin } from "../middleware/auth.js";
 import { upload } from "../middleware/upload.js";
 
@@ -58,7 +62,9 @@ router.get("/inquiries", getInquiries);
 router.patch("/inquiries/:id/status", updateInquiryStatus);
 router.delete("/inquiries/:id", deleteInquiry);
 
-// File / Media Upload
+// 4. File / Media Upload & Presigned URLs
 router.post("/upload", upload.single("file"), uploadMedia);
+router.get("/media/presigned-url", getPresignedUrlHandler);
+router.post("/media/presigned-upload", getPresignedUploadUrlHandler);
 
 export default router;

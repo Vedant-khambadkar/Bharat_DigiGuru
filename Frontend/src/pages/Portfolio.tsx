@@ -16,10 +16,30 @@ export const Portfolio: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
+  // Helper to resolve full image URLs
+  const getFullUrl = (url?: string): string => {
+    if (!url || typeof url !== "string") return "";
+    const trimmed = url.trim();
+    if (!trimmed) return "";
+    if (
+      trimmed.startsWith("http://") ||
+      trimmed.startsWith("https://") ||
+      trimmed.startsWith("data:") ||
+      trimmed.startsWith("blob:")
+    ) {
+      return trimmed;
+    }
+    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const cleanUrl = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    return `${base}${cleanUrl}`;
+  };
+
   // Helper to format backend portfolio records to PlaneItem structure
   const formatPortfolioItem = (item: any, index: number): PlaneItem => {
-    const imgUrl = item.image || item.imageUrl || item.textureUrl || item.posterUrl || "";
+    const rawImg = item.image || item.imageUrl || item.textureUrl || item.posterUrl || "";
+    const imgUrl = getFullUrl(rawImg);
 
+    console.log(imgUrl)
     return {
       id: item.id || item._id || index + 1,
       title: item.title || `Project 0${index + 1}`,
@@ -236,26 +256,6 @@ export const Portfolio: React.FC = () => {
           PORTFOLIO
         </div>
       </div>
-
-      {/* 5. Bottom Right Architecture Preview Card - Portrait Aspect */}
-      {selectedPlane && (
-        <div className="hidden md:block absolute bottom-6 md:bottom-10 right-6 md:right-12 w-[140px] lg:w-[180px] h-[200px] lg:h-[260px] p-0 bg-[#121212]/90  rounded-xl overflow-hidden  z-10 pointer-events-auto cursor-pointer ">
-          <img
-            key={selectedPlane.id}
-            src={selectedPlane.textureUrl}
-            alt={selectedPlane.title || "Project Preview"}
-            className="w-full h-full object-cover rounded-xl block transition-all duration-300"
-          />
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-3 text-white pointer-events-none">
-            <span className="text-[10px] tracking-widest text-[#ff3b30] font-bold uppercase font-['Space_Grotesk',sans-serif] block mb-0.5">
-              {selectedPlane.category || "3D CGI & ArchViz"}
-            </span>
-            <div className="font-neuropol text-xs sm:text-sm tracking-wider uppercase text-white font-normal truncate">
-              {selectedPlane.title}
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 };

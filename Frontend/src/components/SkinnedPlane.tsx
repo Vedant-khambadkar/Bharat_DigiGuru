@@ -20,7 +20,7 @@ function createSkinnedPlaneData(
   width: number,
   height: number,
   segments: number,
-  textureUrl?: string,
+  _textureUrl?: string,
   color: string = "#6c8ebb"
 ) {
   // 1. Plane geometry subdivided horizontally along X-axis
@@ -67,27 +67,8 @@ function createSkinnedPlaneData(
 
   const skeleton = new THREE.Skeleton(bones);
 
-  let map: THREE.Texture | null = null;
-  if (textureUrl && textureUrl.trim().length > 0) {
-    try {
-      const loader = new THREE.TextureLoader();
-      map = loader.load(
-        textureUrl,
-        undefined,
-        undefined,
-        () => {
-          // Silent fallback on individual texture error
-        }
-      );
-      map.colorSpace = THREE.SRGBColorSpace;
-    } catch {
-      map = null;
-    }
-  }
-
   const material = new THREE.MeshStandardMaterial({
-    color: map ? "#ffffff" : color,
-    map: map,
+    color: new THREE.Color(color),
     side: THREE.DoubleSide,
     roughness: 0.35,
     metalness: 0.05,
@@ -101,7 +82,7 @@ function createSkinnedPlaneData(
 
   const skeletonHelper = new THREE.SkeletonHelper(mesh);
 
-  return { mesh, bones, skeleton, skeletonHelper };
+  return { mesh, bones, skeleton, skeletonHelper, material };
 }
 
 interface SingleSkinnedPlaneProps {
@@ -138,8 +119,85 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const { mesh, skeletonHelper } = useMemo(() => {
-    return createSkinnedPlaneData(width, height, segments, textureUrl, color);
-  }, [width, height, segments, textureUrl, color]);
+    return createSkinnedPlaneData(width, height, segments, undefined, color);
+  }, [width, height, segments, color]);
+
+  // Load texture asynchronously with CORS anonymous and proper Three.js lifecycle
+  useEffect(() => {
+    if (!textureUrl || textureUrl.trim().length === 0) {
+      if (meshRef.current) {
+        const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+        if (mat) {
+          mat.map = null;
+          mat.color.set(color);
+          mat.needsUpdate = true;
+        }
+      }
+      return;
+    }
+
+    let isCancelled = false;
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
+
+    const tryLoad = (url: string, isRetry = false) => {
+      loader.load(
+        url,
+        (tex) => {
+          if (isCancelled) {
+            tex.dispose();
+            return;
+          }
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.generateMipmaps = true;
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.magFilter = THREE.LinearFilter;
+          tex.needsUpdate = true;
+
+          if (meshRef.current) {
+            const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+            if (mat) {
+              mat.map = tex;
+              mat.color.set("#ffffff");
+              mat.needsUpdate = true;
+            }
+          }
+        },
+        undefined,
+        (err) => {
+          if (!isRetry && url.includes("amazonaws.com")) {
+            // Attempt fallback through backend media streaming endpoint
+            const baseApi = import.meta.env.VITE_API_URL || "http://localhost:5000";
+            try {
+              const urlObj = new URL(url);
+              const key = urlObj.pathname.replace(/^\/+/, "");
+              const proxyUrl = `${baseApi}/api/media/stream?key=${encodeURIComponent(key)}`;
+              tryLoad(proxyUrl, true);
+              return;
+            } catch {
+              // Ignore URL parse error and proceed to error handler
+            }
+          }
+
+          console.warn(`[SkinnedPlane] Texture load warning for: ${url}`, err);
+          if (!isCancelled && meshRef.current) {
+            const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+            if (mat) {
+              mat.map = null;
+              mat.color.set(color);
+              mat.needsUpdate = true;
+            }
+          }
+        }
+      );
+    };
+
+    tryLoad(textureUrl);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [textureUrl, color]);
 
   // Clean WebGL memory disposal on dynamic change / unmount
   useEffect(() => {
