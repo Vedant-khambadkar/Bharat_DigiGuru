@@ -1,0 +1,566 @@
+{
+  "adminUser": {
+    "id": "admin-master-001",
+    "email": "admin@bharatdigiguru.com",
+    "passwordHash": "$2a$10$OhU6WSGMHVYhnAvb6JAM6.Zart4dtbBVihwBP3L/zUaRxzyCwy6Fi",
+    "name": "Bharat DigiGuru Administrator",
+    "role": "superadmin",
+    "createdAt": "2026-09-21T06:42:10.092Z"
+  },
+  "portfolio": [
+    {
+      "title": "himalayas",
+      "subtitle": "",
+      "client": "",
+      "year": "2026",
+      "category": "Branding & Web",
+      "description": "",
+      "tags": [
+        "React",
+        "UI/UX",
+        "WebGL"
+      ],
+      "metrics": [
+        {
+          "label": "User Growth",
+          "value": "+240%"
+        }
+      ],
+      "image": "http://localhost:5000/uploads/img1-1790337676097-523241666.jpg",
+      "video": "",
+      "id": 1790337681678
+    },
+    {
+      "title": "Snowfall",
+      "subtitle": "",
+      "client": "",
+      "year": "2026",
+      "category": "Branding & Web",
+      "description": "",
+      "tags": [
+        "React",
+        "UI/UX",
+        "WebGL"
+      ],
+      "metrics": [
+        {
+          "label": "User Growth",
+          "value": "+240%"
+        }
+      ],
+      "image": "http://localhost:5000/uploads/img2-1790337649599-410577682.webp",
+      "video": "",
+      "id": 1790337663478
+    },
+    {
+      "id": 1,
+      "number": "(01)",
+      "category": "3D & Architecture",
+      "client": "Apex Architecture Group",
+      "year": "2025-2026",
+      "title": "3D\nVisualization",
+      "subtitle": "High-Fidelity Architectural & Product Renders",
+      "tags": [
+        "Architecture",
+        "Engineering",
+        "Construction",
+        "Interior Design",
+        "Product Design"
+      ],
+      "description": "Our studio specializes in envisioning high-fidelity images and real-time animations for architectural and engineering projects. We harness modern render pipelines to deliver astonishing photorealistic end products.",
+      "metrics": [
+        "Sub-millimeter Precision",
+        "4K Realtime Renders",
+        "BIM Integration"
+      ],
+      "image": "http://localhost:5000/uploads/img3-1790318995761-593606960.jpg",
+      "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      "videoDuration": "0:15 // 4K",
+      "updatedAt": "2026-09-25T06:49:58.423Z"
+    },
+    {
+      "id": 2,
+      "number": "(02)",
+      "category": "Generative Media",
+      "client": "Lumina Studio Labs",
+      "year": "2025-2026",
+      "title": "AI\nServices",
+      "subtitle": "Next-Gen Generative Imagery & Motion Pipelines",
+      "tags": [
+        "AI Video",
+        "AI Images",
+        "Midjourney",
+        "Stable Diffusion",
+        "Motion Graphics"
+      ],
+      "description": "Harnessing cutting-edge AI models to synthesize photorealistic visuals, dynamic animations, and bespoke creative assets at scale. We bridge artificial intelligence with human artistic intuition.",
+      "metrics": [
+        "Zero-Latency Pipelines",
+        "Custom LoRA Models",
+        "8K Upscaling"
+      ],
+      "image": "http://localhost:5000/uploads/img4-1790319061489-150900673.jpg",
+      "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+      "videoDuration": "0:12 // 4K",
+      "updatedAt": "2026-09-25T06:51:02.445Z"
+    },
+    {
+      "id": 3,
+      "number": "(03)",
+      "category": "Digital Growth",
+      "client": "Global Commerce Corp",
+      "year": "2025-2026",
+      "title": "Digital\nMedia",
+      "subtitle": "Omnichannel Acceleration & Performance Marketing",
+      "tags": [
+        "SEO & SEM",
+        "Social Strategy",
+        "Content Pipelines",
+        "Ad Creatives",
+        "CRO"
+      ],
+      "description": "Full-spectrum digital acceleration — from data-driven performance marketing to viral organic campaigns that turn audiences into loyal brand advocates and exponential revenue growth.",
+      "metrics": [
+        "3.4x ROI Average",
+        "2.1M+ Reach",
+        "Top 1% Engagement"
+      ],
+      "image": "http://localhost:5000/uploads/img5-1790319069961-801119147.jpg",
+      "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "videoDuration": "0:18 // 4K",
+      "updatedAt": "2026-09-25T06:51:11.212Z"
+    },
+    {
+      "id": 4,
+      "number": "(04)",
+      "category": "Creative Production",
+      "client": "Krono Horology & Luxury Goods",
+      "year": "2025-2026",
+      "title": "Commercial\nPhotography",
+      "subtitle": "Precision Studio Shoots & High-End Post-Production",
+      "tags": [
+        "Product Shoots",
+        "Studio Lighting",
+        "High-End Retouch",
+        "Fashion",
+        "Editorial"
+      ],
+      "description": "Capturing the soul of luxury goods, industrial products, and human subjects with uncompromising precision. From studio lighting to macro retouching, we deliver frame-worthy imagery.",
+      "metrics": [
+        "100MP Sensor Raws",
+        "Phase One Optics",
+        "Color Master Pro"
+      ],
+      "image": "http://localhost:5000/uploads/img1-1790319080120-508325864.jpg",
+      "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+      "videoDuration": "0:14 // 4K",
+      "updatedAt": "2026-09-25T06:51:23.747Z"
+    },
+    {
+      "id": 6,
+      "number": "(06)",
+      "category": "Web & Interactive",
+      "client": "Nexus Digital Ecosystems",
+      "year": "2025-2026",
+      "title": "Interactive\nWeb Design",
+      "subtitle": "Award-Winning Digital Experiences & 3D Interactive Web",
+      "tags": [
+        "Three.js",
+        "WebGL Shaders",
+        "React / Next.js",
+        "GSAP Scroll",
+        "Full Stack"
+      ],
+      "description": "Crafting bespoke interactive digital experiences that combine high-end 3D graphics, fluid motion choreographies, and state-of-the-art web performance.",
+      "metrics": [
+        "100/100 Lighthouse",
+        "Sub-second TTI",
+        "Awwwards Standard"
+      ],
+      "image": "http://localhost:5000/uploads/img5-1790319089477-3229059.jpg",
+      "video": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+      "videoDuration": "0:16 // 4K",
+      "updatedAt": "2026-09-25T06:51:30.611Z"
+    }
+  ],
+  "threed": [
+    {
+      "id": "hyperion-villa",
+      "title": "Hyperion Ultra-Luxury Villa Walkthrough",
+      "category": "Architecture & Interiors",
+      "client": "Apex Living & Estates",
+      "year": "2025-2026",
+      "duration": "0:15 // 4K",
+      "resolution": "3840 x 2160 (4K UHD)",
+      "software": [
+        "Unreal Engine 5.4",
+        "Lumen GI",
+        "3ds Max",
+        "DaVinci Resolve"
+      ],
+      "description": "A cinematic architectural film highlighting high-end minimalist timber architecture, dynamic day-to-night lighting transitions, and ultra-accurate PBR material shaders for a modern Australian private estate.",
+      "deliverables": [
+        "4K Cinematic Video Reel",
+        "12 High-Res 8K Stills",
+        "Interactive Virtual Tour",
+        "VR Walkthrough"
+      ],
+      "videoUrl": "http://localhost:5000/uploads/Jelly-1790304948016-437890722.mp4",
+      "posterUrl": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=900&auto=format&fit=crop&fm=webp",
+      "stats": {
+        "fps": "60 FPS",
+        "renderEngine": "Unreal Engine 5 Lumen",
+        "turnaround": "7 Business Days"
+      },
+      "updatedAt": "2026-09-25T02:55:56.811Z"
+    },
+    {
+      "id": "chronos-watch-cgi",
+      "title": "Chronos Tourbillon 3D Product Film",
+      "category": "Product Visualization",
+      "client": "Atelier Haute Horlogerie",
+      "year": "2025-2026",
+      "duration": "0:12 // 4K",
+      "resolution": "3840 x 2160 (4K UHD)",
+      "software": [
+        "Blender 4.2",
+        "Octane Render",
+        "Substance Painter",
+        "After Effects"
+      ],
+      "description": "An exploded-view microscopic CGI commercial revealing sapphire crystal reflections, micro-gears, carbon-fiber dial, and hand-finished titanium escapement mechanisms.",
+      "deliverables": [
+        "Commercial Product Ad",
+        "8 Macro Render Posters",
+        "Exploded Technical CGI Animation",
+        "3D Web Configurator Model"
+      ],
+      "videoUrl": "http://localhost:5000/uploads/Cosmos-1790304968925-45035437.mp4",
+      "posterUrl": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=900&auto=format&fit=crop&fm=webp",
+      "stats": {
+        "fps": "60 FPS",
+        "renderEngine": "Octane Spectral Path Tracing",
+        "turnaround": "5 Business Days"
+      },
+      "updatedAt": "2026-09-25T02:56:16.726Z"
+    },
+    {
+      "id": "zenith-tower",
+      "title": "Zenith Metropolis Skyscraper & Masterplan",
+      "category": "Architecture & Interiors",
+      "client": "Vanguard Urban Developers",
+      "year": "2025-2026",
+      "duration": "0:18 // 4K",
+      "resolution": "3840 x 2160 (4K UHD)",
+      "software": [
+        "Unreal Engine 5.4",
+        "Nanite",
+        "Corona Renderer",
+        "Cinema 4D"
+      ],
+      "description": "Massive urban city development film with photoreal volumetric clouds, sunset specular reflections on double-glazed curtain walls, and drone flight simulation.",
+      "deliverables": [
+        "4K Masterplan Drone Film",
+        "360 Panoramic Aerial Views",
+        "Marketing Billboard Still Pack",
+        "Investor Pitch Deck Visuals"
+      ],
+      "videoUrl": "http://localhost:5000/uploads/Drop_Studio-1790304990110-485824231.mp4",
+      "posterUrl": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=900&auto=format&fit=crop&fm=webp",
+      "stats": {
+        "fps": "60 FPS",
+        "renderEngine": "Corona & UE5 Nanite",
+        "turnaround": "10 Business Days"
+      },
+      "updatedAt": "2026-09-25T02:56:37.463Z"
+    }
+  ],
+  "inquiries": [
+    {
+      "name": "Test Client",
+      "fullName": "Test Client",
+      "email": "client@example.com",
+      "phone": "Not Provided",
+      "company": "Not Specified",
+      "services": [],
+      "budget": "Custom Scope",
+      "timeline": "Flexible",
+      "message": "Testing inquiry submission",
+      "status": "NEW",
+      "id": "inq-1789972948406",
+      "createdAt": "2026-09-21T06:42:28.406Z",
+      "updatedAt": "2026-09-21T06:42:28.406Z"
+    },
+    {
+      "id": "inq-demo-001",
+      "name": "Vikram Malhotra",
+      "fullName": "Vikram Malhotra",
+      "email": "vikram@malhotragroup.in",
+      "phone": "+91 98765 43210",
+      "company": "Malhotra Enterprises",
+      "services": [
+        "Digital Media Services",
+        "3D Visualization & Studio"
+      ],
+      "budget": "$5,000 - $10,000",
+      "timeline": "Immediate / Within 1 Month",
+      "message": "We are launching a new luxury residential project in Mumbai and need 3D architectural visual films and a complete digital launch campaign.",
+      "status": "NEW",
+      "createdAt": "2026-09-21T04:42:10.093Z"
+    }
+  ],
+  "services": [
+    {
+      "id": "digital-media-services",
+      "number": "(01)",
+      "title": "Digital Media Services",
+      "subtitle": "SMM, SEO, SMO & ORM",
+      "tag": "& 360° DIGITAL ACCELERATION",
+      "image": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop&fm=webp",
+      "details": {
+        "description": "Our team of professional digital media specialists is dedicated to providing tailored services be it SMM, SEO, SMO or ORM to help you achieve your goals. From crafting engaging social media strategies to optimizing your online presence, count on us to elevate your digital footprint and drive results that matter.",
+        "deliverables": [
+          "Strategic Social Media Marketing (SMM)",
+          "Search Engine Optimization (SEO & SMO)",
+          "Online Reputation Management (ORM)",
+          "Targeted Lead Generation & Automation"
+        ],
+        "chips": [
+          "SMM",
+          "SEO",
+          "SMO",
+          "ORM",
+          "Facebook Ads",
+          "Google Ads",
+          "YouTube Promotions",
+          "WhatsApp Community",
+          "Content Management",
+          "Email Marketing",
+          "Instagram Ads",
+          "Lead Automation",
+          "Website Development",
+          "X Promotions",
+          "Lead Generation",
+          "Website Maintenance"
+        ],
+        "timeline": "Ongoing Retainer / Sprint Based"
+      }
+    },
+    {
+      "id": "photography-services",
+      "number": "(02)",
+      "title": "Photography Services",
+      "subtitle": "PRODUCT, CORPORATE & EVENTS",
+      "tag": "& HIGH-RES STUDIO SHOOTS",
+      "image": "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=800&auto=format&fit=crop&fm=webp",
+      "details": {
+        "description": "Trust our team of skilled photographers to capture your vision with creativity, professionalism, and attention to detail. Whether you require product photography, corporate headshots, or event coverage, we deliver pristine visuals that align seamlessly with your brand identity.",
+        "deliverables": [
+          "High-End Product Photography",
+          "Corporate Executive Headshots",
+          "Event Coverage & Lifestyle Shoots",
+          "Studio Lighting & Color Grading"
+        ],
+        "chips": [
+          "Product Photography",
+          "Corporate Headshots",
+          "Event Coverage",
+          "Lifestyle Shoots",
+          "Studio Lighting",
+          "Commercial Retouching",
+          "Brand Portfolios"
+        ],
+        "timeline": "1–2 Weeks Per Shoot"
+      }
+    },
+    {
+      "id": "videography-services",
+      "number": "(03)",
+      "title": "Videography Services",
+      "subtitle": "PROMOTIONAL, SOCIAL & DOCUMENTARIES",
+      "tag": "& CINEMATIC STORYTELLING",
+      "image": "https://images.unsplash.com/photo-1536240478700-b869070f9279?q=80&w=800&auto=format&fit=crop&fm=webp",
+      "details": {
+        "description": "From captivating promotional videos to engaging social media content, our team excels in delivering high-quality videography services that elevate your brand narrative. We craft visually compelling stories that resonate with your audience and drive meaningful engagement.",
+        "deliverables": [
+          "Promotional Videos & Ad Films",
+          "Corporate Documentaries & Spotlights",
+          "Social Media Reels, TikToks & Shorts",
+          "4K Production, Drone Footage & Color Grading"
+        ],
+        "chips": [
+          "Brand Films",
+          "Promotional Videos",
+          "Reels & Shorts",
+          "Corporate Documentaries",
+          "Event Cinematography",
+          "Motion Design",
+          "Post-Production & Sound"
+        ],
+        "timeline": "2–4 Weeks Per Project"
+      }
+    },
+    {
+      "id": "ai-services",
+      "number": "(04)",
+      "title": "AI Services & Motion",
+      "subtitle": "GENERATIVE VIDEO & AI ART",
+      "tag": "& NEXT-GEN CREATIVE TECH",
+      "image": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800&auto=format&fit=crop&fm=webp",
+      "details": {
+        "description": "Harnessing state-of-the-art neural pipelines to synthesize bespoke hyper-realistic visuals, AI-generated video campaigns, automated motion graphics, and personalized generative media at scale for pioneering digital brands.",
+        "deliverables": [
+          "Custom Generative AI Video Assets",
+          "AI-Assisted Storyboarding & Conceptual Art",
+          "Dynamic AI Voiceover & Multilingual Dubbing",
+          "Algorithmic Personalization Engines"
+        ],
+        "chips": [
+          "AI Video Synth",
+          "Midjourney / SDXL",
+          "Neural Post-FX",
+          "Virtual Influencers",
+          "Voice Synthesis",
+          "Automated Motion"
+        ],
+        "timeline": "1–2 Weeks Turnaround"
+      }
+    },
+    {
+      "id": "3d-visualization-services",
+      "number": "(05)",
+      "title": "3D Visualization & Studio",
+      "subtitle": "ARCHITECTURAL & PRODUCT RENDERS",
+      "tag": "& PHOTOREAL CGI ENVIRONMENTS",
+      "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800&auto=format&fit=crop&fm=webp",
+      "details": {
+        "description": "Envisioning high-fidelity photorealistic stills, interactive 3D virtual walkthroughs, and real-time Unreal Engine 5 experiences for luxury architecture, interior design, and industrial hardware prototypes.",
+        "deliverables": [
+          "Photorealistic 8K Architectural Renders",
+          "Interactive Unreal Engine Walkthroughs",
+          "Product Explosions & CGI Packaging",
+          "Real-Time WebGL / Three.js 3D Models"
+        ],
+        "chips": [
+          "Unreal Engine 5",
+          "3ds Max & Corona",
+          "Blender CGI",
+          "WebGL / Three.js",
+          "V-Ray",
+          "PBR Texturing"
+        ],
+        "timeline": "2–3 Weeks Per Environment"
+      }
+    },
+    {
+      "id": "brand-strategy-development",
+      "number": "(06)",
+      "title": "Brand Strategy & Architecture",
+      "subtitle": "IDENTITY, UI/UX & FULL-STACK WEB",
+      "tag": "& HIGH-PERFORMANCE DIGITAL ECOSYSTEMS",
+      "image": "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=800&auto=format&fit=crop&fm=webp",
+      "details": {
+        "description": "Designing cohesive brand identities paired with ultra-fast, visually stunning React & Three.js web experiences engineered to convert traffic and captivate premium enterprise audiences.",
+        "deliverables": [
+          "Complete Brand Guidelines & Visual Identity",
+          "Interactive Web Platforms & E-Commerce",
+          "Conversion-Rate Optimization (CRO)",
+          "Search & Social Architecture"
+        ],
+        "chips": [
+          "React & Next.js",
+          "Tailwind CSS",
+          "GSAP Animations",
+          "UI/UX Design",
+          "Design Systems",
+          "Enterprise SEO"
+        ],
+        "timeline": "3–6 Weeks Sprint"
+      }
+    }
+  ],
+  "blogs": [
+    {
+      "id": "empower-brands-digital-journey",
+      "number": "(01)",
+      "category": "Digital Acceleration",
+      "title": "Empower Your Brand's Digital Journey with Bharat DigiGuru",
+      "description": "In today's digital landscape, establishing a formidable online presence is essential for businesses striving to excel in competitive markets.",
+      "readTime": "6 MIN READ",
+      "date": "AUG 2026",
+      "image": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1000&auto=format&fit=crop&fm=webp",
+      "content": [
+        "In today's digital landscape, establishing a formidable online presence is essential for businesses striving to excel in competitive markets. The ever-evolving nature of digital media can be overwhelming, but Bharat DigiGuru serves as a steadfast ally in navigating this dynamic terrain.",
+        "Specializing in Social Media Marketing (SMM), Website Design and development, and more, Bharat DigiGuru tailors solutions to meet your business requirements. Whether seeking increased organic traffic, optimizing social media engagement, or streamlining lead generation, our team of experts is dedicated to realizing clients' objectives.",
+        "In conclusion, Bharat DigiGuru is synonymous with innovation and expertise in digital media services. Our comprehensive offerings empower businesses to harness the full potential of the digital landscape, unlocking new opportunities for growth and success."
+      ],
+      "bullets": [
+        "Elevate brand social media presence with expert Social Media Marketing Strategies",
+        "Boost website visibility and organic traffic through tailored SEO Services",
+        "Enhance social media engagement with strategic Social Media Optimization (SMO)",
+        "Safeguard online reputation effectively with ORM solutions",
+        "Reach target audience with high-converting Facebook, Google, and Instagram Ads",
+        "Streamline lead pipelines with advanced Lead Automation services"
+      ]
+    },
+    {
+      "id": "vital-role-digital-media-tech-era",
+      "number": "(02)",
+      "category": "Tech Era & Culture",
+      "title": "Embracing the Vital Role of Digital Media in the Technological Era",
+      "description": "The significance of digital media in the contemporary world cannot be overstated, serving as the cornerstone of our technological revolution.",
+      "readTime": "8 MIN READ",
+      "date": "AUG 2026",
+      "image": "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=1000&auto=format&fit=crop&fm=webp",
+      "content": [
+        "Technology permeates every aspect of our lives, and digital media stands as the cornerstone of this technological revolution. From communication and entertainment to education and commerce, digital media plays a pivotal role in shaping our daily experiences.",
+        "One of the primary reasons for digital media's importance lies in its unparalleled reach and accessibility. High-speed internet and smartphones have democratized information, enabling individuals from diverse backgrounds to participate in global discourse.",
+        "Furthermore, new-age technologies like Virtual Reality (VR), Augmented Reality (AR), and Generative AI are pushing the boundaries of immersive storytelling, allowing brands and audiences to experience narratives in unprecedented ways."
+      ],
+      "bullets": [
+        "Unprecedented reach and instantaneous global accessibility",
+        "Democratization of knowledge dissemination and creative tools",
+        "Catalyst for social change, grassroots movements, and community empowerment",
+        "Revolutionized educational tools through interactive multimedia learning"
+      ]
+    }
+  ],
+  "missionVision": {
+    "id": "mission-vision-main",
+    "missionTitle": "OUR MISSION",
+    "missionDescription": "At Bharat DigiGuru, our mission is to deliver comprehensive and innovative digital solutions, combining expertise with personalized service to elevate brands and drive measurable success. Through strategic planning, innovative design, and data-driven insights, we empower businesses to thrive in the digital age, achieve their goals, and unlock new possibilities for sustainable growth.",
+    "missionPoints": [
+      "Deliver tailored 360-degree digital solutions",
+      "Empower businesses with innovative design & cutting-edge AI",
+      "Provide personalized service and strategic guidance",
+      "Achieve measurable outcomes and unlock new growth frontiers"
+    ],
+    "visionTitle": "OUR VISION",
+    "visionDescription": "Our vision is to be the premier catalyst for digital excellence, recognized for innovation, client-centric focus, and unwavering dedication to delivering results. We aspire to set the standard for digital agencies, continuously evolving to meet the dynamic needs of our clients and leading them to sustained prosperity in the digital realm.",
+    "visionPoints": [
+      "Be the leading pioneer in digital media & creative tech",
+      "Inspire brands to reach their fullest potential",
+      "Maintain a client-first approach grounded in transparency",
+      "Cultivate a culture of continuous learning and technological mastery"
+    ],
+    "coreValues": [
+      {
+        "title": "Excellence & Precision",
+        "description": "Striving for the highest quality in every deliverable, campaign, and render we produce."
+      },
+      {
+        "title": "Innovation First",
+        "description": "Embracing emerging AI, 3D render pipelines, and creative technologies to stay ahead."
+      },
+      {
+        "title": "Client Partnership",
+        "description": "Treating client objectives as our own with deep dedication, speed, and integrity."
+      },
+      {
+        "title": "Measurable Impact",
+        "description": "Grounding creative endeavors in real-world performance, conversions, and growth."
+      }
+    ],
+    "updatedAt": "2026-09-21T06:42:10.093Z"
+  }
+}
