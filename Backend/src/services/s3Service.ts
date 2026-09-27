@@ -15,8 +15,8 @@ import ffmpegPath from "ffmpeg-static";
 
 /**
  * Returns the S3 Client.
- * In Production on EC2: Automatically uses EC2 IAM Instance Role via IMDS.
- * In Local Development: Uses AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY if present.
+ * Production (EC2): Resolves EC2 IAM Role automatically via IMDS.
+ * Local Development: Uses AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY if present in .env.
  */
 export function getS3Client(): { client: S3Client; bucket: string; region: string } {
   const region = (process.env.AWS_REGION || "us-east-1").trim();
@@ -48,13 +48,49 @@ export const isS3Configured = (): boolean => {
   return Boolean(bucket);
 };
 
+/**
+ * Generates a clean, cached CloudFront CDN URL for any public asset key or legacy S3 URL.
+ * Example: uploads/photo.webp -> https://d1mou18mn47yy7.cloudfront.net/uploads/photo.webp
+ */
+export function getCloudFrontUrl(keyOrUrl: string): string {
+  if (!keyOrUrl || typeof keyOrUrl !== "string") return "";
+  const trimmed = keyOrUrl.trim();
+  if (!trimmed) return "";
+
+  const cloudFrontDomain = (
+    process.env.CLOUDFRONT_URL || "https://d1mou18mn47yy7.cloudfront.net"
+  ).replace(/\/+$/, "");
+
+  // If already a CloudFront URL, strip query params and return clean URL
+  if (trimmed.startsWith(cloudFrontDomain)) {
+    return trimmed.split("?")[0];
+  }
+
+  let key = trimmed;
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    try {
+      const urlObj = new URL(trimmed);
+      key = urlObj.pathname.replace(/^\/+/, "");
+      const bucket = (process.env.AWS_BUCKET_NAME || "bharat-digiguru-bucket").trim();
+      if (key.startsWith(`${bucket}/`)) {
+        key = key.replace(`${bucket}/`, "");
+      }
+    } catch {
+      key = trimmed;
+    }
+  }
+
+  // Normalize key: remove leading slashes and query strings
+  const cleanKey = key.split("?")[0].replace(/^\/+/, "");
+  return `${cloudFrontDomain}/${cleanKey}`;
+}
+
 export interface S3UploadResult {
   url: string;
   key: string;
   bucket: string;
   size: number;
   mimetype: string;
-  expiresIn: number;
 }
 
 /**
@@ -197,10 +233,11 @@ export async function processFileForUpload(file: Express.Multer.File): Promise<{
   if (isRasterImage) {
     try {
       const webpBuffer = await sharp(file.buffer)
+        .rotate() // Auto-orient image based on EXIF orientation metadata (fixes 90° sideways/rotation issue)
         .webp({ quality: 85, effort: 4 })
         .toBuffer();
 
-      console.log(`🖼️ [IMAGE CONVERSION] Converted ${file.originalname} (${file.size} bytes) -> WebP (${webpBuffer.length} bytes)`);
+      console.log(`🖼️ [IMAGE CONVERSION] Converted ${file.originalname} (${file.size} bytes) -> WebP (${webpBuffer.length} bytes) [Auto-Oriented]`);
 
       return {
         buffer: webpBuffer,
@@ -233,19 +270,18 @@ export async function processFileForUpload(file: Express.Multer.File): Promise<{
 }
 
 /**
- * Uploads a file buffer directly to a private AWS S3 bucket.
+ * Uploads a file buffer directly to private AWS S3 bucket.
  * All images are automatically converted to .webp before upload.
- * Videos are configured with inline streaming headers.
- * Returns a presigned GET URL for temporary preview.
+ * Videos are transcoded to .webm.
+ * Returns the permanent, clean CloudFront CDN URL for public delivery.
  */
 export async function uploadFileToS3(
   file: Express.Multer.File,
-  folder = "uploads",
-  presignedExpiresIn = 900 // 15 minutes
+  folder = "uploads"
 ): Promise<S3UploadResult> {
   const { client, bucket, region } = getS3Client();
 
-  // 1. Process File (Convert images to WebP, configure videos)
+  // 1. Process File (Convert images to WebP, transcode videos to WebM)
   const processed = await processFileForUpload(file);
 
   const cleanBase = path.basename(file.originalname, path.extname(file.originalname)).replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -258,41 +294,30 @@ export async function uploadFileToS3(
     Key: uniqueKey,
     Body: processed.buffer,
     ContentType: processed.mimetype,
-    ContentDisposition: "inline", // Allows browsers to play videos and display images directly
+    ContentDisposition: "inline", // Allows browsers & CDN to play videos and display images directly
   });
 
   await client.send(putCommand);
 
-  // Generate a secure temporary presigned GET URL with inline playback disposition
-  const getCommand = new GetObjectCommand({
-    Bucket: bucket,
-    Key: uniqueKey,
-    ResponseContentDisposition: "inline",
-    ResponseContentType: processed.mimetype,
-  });
-
-  const presignedUrl = await getSignedUrl(client, getCommand, {
-    expiresIn: presignedExpiresIn,
-  });
-
-  console.log(`✅ [AWS S3 SUCCESS] Object saved privately. Generated Presigned URL (Valid for ${presignedExpiresIn}s).`);
+  // 2. Generate clean, cached CloudFront CDN URL
+  const cloudFrontUrl = getCloudFrontUrl(uniqueKey);
+  console.log(`🌐 [CLOUDFRONT CDN] Generated CDN URL: ${cloudFrontUrl}`);
 
   return {
-    url: presignedUrl,
+    url: cloudFrontUrl,
     key: uniqueKey,
     bucket,
     size: processed.size,
     mimetype: processed.mimetype,
-    expiresIn: presignedExpiresIn,
   };
 }
 
 /**
- * Generates a temporary Presigned Download/View URL (GET) for a private S3 object.
+ * Generates a temporary Presigned Download/View URL (GET) for a private S3 object if required.
  */
 export async function getPresignedDownloadUrl(
   fileKeyOrUrl: string,
-  expiresInSeconds = 900 // Default: 15 minutes
+  expiresInSeconds = 900
 ): Promise<{ url: string; key: string; expiresIn: number }> {
   const { client, bucket } = getS3Client();
 
@@ -343,7 +368,7 @@ export async function getPresignedDownloadUrl(
 }
 
 /**
- * Generates a Presigned Upload URL (PUT) for direct client-to-S3 uploads.
+ * Generates a Presigned Upload URL (PUT) for direct client-to-S3 uploads if required.
  */
 export async function getPresignedUploadUrl(
   fileName: string,

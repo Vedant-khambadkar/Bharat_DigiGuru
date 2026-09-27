@@ -165,7 +165,7 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
         },
         undefined,
         (err) => {
-          if (!isRetry && url.includes("amazonaws.com")) {
+          if (!isRetry && (url.includes("amazonaws.com") || url.includes("cloudfront.net"))) {
             // Attempt fallback through backend media streaming endpoint
             const baseApi = import.meta.env.VITE_API_URL || "http://localhost:5000";
             try {

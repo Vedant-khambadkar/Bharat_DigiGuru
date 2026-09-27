@@ -29,6 +29,11 @@ export const Portfolio: React.FC = () => {
     ) {
       return trimmed;
     }
+    const cdnBase = import.meta.env.VITE_CLOUDFRONT_URL;
+    if (cdnBase && (trimmed.startsWith("uploads/") || trimmed.startsWith("/uploads/"))) {
+      const cleanKey = trimmed.replace(/^\/+/, "");
+      return `${cdnBase.replace(/\/+$/, "")}/${cleanKey}`;
+    }
     const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
     const cleanUrl = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
     return `${base}${cleanUrl}`;

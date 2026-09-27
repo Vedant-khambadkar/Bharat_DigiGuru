@@ -10,6 +10,7 @@ import {
   isS3Configured,
   processFileForUpload,
   getS3Client,
+  getCloudFrontUrl,
 } from "../services/s3Service.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,7 +19,7 @@ const UPLOADS_DIR = path.join(__dirname, "../../uploads");
 
 /**
  * Handles multipart file uploads:
- * In S3 mode: Streams to private S3 bucket and returns S3 key + temporary presigned URL.
+ * In S3 mode: Streams to private S3 bucket and returns clean CloudFront CDN URL.
  * In local mode: Saves to ./uploads and returns local URL.
  */
 export const uploadMedia = async (req: Request, res: Response): Promise<void> => {
@@ -31,21 +32,20 @@ export const uploadMedia = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // 1. Direct AWS S3 Private Upload (Production & S3 Configured)
+    // 1. Direct AWS S3 Private Upload + CloudFront CDN Delivery
     if (isS3Configured()) {
-      const s3Result = await uploadFileToS3(req.file, "uploads", 604800); // 7 days presigned preview
+      const s3Result = await uploadFileToS3(req.file, "uploads");
 
       res.status(200).json({
         success: true,
-        message: "File uploaded securely to AWS S3.",
+        message: "File uploaded securely to AWS S3 and served via CloudFront CDN.",
         storage: "s3",
         key: s3Result.key,
         filename: path.basename(s3Result.key),
         originalName: req.file.originalname,
         size: s3Result.size,
         mimetype: s3Result.mimetype,
-        url: s3Result.url, // Presigned temporary URL for immediate frontend preview & playback
-        expiresIn: s3Result.expiresIn,
+        url: s3Result.url, // Clean permanent CloudFront URL: https://d1mou18mn47yy7.cloudfront.net/uploads/...
         data: {
           key: s3Result.key,
           url: s3Result.url,
@@ -81,7 +81,7 @@ export const uploadMedia = async (req: Request, res: Response): Promise<void> =>
 
     res.status(200).json({
       success: true,
-      message: "File uploaded to local storage successfully (AWS S3 not configured).",
+      message: "File uploaded to local storage successfully.",
       storage: "local",
       key: `uploads/${filename}`,
       filename,
@@ -105,8 +105,8 @@ export const uploadMedia = async (req: Request, res: Response): Promise<void> =>
 };
 
 /**
- * Generates a fresh Presigned GET URL on demand for any stored S3 key or existing asset URL.
- * GET /api/media/presigned-url?key=uploads/...
+ * Returns CloudFront URL or Presigned GET URL on demand for any stored asset key.
+ * GET /api/media/url?key=uploads/...
  */
 export const getPresignedUrlHandler = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -114,22 +114,21 @@ export const getPresignedUrlHandler = async (req: Request, res: Response): Promi
     if (!keyParam) {
       res.status(400).json({
         success: false,
-        message: "S3 object 'key' query parameter is required.",
+        message: "Object 'key' query parameter is required.",
       });
       return;
     }
 
-    const expiresIn = parseInt(req.query.expiresIn as string, 10) || 900; // 15 min default
-    const result = await getPresignedDownloadUrl(keyParam, expiresIn);
+    // Generate clean CloudFront CDN URL by default
+    const cloudFrontUrl = getCloudFrontUrl(keyParam);
 
     res.status(200).json({
       success: true,
-      url: result.url,
-      key: result.key,
-      expiresIn: result.expiresIn,
+      url: cloudFrontUrl,
+      key: keyParam,
     });
   } catch (err: any) {
-    console.error("❌ [PRESIGNED GET ERROR]:", err.message);
+    console.error("❌ [MEDIA URL ERROR]:", err.message);
     const status = err.message.includes("not found") ? 404 : 500;
     res.status(status).json({
       success: false,
@@ -139,7 +138,7 @@ export const getPresignedUrlHandler = async (req: Request, res: Response): Promi
 };
 
 /**
- * Generates a Presigned PUT URL for direct frontend-to-S3 uploads.
+ * Generates a Presigned PUT URL for direct client-to-S3 uploads if needed.
  * POST /api/admin/media/presigned-upload
  */
 export const getPresignedUploadUrlHandler = async (req: Request, res: Response): Promise<void> => {
@@ -174,7 +173,7 @@ export const getPresignedUploadUrlHandler = async (req: Request, res: Response):
 
 /**
  * Streams private S3 video/media assets directly with HTTP 206 Partial Content (Range requests)
- * for instantaneous video loading, scrubbing, and seeking in HTML5 video players.
+ * for instant fallback and seeking in HTML5 video players.
  * GET /api/media/stream?key=uploads/...
  */
 export const streamMediaHandler = async (req: Request, res: Response): Promise<void> => {
@@ -247,4 +246,3 @@ export const streamMediaHandler = async (req: Request, res: Response): Promise<v
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
