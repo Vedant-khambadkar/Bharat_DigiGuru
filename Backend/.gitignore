@@ -3,5 +3,7 @@ dist/
 uploads/*
 !uploads/.gitkeep
 .env
+.env.local
+.env.*.local
 *.tmp
 *.log

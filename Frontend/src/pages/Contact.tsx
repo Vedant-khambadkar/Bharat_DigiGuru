@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import emailjs from "@emailjs/browser";
 import {
   Mail,
   MapPin,
@@ -44,8 +43,7 @@ export const Contact: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState(false);
 
-  const clientEmail =
-    import.meta.env.VITE_CLIENT_EMAIL || "contactbharatdigiguru@gmail.com";
+  const clientEmail = "contactbharatdigiguru@gmail.com";
 
   const toggleService = (service: string) => {
     if (selectedServices.includes(service)) {
@@ -62,102 +60,33 @@ export const Contact: React.FC = () => {
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    const emailjsServiceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const emailjsTemplateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-    const emailjsPublicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-    const web3formsKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
-    const customEndpoint = import.meta.env.VITE_CONTACT_FORM_ENDPOINT;
-
-    const payload = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      company: formData.company || "Not Specified",
-      services: selectedServices.join(", "),
-      message: formData.message,
-      _subject: `New Project Inquiry from ${formData.name} - Bharat DigiGuru`,
-      _template: "table",
-      _captcha: "false",
-    };
-
     try {
-      if (
-        emailjsServiceId &&
-        emailjsTemplateId &&
-        emailjsPublicKey &&
-        emailjsPublicKey !== "your_emailjs_public_key_here"
-      ) {
-        await emailjs.send(
-          emailjsServiceId,
-          emailjsTemplateId,
-          {
-            from_name: formData.name,
-            reply_to: formData.email,
-            phone_number: formData.phone,
-            company_name: formData.company || "Not Specified",
-            services_requested: selectedServices.join(", "),
-            message: formData.message,
-            to_email: clientEmail,
-          },
-          emailjsPublicKey
-        );
-      } else if (web3formsKey) {
-        await fetch("https://api.web3forms.com/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({
-            access_key: web3formsKey,
-            ...payload,
-          }),
-        });
-      } else if (customEndpoint) {
-        await fetch(customEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(payload),
-        });
-      } else {
-        // Direct Live AJAX API Dispatch to contactbharatdigiguru@gmail.com
-        const targetApi = `https://formsubmit.co/ajax/${encodeURIComponent(clientEmail)}`;
-        console.log("🚀 [API DISPATCH] Submitting inquiry to:", targetApi, payload);
-        const res = await fetch(targetApi, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
-        const resData = await res.json().catch(() => null);
-        console.log("✅ [API RESPONSE]", res?.status, resData);
-      }
+      await userService.submitInquiry({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company || "Not Specified",
+        services: selectedServices.join(", "),
+        message: formData.message,
+      });
 
-      // Also dispatch through userService and Socket.io for live Admin Panel notifications
-      userService.submitInquiry({
+      // Dispatch real-time socket notification for connected admin dashboard
+      socket.emit("inquiry:new", {
+        id: `inq-${Date.now()}`,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         company: formData.company,
         services: selectedServices.join(", "),
         message: formData.message,
-      }).then(() => {
-        socket.emit("inquiry:new", {
-          id: `inq-${Date.now()}`,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          company: formData.company,
-          services: selectedServices.join(", "),
-          message: formData.message,
-          createdAt: new Date().toISOString(),
-          status: "pending",
-        });
-      }).catch((e) => console.warn("Inquiry sync warning:", e));
+        createdAt: new Date().toISOString(),
+        status: "NEW",
+      });
 
       setIsSubmitting(false);
       setIsSubmitted(true);
     } catch (err: any) {
-      console.error("Email submission error:", err);
+      console.error("Inquiry submission error:", err);
       // Fallback so user receives immediate UI confirmation
       setIsSubmitting(false);
       setIsSubmitted(true);

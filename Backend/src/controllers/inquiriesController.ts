@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../data/db.js";
 import { emitEvent } from "../services/socketService.js";
+import { sendInquiryNotificationEmail } from "../services/emailService.js";
 
 export const submitInquiry = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -29,6 +30,11 @@ export const submitInquiry = async (req: Request, res: Response): Promise<void> 
 
     // Real-time broadcast to connected admin clients
     emitEvent("inquiry:new", newInquiry);
+
+    // Send email notification in the background
+    sendInquiryNotificationEmail(newInquiry).catch((err) => {
+      console.warn("⚠️ Background email notification failed:", err.message);
+    });
 
     res.status(201).json({
       success: true,

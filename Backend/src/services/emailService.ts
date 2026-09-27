@@ -119,3 +119,61 @@ export async function sendPasswordResetOtpEmail({ toEmail, otp, recipientName = 
     };
   }
 }
+
+/**
+ * Sends a notification email to admin when a new inquiry is received.
+ */
+export async function sendInquiryNotificationEmail(inquiry: {
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  services?: string[] | string;
+  budget?: string;
+  timeline?: string;
+  message: string;
+}): Promise<void> {
+  const transporter = createTransporter();
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER || process.env.GMAIL_USER || "contactbharatdigiguru@gmail.com";
+  const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER || `"Bharat DigiGuru Leads" <no-reply@bharatdigiguru.com>`;
+
+  const servicesList = Array.isArray(inquiry.services)
+    ? inquiry.services.join(", ")
+    : inquiry.services || "General Inquiry";
+
+  console.log("\n=======================================================");
+  console.log("📬 [NEW INQUIRY RECEIVED]");
+  console.log(`👤 Name: ${inquiry.name}`);
+  console.log(`📧 Email: ${inquiry.email}`);
+  console.log(`📱 Phone: ${inquiry.phone || "N/A"}`);
+  console.log(`🏢 Company: ${inquiry.company || "N/A"}`);
+  console.log(`🛠️ Services: ${servicesList}`);
+  console.log(`💬 Message: ${inquiry.message}`);
+  console.log("=======================================================\n");
+
+  if (!transporter) {
+    return;
+  }
+
+  try {
+    await transporter.sendMail({
+      from: fromAddress,
+      to: adminEmail,
+      subject: `[New Lead] Inquiry from ${inquiry.name} - Bharat DigiGuru`,
+      html: `
+        <h2>New Client Inquiry Received</h2>
+        <p><strong>Name:</strong> ${inquiry.name}</p>
+        <p><strong>Email:</strong> ${inquiry.email}</p>
+        <p><strong>Phone:</strong> ${inquiry.phone || "Not provided"}</p>
+        <p><strong>Company:</strong> ${inquiry.company || "Not provided"}</p>
+        <p><strong>Services:</strong> ${servicesList}</p>
+        <p><strong>Message:</strong></p>
+        <p style="background:#f4f4f4;padding:12px;border-radius:6px;">${inquiry.message}</p>
+      `,
+    });
+    console.log(`✅ [EMAIL NOTIFICATION] Inquiry sent to admin: ${adminEmail}`);
+  } catch (err: any) {
+    console.error("❌ [EMAIL NOTIFICATION ERROR]:", err.message);
+  }
+}
+
