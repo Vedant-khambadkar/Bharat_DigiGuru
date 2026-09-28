@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { getCachedMediaUrl } from "../utils/mediaCache";
 
 interface ColorLensImageProps {
   src: string;
@@ -18,6 +19,21 @@ export const ColorLensImage: React.FC<ColorLensImageProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [resolvedSrc, setResolvedSrc] = useState<string>(src);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (src) {
+      getCachedMediaUrl(src).then((cached) => {
+        if (isMounted) setResolvedSrc(cached || src);
+      }).catch(() => {
+        if (isMounted) setResolvedSrc(src);
+      });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [src]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -60,7 +76,7 @@ export const ColorLensImage: React.FC<ColorLensImageProps> = ({
     >
       {/* Base Layer: Black and white by default */}
       <img
-        src={src}
+        src={resolvedSrc || src}
         alt={alt}
         className={`${className} grayscale contrast-115 brightness-90 transition-transform duration-700 ease-out group-hover:scale-105`}
         loading="lazy"
@@ -76,7 +92,7 @@ export const ColorLensImage: React.FC<ColorLensImageProps> = ({
         }}
       >
         <img
-          src={src}
+          src={resolvedSrc || src}
           alt={alt}
           className={`${className} brightness-105 contrast-110 transition-transform duration-700 ease-out group-hover:scale-105`}
           loading="lazy"

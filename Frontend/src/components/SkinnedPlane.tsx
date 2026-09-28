@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { getCachedMediaUrl } from "../utils/mediaCache";
 
 const WIDTH = 4.0;
 const HEIGHT = 2.5;
@@ -191,8 +192,19 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
         }
       );
     };
-
-    tryLoad(textureUrl);
+ 
+    // Fetch via browser CacheStorage/Blob cache to eliminate repeated CloudFront hits
+    getCachedMediaUrl(textureUrl)
+      .then((cachedUrl) => {
+        if (!isCancelled) {
+          tryLoad(cachedUrl || textureUrl);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          tryLoad(textureUrl);
+        }
+      });
 
     return () => {
       isCancelled = true;

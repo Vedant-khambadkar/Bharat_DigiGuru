@@ -1,4 +1,10 @@
 import nodemailer from "nodemailer";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 interface SendOtpOptions {
   toEmail: string;
@@ -35,10 +41,45 @@ function createTransporter() {
 }
 
 /**
+ * Resolves the company logo attachment if available on the filesystem.
+ */
+function getLogoAttachment(): { attachments: Array<{ filename: string; path: string; cid: string }>; logoSrc: string } {
+  const possiblePaths = [
+    path.join(__dirname, "../../assets/logo.png"),
+    path.join(__dirname, "../assets/logo.png"),
+    path.join(__dirname, "../../../Frontend/public/Logo/BDG Extended.png"),
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      return {
+        attachments: [
+          {
+            filename: "logo.png",
+            path: p,
+            cid: "bdg-logo",
+          },
+        ],
+        logoSrc: "cid:bdg-logo",
+      };
+    }
+  }
+
+  // Fallback to hosted web logo URL
+  return {
+    attachments: [],
+    logoSrc: "https://test.bharatdigiguru.com/Logo/BDG%20Extended.png",
+  };
+}
+
+/**
  * Sends a password reset OTP email to the requested administrator.
  */
-export async function sendPasswordResetOtpEmail({ toEmail, otp, recipientName = "Administrator" }: SendOtpOptions): Promise<{ sent: boolean; message: string }> {
-  // Always log OTP prominently in console for easy development & debugging
+export async function sendPasswordResetOtpEmail({
+  toEmail,
+  otp,
+  recipientName = "Administrator",
+}: SendOtpOptions): Promise<{ sent: boolean; message: string }> {
   console.log("\n=======================================================");
   console.log("🔐 [BHARAT DIGIGURU] PASSWORD RESET OTP GENERATED");
   console.log(`📧 Recipient: ${toEmail}`);
@@ -47,7 +88,13 @@ export async function sendPasswordResetOtpEmail({ toEmail, otp, recipientName = 
   console.log("=======================================================\n");
 
   const transporter = createTransporter();
-  const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER || `"Bharat DigiGuru Security" <no-reply@bharatdigiguru.com>`;
+  const fromAddress =
+    process.env.SMTP_FROM ||
+    process.env.SMTP_USER ||
+    process.env.GMAIL_USER ||
+    `"Bharat DigiGuru" <no-reply@bharatdigiguru.com>`;
+
+  const { attachments, logoSrc } = getLogoAttachment();
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -55,40 +102,59 @@ export async function sendPasswordResetOtpEmail({ toEmail, otp, recipientName = 
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Password Reset OTP - Bharat DigiGuru</title>
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0c10; color: #ffffff; margin: 0; padding: 24px; }
-        .container { max-width: 520px; margin: 0 auto; background: #12141c; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 36px 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; }
-        .logo { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff; margin-bottom: 20px; }
-        .logo span { color: #ff3b30; }
-        .heading { font-size: 20px; font-weight: 700; color: #ffffff; margin-bottom: 12px; }
-        .desc { font-size: 14px; color: #9ca3af; line-height: 1.6; margin-bottom: 28px; }
-        .otp-box { background: rgba(255, 59, 48, 0.08); border: 1px dashed #ff3b30; border-radius: 14px; padding: 18px 24px; margin: 0 auto 28px; display: inline-block; }
-        .otp-code { font-family: 'Courier New', monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #ff5247; text-shadow: 0 0 16px rgba(255,59,48,0.4); margin: 0; }
-        .warning { font-size: 12px; color: #6b7280; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.08); pt: 20px; margin-top: 24px; }
-        .footer { font-size: 11px; color: #4b5563; margin-top: 24px; }
-      </style>
+      <title>Reset your password</title>
     </head>
-    <body>
-      <div class="container">
-        <div class="logo">bharat <span>DIGIGURU</span></div>
-        <div class="heading">Admin Password Reset Request</div>
-        <p class="desc">Hello <strong>${recipientName}</strong>,<br>We received a request to reset your admin console password. Use the verification code below to authorize the reset:</p>
-        
-        <div class="otp-box">
-          <div class="otp-code">${otp}</div>
-        </div>
+    <body style="margin: 0; padding: 0; background-color: #0c0d12; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #d1d5db;">
+      <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0c0d12; padding: 48px 16px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; background: #141620; border: 1px solid #232636; border-radius: 12px; overflow: hidden;">
+              
+              <!-- Header -->
+              <tr>
+                <td style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #232636;">
+                  <img src="${logoSrc}" alt="Bharat DigiGuru" style="height: 32px; width: auto; display: block;" />
+                </td>
+              </tr>
 
-        <p class="desc" style="margin-bottom: 0; font-size: 13px;">This OTP is valid for <strong>10 minutes</strong>. Do not share this code with anyone.</p>
-        
-        <div class="warning">
-          If you did not request this password reset, you can safely ignore this email. Your admin account remains secure.
-        </div>
-        
-        <div class="footer">
-          &copy; ${new Date().getFullYear()} Bharat DigiGuru &bull; Next-Gen Digital Studio & Production
-        </div>
-      </div>
+              <!-- Body -->
+              <tr>
+                <td style="padding: 32px;">
+                  <h1 style="font-size: 19px; font-weight: 600; color: #ffffff; margin: 0 0 12px 0; letter-spacing: -0.2px;">
+                    Password reset request
+                  </h1>
+                  
+                  <p style="font-size: 14px; line-height: 1.55; color: #9ca3af; margin: 0 0 24px 0;">
+                    Hello ${recipientName},<br>
+                    Use the verification code below to complete your password reset. This code expires in 10 minutes.
+                  </p>
+                  
+                  <!-- OTP Code -->
+                  <div style="background: #0d0e15; border: 1px solid #2a2e42; border-radius: 8px; padding: 20px; text-align: center; margin: 0 0 24px 0;">
+                    <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 32px; font-weight: 700; letter-spacing: 6px; color: #ffffff; display: block;">
+                      ${otp}
+                    </span>
+                  </div>
+
+                  <p style="font-size: 13px; line-height: 1.5; color: #6b7280; margin: 0;">
+                    If you didn't request this change, you can safely ignore this email. No changes will be made to your account.
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="background: #0f1017; padding: 20px 32px; border-top: 1px solid #1f2230;">
+                  <p style="font-size: 12px; color: #6b7280; margin: 0;">
+                    Bharat DigiGuru &bull; Studio & Production
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
     </body>
     </html>
   `;
@@ -104,9 +170,10 @@ export async function sendPasswordResetOtpEmail({ toEmail, otp, recipientName = 
     await transporter.sendMail({
       from: fromAddress,
       to: toEmail,
-      subject: `[Bharat DigiGuru] ${otp} is your Admin Password Reset Code`,
-      text: `Your Bharat DigiGuru Admin Password Reset Code is: ${otp}. It expires in 10 minutes.`,
+      subject: `${otp} is your verification code - Bharat DigiGuru`,
+      text: `Your password reset code is: ${otp}. It expires in 10 minutes.`,
       html: htmlContent,
+      attachments,
     });
 
     console.log(`✅ [EMAIL SENT] Password reset OTP delivered to ${toEmail}`);
@@ -121,7 +188,7 @@ export async function sendPasswordResetOtpEmail({ toEmail, otp, recipientName = 
 }
 
 /**
- * Sends a notification email to admin when a new inquiry is received.
+ * Sends a clean, professional notification email to admin when a new inquiry is received.
  */
 export async function sendInquiryNotificationEmail(inquiry: {
   name: string;
@@ -134,12 +201,216 @@ export async function sendInquiryNotificationEmail(inquiry: {
   message: string;
 }): Promise<void> {
   const transporter = createTransporter();
-  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER || process.env.GMAIL_USER || "contactbharatdigiguru@gmail.com";
-  const fromAddress = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER || `"Bharat DigiGuru Leads" <no-reply@bharatdigiguru.com>`;
+  const adminEmail =
+    process.env.ADMIN_NOTIFICATION_EMAIL ||
+    process.env.SMTP_USER ||
+    process.env.GMAIL_USER ||
+    "contactbharatdigiguru@gmail.com";
+  const fromAddress =
+    process.env.SMTP_FROM ||
+    process.env.SMTP_USER ||
+    process.env.GMAIL_USER ||
+    `"Bharat DigiGuru" <no-reply@bharatdigiguru.com>`;
 
-  const servicesList = Array.isArray(inquiry.services)
-    ? inquiry.services.join(", ")
-    : inquiry.services || "General Inquiry";
+  const rawServices = Array.isArray(inquiry.services)
+    ? inquiry.services
+    : typeof inquiry.services === "string" && inquiry.services.trim()
+    ? [inquiry.services]
+    : [];
+
+  const servicesTextList = rawServices.join(", ") || "General";
+  const firstName = inquiry.name ? inquiry.name.trim().split(" ")[0] : "Client";
+
+  const { attachments, logoSrc } = getLogoAttachment();
+  const formattedDate = new Date().toLocaleDateString("en-IN", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Kolkata",
+  });
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>New Inquiry</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #0b0c10; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #e5e7eb;">
+      <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0b0c10; padding: 40px 16px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background: #13151f; border: 1px solid #222533; border-radius: 12px; overflow: hidden; text-align: left;">
+              
+              <!-- Header with Logo and Timestamp -->
+              <tr>
+                <td style="padding: 24px 32px; border-bottom: 1px solid #222533;">
+                  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td align="left" valign="middle">
+                        <img src="${logoSrc}" alt="Bharat DigiGuru" style="height: 30px; width: auto; display: block;" />
+                      </td>
+                      <td align="right" valign="middle" style="font-size: 12px; color: #6b7280; font-weight: 400;">
+                        ${formattedDate}
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Lead Title -->
+              <tr>
+                <td style="padding: 28px 32px 16px 32px;">
+                  <h1 style="font-size: 20px; font-weight: 600; color: #ffffff; margin: 0 0 6px 0; letter-spacing: -0.2px;">
+                    New inquiry from ${inquiry.name}
+                  </h1>
+                  <p style="font-size: 14px; color: #9ca3af; margin: 0;">
+                    ${inquiry.company && inquiry.company !== "Not Specified" ? `${inquiry.company} &bull; ` : ""}${inquiry.email}
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Client Message Box -->
+              <tr>
+                <td style="padding: 12px 32px 24px 32px;">
+                  <div style="background: #0d0f17; border: 1px solid #1e2230; border-radius: 8px; padding: 18px 20px;">
+                    <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: #6b7280; margin-bottom: 8px;">
+                      Message
+                    </div>
+                    <div style="font-size: 14px; line-height: 1.6; color: #f3f4f6; white-space: pre-wrap;">${inquiry.message}</div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Inquiry Overview Details -->
+              <tr>
+                <td style="padding: 0 32px 28px 32px;">
+                  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="border-top: 1px solid #1e2230;">
+                    
+                    <tr>
+                      <td width="30%" style="padding: 12px 0; border-bottom: 1px solid #1e2230; font-size: 13px; color: #6b7280; font-weight: 500;">
+                        Name
+                      </td>
+                      <td width="70%" style="padding: 12px 0; border-bottom: 1px solid #1e2230; font-size: 13px; color: #f3f4f6; font-weight: 500;">
+                        ${inquiry.name}
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td style="padding: 12px 0; border-bottom: 1px solid #1e2230; font-size: 13px; color: #6b7280; font-weight: 500;">
+                        Email
+                      </td>
+                      <td style="padding: 12px 0; border-bottom: 1px solid #1e2230; font-size: 13px;">
+                        <a href="mailto:${inquiry.email}" style="color: #60a5fa; text-decoration: none;">
+                          ${inquiry.email}
+                        </a>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td style="padding: 12px 0; border-bottom: 1px solid #1e2230; font-size: 13px; color: #6b7280; font-weight: 500;">
+                        Phone
+                      </td>
+                      <td style="padding: 12px 0; border-bottom: 1px solid #1e2230; font-size: 13px; color: #e5e7eb;">
+                        ${
+                          inquiry.phone && inquiry.phone !== "Not Provided"
+                            ? `<a href="tel:${inquiry.phone}" style="color: #60a5fa; text-decoration: none;">${inquiry.phone}</a>`
+                            : `<span style="color: #6b7280;">—</span>`
+                        }
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td style="padding: 12px 0; border-bottom: 1px solid #1e2230; font-size: 13px; color: #6b7280; font-weight: 500;">
+                        Company
+                      </td>
+                      <td style="padding: 12px 0; border-bottom: 1px solid #1e2230; font-size: 13px; color: #e5e7eb;">
+                        ${inquiry.company && inquiry.company !== "Not Specified" ? inquiry.company : `<span style="color: #6b7280;">—</span>`}
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td style="padding: 12px 0; border-bottom: ${inquiry.budget || inquiry.timeline ? "1px solid #1e2230" : "none"}; font-size: 13px; color: #6b7280; font-weight: 500; vertical-align: middle;">
+                        Services
+                      </td>
+                      <td style="padding: 12px 0; border-bottom: ${inquiry.budget || inquiry.timeline ? "1px solid #1e2230" : "none"}; font-size: 13px; color: #e5e7eb;">
+                        ${servicesTextList}
+                      </td>
+                    </tr>
+
+                    ${
+                      inquiry.budget
+                        ? `
+                    <tr>
+                      <td style="padding: 12px 0; border-bottom: ${inquiry.timeline ? "1px solid #1e2230" : "none"}; font-size: 13px; color: #6b7280; font-weight: 500;">
+                        Budget
+                      </td>
+                      <td style="padding: 12px 0; border-bottom: ${inquiry.timeline ? "1px solid #1e2230" : "none"}; font-size: 13px; color: #e5e7eb;">
+                        ${inquiry.budget}
+                      </td>
+                    </tr>`
+                        : ""
+                    }
+
+                    ${
+                      inquiry.timeline
+                        ? `
+                    <tr>
+                      <td style="padding: 12px 0; font-size: 13px; color: #6b7280; font-weight: 500;">
+                        Timeline
+                      </td>
+                      <td style="padding: 12px 0; font-size: 13px; color: #e5e7eb;">
+                        ${inquiry.timeline}
+                      </td>
+                    </tr>`
+                        : ""
+                    }
+
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Primary Action Button -->
+              <tr>
+                <td style="padding: 0 32px 32px 32px;">
+                  <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="border-radius: 6px; background: #ffffff;">
+                        <a href="mailto:${inquiry.email}?subject=Re:%20Inquiry%20with%20Bharat%20DigiGuru" target="_blank" style="font-size: 13px; font-weight: 600; color: #0b0c10; text-decoration: none; padding: 10px 20px; display: inline-block; border-radius: 6px; letter-spacing: -0.1px;">
+                          Reply to ${firstName} &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Clean Studio Footer -->
+              <tr>
+                <td style="background: #0e0f16; padding: 18px 32px; border-top: 1px solid #1e2230;">
+                  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td align="left" style="font-size: 12px; color: #6b7280;">
+                        Bharat DigiGuru &bull; Next-Gen Digital Studio
+                      </td>
+                      <td align="right" style="font-size: 12px;">
+                        <a href="https://bharatdigiguru.com" style="color: #6b7280; text-decoration: none;">bharatdigiguru.com</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
 
   console.log("\n=======================================================");
   console.log("📬 [NEW INQUIRY RECEIVED]");
@@ -147,7 +418,7 @@ export async function sendInquiryNotificationEmail(inquiry: {
   console.log(`📧 Email: ${inquiry.email}`);
   console.log(`📱 Phone: ${inquiry.phone || "N/A"}`);
   console.log(`🏢 Company: ${inquiry.company || "N/A"}`);
-  console.log(`🛠️ Services: ${servicesList}`);
+  console.log(`🛠️ Services: ${servicesTextList}`);
   console.log(`💬 Message: ${inquiry.message}`);
   console.log("=======================================================\n");
 
@@ -159,21 +430,12 @@ export async function sendInquiryNotificationEmail(inquiry: {
     await transporter.sendMail({
       from: fromAddress,
       to: adminEmail,
-      subject: `[New Lead] Inquiry from ${inquiry.name} - Bharat DigiGuru`,
-      html: `
-        <h2>New Client Inquiry Received</h2>
-        <p><strong>Name:</strong> ${inquiry.name}</p>
-        <p><strong>Email:</strong> ${inquiry.email}</p>
-        <p><strong>Phone:</strong> ${inquiry.phone || "Not provided"}</p>
-        <p><strong>Company:</strong> ${inquiry.company || "Not provided"}</p>
-        <p><strong>Services:</strong> ${servicesList}</p>
-        <p><strong>Message:</strong></p>
-        <p style="background:#f4f4f4;padding:12px;border-radius:6px;">${inquiry.message}</p>
-      `,
+      subject: `Inquiry from ${inquiry.name} (${servicesTextList})`,
+      html: htmlContent,
+      attachments,
     });
     console.log(`✅ [EMAIL NOTIFICATION] Inquiry sent to admin: ${adminEmail}`);
   } catch (err: any) {
     console.error("❌ [EMAIL NOTIFICATION ERROR]:", err.message);
   }
 }
-

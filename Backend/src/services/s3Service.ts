@@ -295,6 +295,7 @@ export async function uploadFileToS3(
     Body: processed.buffer,
     ContentType: processed.mimetype,
     ContentDisposition: "inline", // Allows browsers & CDN to play videos and display images directly
+    CacheControl: "public, max-age=31536000, immutable", // Tells CloudFront and browser to cache permanently
   });
 
   await client.send(putCommand);

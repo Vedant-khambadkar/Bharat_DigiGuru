@@ -1,4 +1,6 @@
 import { adminApi } from "../api/adminApi/adminApi";
+import { invalidateApiCache } from "../../utils/apiCache";
+import { invalidateMediaCache } from "../../utils/mediaCache";
 
 class AdminService {
   // Auth
@@ -27,16 +29,25 @@ class AdminService {
     return adminApi.getPortfolio(params);
   }
 
-  createPortfolio(data: any) {
-    return adminApi.createPortfolio(data);
+  async createPortfolio(data: any) {
+    const res = await adminApi.createPortfolio(data);
+    invalidateApiCache("portfolio");
+    return res;
   }
 
-  updatePortfolio(id: string, data: any) {
-    return adminApi.updatePortfolio(id, data);
+  async updatePortfolio(id: string, data: any) {
+    const res = await adminApi.updatePortfolio(id, data);
+    invalidateApiCache("portfolio");
+    if (data.image || data.imageUrl || data.textureUrl) {
+      invalidateMediaCache(data.image || data.imageUrl || data.textureUrl);
+    }
+    return res;
   }
 
-  deletePortfolio(id: string) {
-    return adminApi.deletePortfolio(id);
+  async deletePortfolio(id: string) {
+    const res = await adminApi.deletePortfolio(id);
+    invalidateApiCache("portfolio");
+    return res;
   }
 
   // 3D Studio
@@ -44,16 +55,25 @@ class AdminService {
     return adminApi.getThreeD(params);
   }
 
-  createThreeD(data: any) {
-    return adminApi.createThreeD(data);
+  async createThreeD(data: any) {
+    const res = await adminApi.createThreeD(data);
+    invalidateApiCache("threed");
+    return res;
   }
 
-  updateThreeD(id: string, data: any) {
-    return adminApi.updateThreeD(id, data);
+  async updateThreeD(id: string, data: any) {
+    const res = await adminApi.updateThreeD(id, data);
+    invalidateApiCache("threed");
+    if (data.posterUrl || data.videoUrl) {
+      invalidateMediaCache(data.posterUrl);
+    }
+    return res;
   }
 
-  deleteThreeD(id: string) {
-    return adminApi.deleteThreeD(id);
+  async deleteThreeD(id: string) {
+    const res = await adminApi.deleteThreeD(id);
+    invalidateApiCache("threed");
+    return res;
   }
 
   // Inquiries

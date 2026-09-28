@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowUpRight } from "lucide-react";
+import CachedImage from "./CachedImage";
 
 export interface BlogItem {
   id: string;
@@ -31,7 +32,7 @@ export const BlogCard: React.FC<BlogCardProps> = ({ blog, onClick }) => {
       {/* Optional Background Image or Ambient Glow */}
       {blog.image && (
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          <img
+          <CachedImage
             src={blog.image}
             alt={blog.title}
             className="w-full h-full object-cover object-center opacity-30 group-hover:opacity-50 group-hover:scale-105 transition-all duration-700 ease-out grayscale group-hover:grayscale-0"

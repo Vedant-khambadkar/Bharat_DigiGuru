@@ -5,14 +5,25 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import SkinnedPlane, { type PlaneItem } from "../components/SkinnedPlane";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
+import { getApiCache, setApiCache } from "../utils/apiCache";
+import { preloadMediaList } from "../utils/mediaCache";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export const Portfolio: React.FC = () => {
-  const [planes, setPlanes] = useState<PlaneItem[]>([]);
-  const [selectedPlane, setSelectedPlane] = useState<PlaneItem | null>(null);
+  const [planes, setPlanes] = useState<PlaneItem[]>(() => {
+    const cached = getApiCache<PlaneItem[]>("portfolio_items");
+    return cached && cached.length > 0 ? cached : [];
+  });
+  const [selectedPlane, setSelectedPlane] = useState<PlaneItem | null>(() => {
+    const cached = getApiCache<PlaneItem[]>("portfolio_items");
+    return cached && cached.length > 0 ? cached[0] : null;
+  });
   const [scrollProgress, setScrollProgress] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    const cached = getApiCache<PlaneItem[]>("portfolio_items");
+    return !(cached && cached.length > 0);
+  });
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +55,6 @@ export const Portfolio: React.FC = () => {
     const rawImg = item.image || item.imageUrl || item.textureUrl || item.posterUrl || "";
     const imgUrl = getFullUrl(rawImg);
 
-    console.log(imgUrl)
     return {
       id: item.id || item._id || index + 1,
       title: item.title || `Project 0${index + 1}`,
@@ -54,11 +64,15 @@ export const Portfolio: React.FC = () => {
     };
   };
 
-  // 1. Fetch Dynamic Portfolio directly from API / Database
+  // 1. Fetch Dynamic Portfolio directly from API / Database (with Cache Sync)
   useEffect(() => {
+    // Pre-cache textures from initial cache immediately
+    if (planes.length > 0) {
+      preloadMediaList(planes.map((p) => p.textureUrl));
+    }
+
     const fetchPortfolioData = async () => {
       try {
-        setIsLoading(true);
         const res = await userService.getPortfolio();
         const rawItems = Array.isArray(res)
           ? res
@@ -68,17 +82,24 @@ export const Portfolio: React.FC = () => {
           ? res.data
           : [];
 
-        const formatted = rawItems.map(formatPortfolioItem);
+        const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
         setPlanes(formatted);
+        setApiCache("portfolio_items", formatted);
+        preloadMediaList(formatted.map((p: PlaneItem) => p.textureUrl));
+
         if (formatted.length > 0) {
-          setSelectedPlane(formatted[0]);
+          setSelectedPlane((current) => {
+            if (current) {
+              const matched = formatted.find((f: PlaneItem) => String(f.id) === String(current.id));
+              return matched || formatted[0];
+            }
+            return formatted[0];
+          });
         } else {
           setSelectedPlane(null);
         }
       } catch (err) {
         console.error("Error fetching database portfolio:", err);
-        setPlanes([]);
-        setSelectedPlane(null);
       } finally {
         setIsLoading(false);
       }
@@ -94,6 +115,8 @@ export const Portfolio: React.FC = () => {
         const exists = prev.some((p) => String(p.id) === String(formatted.id));
         if (exists) return prev;
         const updated = [formatted, ...prev];
+        setApiCache("portfolio_items", updated);
+        preloadMediaList([formatted.textureUrl]);
         if (!selectedPlane) setSelectedPlane(formatted);
         return updated;
       });
@@ -101,13 +124,17 @@ export const Portfolio: React.FC = () => {
 
     const unsubscribeUpdate = onSocketEvent("portfolio:updated", (updatedCard: any) => {
       if (!updatedCard) return;
-      setPlanes((prev) =>
-        prev.map((p, idx) =>
+      setPlanes((prev) => {
+        const updated = prev.map((p, idx) =>
           String(p.id) === String(updatedCard.id || updatedCard._id)
             ? formatPortfolioItem(updatedCard, idx)
             : p
-        )
-      );
+        );
+        setApiCache("portfolio_items", updated);
+        const updatedItem = formatPortfolioItem(updatedCard, 0);
+        preloadMediaList([updatedItem.textureUrl]);
+        return updated;
+      });
       setSelectedPlane((current) =>
         current && String(current.id) === String(updatedCard.id || updatedCard._id)
           ? formatPortfolioItem(updatedCard, 0)
@@ -118,6 +145,7 @@ export const Portfolio: React.FC = () => {
     const unsubscribeDelete = onSocketEvent("portfolio:deleted", (deletedId: any) => {
       setPlanes((prev) => {
         const filtered = prev.filter((p) => String(p.id) !== String(deletedId));
+        setApiCache("portfolio_items", filtered);
         return filtered;
       });
       setSelectedPlane((current) => {

@@ -12,7 +12,6 @@ import pic2 from "../assets/Picture/Picture2.webp";
 import pic3 from "../assets/Picture/Picture3.webp";
 import pic4 from "../assets/Picture/Picture4.webp";
 import pic5 from "../assets/Picture/Picture5.webp";
-import pic6 from "../assets/Picture/Picture6.webp";
 import pic7 from "../assets/Picture/Picture7.webp";
 import pic8 from "../assets/Picture/Picture8.webp";
 import pic9 from "../assets/Picture/Picture9.webp";
@@ -21,6 +20,14 @@ import pic11 from "../assets/Picture/Picture11.webp";
 import pic12 from "../assets/Picture/Picture12.webp";
 import pic13 from "../assets/Picture/Picture13.webp";
 import videoLaptop from "../assets/Video/Laptop.mp4";
+import PhotographyImg1 from "../assets/photography/photography-1.webp";
+import PhotographyImg2 from "../assets/photography/photography-2.webp";
+import PhotographyImg3 from "../assets/photography/photography-3.webp";
+import DigitalMediaImg1 from "../assets/digitalmedia/DigitalMedia-1.jpg";
+import DigitalMediaImg2 from "../assets/digitalmedia/DigitalMedia-2.jpg";
+import DigitalMediaImg3 from "../assets/digitalmedia/DigitalMedia-3.jpg";
+import DigitalMediaImg4 from "../assets/digitalmedia/DigitalMedia-4.jpg";
+
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -31,14 +38,14 @@ const SERVICES_DATA: ServiceData[] = [
         title: "Digital Media Services",
         subtitle: "360° SMM, SEO, PERFORMANCE ADS & LEAD GENERATION",
         tag: "& 360° DIGITAL ACCELERATION",
-        image: pic1,
+        image: DigitalMediaImg1,
         works: [
             {
                 id: "dm-work-1",
                 title: "Apex Growth Campaign & SMM",
                 type: "image",
-                url: pic1,
-                thumbnail: pic1,
+                url: DigitalMediaImg2,
+                thumbnail: DigitalMediaImg2,
                 tag: "Ad Campaign Reel",
                 description: "Multi-channel lead generation and ad conversion campaign with +280% ROI.",
                 metrics: "+280% Lead Volume • 4K",
@@ -47,8 +54,8 @@ const SERVICES_DATA: ServiceData[] = [
                 id: "dm-work-2",
                 title: "Omnichannel Brand Positioning",
                 type: "image",
-                url: pic2,
-                thumbnail: pic2,
+                url: DigitalMediaImg4,
+                thumbnail: DigitalMediaImg4,
                 tag: "Brand Architecture",
                 description: "Complete visual branding, meta ads strategy, and high-converting creative copies.",
                 metrics: "4.8M Impressions",
@@ -57,8 +64,8 @@ const SERVICES_DATA: ServiceData[] = [
                 id: "dm-work-3",
                 title: "Viral Social Content & SEO",
                 type: "image",
-                url: pic3,
-                thumbnail: pic3,
+                url: DigitalMediaImg3,
+                thumbnail: DigitalMediaImg3,
                 tag: "SEO & Growth Engine",
                 description: "Data-driven SEO dominance and organic engagement across search & socials.",
                 metrics: "Top 3 SERP Ranking",
@@ -106,8 +113,8 @@ const SERVICES_DATA: ServiceData[] = [
                 id: "photo-work-1",
                 title: "Luxury Product Studio Shoot",
                 type: "image",
-                url: pic4,
-                thumbnail: pic4,
+                url: PhotographyImg1,
+                thumbnail: PhotographyImg1,
                 tag: "Studio Lighting",
                 description: "High-end product photography featuring precision studio lighting and reflection controls.",
                 metrics: "Ultra-HD Master",
@@ -116,8 +123,8 @@ const SERVICES_DATA: ServiceData[] = [
                 id: "photo-work-2",
                 title: "Executive Corporate Portfolios",
                 type: "image",
-                url: pic5,
-                thumbnail: pic5,
+                url: PhotographyImg2,
+                thumbnail: PhotographyImg2,
                 tag: "Executive Headshots",
                 description: "Editorial corporate portraits and leadership team showcase for modern enterprise brands.",
                 metrics: "100+ C-Suite Shoots",
@@ -126,8 +133,8 @@ const SERVICES_DATA: ServiceData[] = [
                 id: "photo-work-3",
                 title: "Global Summit & Event Coverage",
                 type: "image",
-                url: pic6,
-                thumbnail: pic6,
+                url: PhotographyImg3,
+                thumbnail: PhotographyImg3,
                 tag: "Live Event Photography",
                 description: "Real-time live conference capture, keynote spotlights, and high-energy atmosphere moments.",
                 metrics: "Instant Live Delivery",

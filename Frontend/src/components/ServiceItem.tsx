@@ -354,19 +354,19 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
       {activeModalWork && (
         <div
           onClick={() => setActiveModalWork(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/90 backdrop-blur-2xl animate-fade-in"
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-5 md:p-8 bg-black/95 backdrop-blur-2xl animate-fade-in overflow-y-auto"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-4xl bg-neutral-950 border border-neutral-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+            className="relative w-full max-w-4xl bg-neutral-950/95 border border-neutral-800 rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_25px_70px_rgba(0,0,0,0.95)] flex flex-col max-h-[92vh] my-auto"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800/80 bg-neutral-900/50">
-              <div className="flex items-center gap-3">
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-mono uppercase bg-blue-500/20 text-blue-300 border border-blue-500/30">
+            <div className="shrink-0 flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 border-b border-neutral-800/80 bg-neutral-900/80">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
+                <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-mono uppercase bg-blue-500/20 text-blue-300 border border-blue-500/30">
                   {activeModalWork.tag}
                 </span>
-                <h3 className="text-sm sm:text-base font-['Space_Grotesk',sans-serif] uppercase tracking-wider font-bold text-white">
+                <h3 className="text-xs sm:text-sm md:text-base font-['Space_Grotesk',sans-serif] uppercase tracking-wider font-bold text-white truncate">
                   {activeModalWork.title}
                 </h3>
               </div>
@@ -374,16 +374,16 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                 type="button"
                 onClick={() => setActiveModalWork(null)}
                 aria-label="Close Preview"
-                className="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                className="shrink-0 w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Modal Media Display */}
-            <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
+            {/* Modal Media Display (Adapts to both Portrait & Landscape Media seamlessly) */}
+            <div className="relative w-full flex-1 min-h-[260px] max-h-[58vh] sm:max-h-[64vh] bg-black flex items-center justify-center overflow-hidden p-2 sm:p-3">
               {activeModalWork.type === "video" ? (
-                <>
+                <div className="relative w-full h-full flex items-center justify-center">
                   <video
                     src={activeModalWork.url}
                     poster={activeModalWork.thumbnail}
@@ -391,7 +391,7 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                     loop
                     muted={modalMuted}
                     playsInline
-                    className="w-full h-full object-cover"
+                    className="max-w-full max-h-[55vh] sm:max-h-[60vh] w-auto h-auto object-contain rounded-lg"
                     ref={(el) => {
                       if (el) {
                         if (modalPlaying) el.play().catch(() => {});
@@ -400,58 +400,58 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                     }}
                   />
                   {/* Floating Video Controls */}
-                  <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between p-3 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-white">
-                    <div className="flex items-center gap-3">
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 text-white">
+                    <div className="flex items-center gap-2.5">
                       <button
                         type="button"
                         onClick={() => setModalPlaying((p) => !p)}
-                        className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                        className="p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                       >
                         {modalPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                       </button>
                       <button
                         type="button"
                         onClick={() => setModalMuted((m) => !m)}
-                        className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                        className="p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                       >
                         {modalMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                       </button>
                     </div>
                     {activeModalWork.metrics && (
-                      <span className="text-xs font-mono text-neutral-300">
+                      <span className="text-[11px] sm:text-xs font-mono text-neutral-300">
                         {activeModalWork.metrics}
                       </span>
                     )}
                   </div>
-                </>
+                </div>
               ) : (
                 <img
                   src={activeModalWork.url}
                   alt={activeModalWork.title}
-                  className="w-full h-full object-contain"
+                  className="max-w-full max-h-[55vh] sm:max-h-[60vh] w-auto h-auto object-contain rounded-lg shadow-2xl"
                 />
               )}
             </div>
 
             {/* Modal Footer / CTAs */}
-            <div className="p-6 bg-neutral-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-neutral-800">
-              <div>
-                <p className="text-xs sm:text-sm text-neutral-300 font-['Space_Grotesk',sans-serif]">
+            <div className="shrink-0 p-4 sm:p-5 bg-neutral-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 border-t border-neutral-800/80">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-neutral-300 font-['Space_Grotesk',sans-serif] line-clamp-2 sm:line-clamp-none">
                   {activeModalWork.description ||
                     `High-impact visual execution delivered under ${service.title}.`}
                 </p>
               </div>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setActiveModalWork(null);
                     scrollToSection("#portfolio-section");
                   }}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider font-semibold bg-neutral-800 hover:bg-neutral-700 text-white transition-colors cursor-pointer"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs uppercase tracking-wider font-semibold bg-neutral-800 hover:bg-neutral-700 text-white transition-colors cursor-pointer"
                 >
                   <Briefcase className="w-3.5 h-3.5" />
-                  View Portfolio
+                  <span>View Portfolio</span>
                 </button>
                 <button
                   type="button"
@@ -459,10 +459,10 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                     setActiveModalWork(null);
                     scrollToSection("#contact-section");
                   }}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider font-semibold bg-white text-black hover:bg-neutral-200 transition-colors cursor-pointer"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs uppercase tracking-wider font-semibold bg-white text-black hover:bg-neutral-200 transition-colors cursor-pointer"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-black" />
-                  Get In Touch
+                  <span>Get In Touch</span>
                 </button>
               </div>
             </div>

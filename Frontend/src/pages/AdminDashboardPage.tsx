@@ -28,6 +28,7 @@ import {
 import { adminService } from "../services/service/adminService";
 import { socket, onSocketEvent } from "../utils/socket";
 import { ConfirmDeleteModal } from "../components/Admin/ConfirmDeleteModal";
+import CachedImage from "../components/CachedImage";
 
 type TabType = "overview" | "portfolio" | "threed" | "inquiries";
 
@@ -951,7 +952,7 @@ export const AdminDashboardPage: React.FC = () => {
                       <div className="flex flex-col gap-2">
                         {p.image && (
                           <div className="w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-black/40 relative">
-                            <img
+                            <CachedImage
                               src={p.image}
                               alt={p.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -1176,7 +1177,7 @@ export const AdminDashboardPage: React.FC = () => {
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
                             ) : (
-                              <img
+                              <CachedImage
                                 src={t.posterUrl || t.videoUrl}
                                 alt={t.title}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -1189,7 +1190,7 @@ export const AdminDashboardPage: React.FC = () => {
                           </div>
                         ) : t.posterUrl ? (
                           <div className="w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-black/40 relative">
-                            <img
+                            <CachedImage
                               src={t.posterUrl}
                               alt={t.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -1770,7 +1771,7 @@ export const AdminDashboardPage: React.FC = () => {
                     {editingItem.data.image ? (
                       <div className="relative rounded-2xl overflow-hidden border border-blue-500/30 bg-black/40 p-2.5 flex items-center gap-3">
                         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-black shrink-0 border border-white/10 relative">
-                          <img
+                          <CachedImage
                             src={editingItem.data.image}
                             alt="Preview"
                             className="w-full h-full object-cover"

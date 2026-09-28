@@ -4,6 +4,10 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import Home from "./pages/Home";
 import Services from "./pages/Services";
+import Process from "./pages/Process";
+import PlatformsWeManage from "./pages/PlatformsWeManage";
+import ToolsAndTechnology from "./pages/ToolsAndTechnology";
+import WorkWithUs from "./pages/WorkWithUs";
 import Portfolio from "./pages/Portfolio";
 import ThreeDProjects from "./pages/ThreeDProjects";
 import About from "./pages/About";
@@ -425,8 +429,12 @@ const App = () => {
         <Services />
         <About />
         <MissionVision/>
+        <ToolsAndTechnology /> 
+        <PlatformsWeManage />
+        <Process />
         <Portfolio />
         <ThreeDProjects />
+        <WorkWithUs />
         <Blogs />
         <Contact />
         <Footer />

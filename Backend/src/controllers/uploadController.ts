@@ -227,6 +227,10 @@ export const streamMediaHandler = async (req: Request, res: Response): Promise<v
 
     res.setHeader("Accept-Ranges", "bytes");
     res.setHeader("Content-Disposition", "inline");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    if (s3Response.ETag) {
+      res.setHeader("ETag", s3Response.ETag);
+    }
 
     if (s3Response.ContentRange) {
       res.status(206);

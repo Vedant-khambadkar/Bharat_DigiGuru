@@ -11,6 +11,8 @@ import {
 import LensText from "../components/LensText";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
+import { getApiCache, setApiCache } from "../utils/apiCache";
+import { preloadMediaList, useCachedMedia } from "../utils/mediaCache";
 
 interface ThreeDProject {
   id: string;
@@ -22,9 +24,119 @@ interface ThreeDProject {
   [key: string]: any;
 }
 
+interface ThreeDCardProps {
+  project: ThreeDProject;
+  isPlaying: boolean;
+  isMuted: boolean;
+  onTogglePlay: (e: React.MouseEvent) => void;
+  onToggleMute: (e: React.MouseEvent) => void;
+  onOpenTheater: () => void;
+  setVideoRef: (el: HTMLVideoElement | null) => void;
+}
+
+const ThreeDCard: React.FC<ThreeDCardProps> = ({
+  project,
+  isPlaying,
+  isMuted,
+  onTogglePlay,
+  onToggleMute,
+  onOpenTheater,
+  setVideoRef,
+}) => {
+  const cachedPoster = useCachedMedia(project.posterUrl);
+
+  return (
+    <div
+      className="group relative bg-[#0c0c0c] border border-neutral-800/90 hover:border-neutral-500 rounded-3xl overflow-hidden shadow-[0_20px_45px_rgba(0,0,0,0.6)] hover:shadow-[0_25px_60px_-15px_rgba(255,59,48,0.22)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col text-white cursor-pointer"
+      onClick={onOpenTheater}
+    >
+      {/* Full-Card Video Player View */}
+      <div className="relative aspect-[16/10] w-full bg-neutral-950 overflow-hidden">
+        <video
+          ref={setVideoRef}
+          src={project.videoUrl}
+          poster={cachedPoster || project.posterUrl}
+          autoPlay
+          loop
+          muted={isMuted}
+          playsInline
+          preload="metadata"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+        />
+
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none transition-opacity duration-300 group-hover:opacity-60" />
+
+        {/* Top Bar: Playback Controls & Expand */}
+        <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-auto">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md text-[10px] font-mono uppercase tracking-wider text-white border border-white/15 shadow-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#ff3b30] shadow-[0_0_6px_#ff3b30] animate-pulse" />
+            <span>4K REEL</span>
+          </div>
+
+          <div className="flex items-center gap-1 bg-black/80 backdrop-blur-md border border-white/15 rounded-full p-0.5 shadow-lg">
+            {/* Play / Pause */}
+            <button
+              type="button"
+              onClick={onTogglePlay}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
+              title={isPlaying ? "Pause" : "Play"}
+            >
+              {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+            </button>
+
+            {/* Mute / Unmute */}
+            <button
+              type="button"
+              onClick={onToggleMute}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
+              title={isMuted ? "Unmute" : "Mute"}
+            >
+              {isMuted ? (
+                <VolumeX className="w-3.5 h-3.5" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5" />
+              )}
+            </button>
+
+            {/* Fullscreen Expand */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenTheater();
+              }}
+              className="w-7 h-7 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
+              title="Fullscreen Theater View"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Center Hover Play Icon */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="relative flex items-center justify-center">
+            <span className="absolute w-14 h-14 rounded-full bg-[#ff3b30]/30 animate-ping" />
+            <div className="relative w-12 h-12 rounded-full bg-white text-black flex items-center justify-center shadow-2xl backdrop-blur-md scale-90 group-hover:scale-110 transition-transform duration-300">
+              <Play className="w-5 h-5 fill-current translate-x-0.5 text-[#ff3b30]" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const ThreeDProjects: React.FC = () => {
-  const [projects, setProjects] = useState<ThreeDProject[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [projects, setProjects] = useState<ThreeDProject[]>(() => {
+    const cached = getApiCache<ThreeDProject[]>("threed_projects");
+    return cached && cached.length > 0 ? cached : [];
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    const cached = getApiCache<ThreeDProject[]>("threed_projects");
+    return !(cached && cached.length > 0);
+  });
   const [activeTheaterProject, setActiveTheaterProject] = useState<ThreeDProject | null>(null);
   const [playingStates, setPlayingStates] = useState<{ [key: string]: boolean }>({});
   const [mutedStates, setMutedStates] = useState<{ [key: string]: boolean }>({});
@@ -32,9 +144,12 @@ export const ThreeDProjects: React.FC = () => {
 
   // Initial fetch from API / Database and Socket.IO listener for real-time synchronization
   useEffect(() => {
+    if (projects.length > 0) {
+      preloadMediaList(projects.map((p) => p.posterUrl));
+    }
+
     const fetchThreeD = async () => {
       try {
-        setIsLoading(true);
         const res = await userService.getThreeD();
         const items = Array.isArray(res)
           ? res
@@ -44,9 +159,10 @@ export const ThreeDProjects: React.FC = () => {
           ? (res as any).data
           : [];
         setProjects(items);
+        setApiCache("threed_projects", items);
+        preloadMediaList(items.map((p: ThreeDProject) => p.posterUrl));
       } catch (err) {
         console.error("Error loading 3D projects from database:", err);
-        setProjects([]);
       } finally {
         setIsLoading(false);
       }
@@ -55,9 +171,12 @@ export const ThreeDProjects: React.FC = () => {
 
     const unsubscribeUpdate = onSocketEvent("threed:updated", (updatedProject: any) => {
       if (!updatedProject) return;
-      setProjects((prev) =>
-        prev.map((p) => (String(p.id) === String(updatedProject.id || updatedProject._id) ? { ...p, ...updatedProject } : p))
-      );
+      setProjects((prev) => {
+        const updated = prev.map((p) => (String(p.id) === String(updatedProject.id || updatedProject._id) ? { ...p, ...updatedProject } : p));
+        setApiCache("threed_projects", updated);
+        if (updatedProject.posterUrl) preloadMediaList([updatedProject.posterUrl]);
+        return updated;
+      });
     });
 
     const unsubscribeCreate = onSocketEvent("threed:created", (newProject: any) => {
@@ -65,12 +184,19 @@ export const ThreeDProjects: React.FC = () => {
       setProjects((prev) => {
         const exists = prev.some((p) => String(p.id) === String(newProject.id || newProject._id));
         if (exists) return prev;
-        return [newProject, ...prev];
+        const updated = [newProject, ...prev];
+        setApiCache("threed_projects", updated);
+        if (newProject.posterUrl) preloadMediaList([newProject.posterUrl]);
+        return updated;
       });
     });
 
     const unsubscribeDelete = onSocketEvent("threed:deleted", (deletedId: string) => {
-      setProjects((prev) => prev.filter((p) => String(p.id) !== String(deletedId)));
+      setProjects((prev) => {
+        const updated = prev.filter((p) => String(p.id) !== String(deletedId));
+        setApiCache("threed_projects", updated);
+        return updated;
+      });
     });
 
     return () => {
@@ -203,88 +329,18 @@ export const ThreeDProjects: React.FC = () => {
               const isMuted = mutedStates[project.id] ?? true;
 
               return (
-                <div
+                <ThreeDCard
                   key={project.id || index}
-                  className="group relative bg-[#0c0c0c] border border-neutral-800/90 hover:border-neutral-500 rounded-3xl overflow-hidden shadow-[0_20px_45px_rgba(0,0,0,0.6)] hover:shadow-[0_25px_60px_-15px_rgba(255,59,48,0.22)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col text-white cursor-pointer"
-                  onClick={() => setActiveTheaterProject(project)}
-                >
-                  {/* Full-Card Video Player View */}
-                  <div className="relative aspect-[16/10] w-full bg-neutral-950 overflow-hidden">
-                    <video
-                      ref={(el) => {
-                        videoRefs.current[project.id] = el;
-                      }}
-                      src={project.videoUrl}
-                      poster={project.posterUrl}
-                      autoPlay
-                      loop
-                      muted={isMuted}
-                      playsInline
-                      preload="metadata"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                    />
-
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none transition-opacity duration-300 group-hover:opacity-60" />
-
-                    {/* Top Bar: Playback Controls & Expand */}
-                    <div className="absolute top-3 inset-x-3 flex items-center justify-between pointer-events-auto">
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md text-[10px] font-mono uppercase tracking-wider text-white border border-white/15 shadow-md">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#ff3b30] shadow-[0_0_6px_#ff3b30] animate-pulse" />
-                        <span>4K REEL</span>
-                      </div>
-
-                      <div className="flex items-center gap-1 bg-black/80 backdrop-blur-md border border-white/15 rounded-full p-0.5 shadow-lg">
-                        {/* Play / Pause */}
-                        <button
-                          type="button"
-                          onClick={(e) => toggleInlinePlay(project.id, e)}
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
-                          title={isPlaying ? "Pause" : "Play"}
-                        >
-                          {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-                        </button>
-
-                        {/* Mute / Unmute */}
-                        <button
-                          type="button"
-                          onClick={(e) => toggleInlineMute(project.id, e)}
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
-                          title={mutedStates[project.id] ?? true ? "Unmute" : "Mute"}
-                        >
-                          {mutedStates[project.id] ?? true ? (
-                            <VolumeX className="w-3.5 h-3.5" />
-                          ) : (
-                            <Volume2 className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-
-                        {/* Fullscreen Expand */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveTheaterProject(project);
-                          }}
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 active:scale-90 transition-all cursor-pointer"
-                          title="Fullscreen Theater View"
-                        >
-                          <Maximize2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Center Hover Play Icon */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="relative flex items-center justify-center">
-                        <span className="absolute w-14 h-14 rounded-full bg-[#ff3b30]/30 animate-ping" />
-                        <div className="relative w-12 h-12 rounded-full bg-white text-black flex items-center justify-center shadow-2xl backdrop-blur-md scale-90 group-hover:scale-110 transition-transform duration-300">
-                          <Play className="w-5 h-5 fill-current translate-x-0.5 text-[#ff3b30]" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  project={project}
+                  isPlaying={isPlaying}
+                  isMuted={isMuted}
+                  onTogglePlay={(e) => toggleInlinePlay(project.id, e)}
+                  onToggleMute={(e) => toggleInlineMute(project.id, e)}
+                  onOpenTheater={() => setActiveTheaterProject(project)}
+                  setVideoRef={(el) => {
+                    videoRefs.current[project.id] = el;
+                  }}
+                />
               );
             })
           )}
@@ -292,50 +348,63 @@ export const ThreeDProjects: React.FC = () => {
       </div>
 
       {/* FULLSCREEN 3D CINEMA THEATER MODAL */}
-      {activeTheaterProject &&
-        createPortal(
-          <div
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setActiveTheaterProject(null);
-            }}
-            className="fixed inset-0 z-[9999999] bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-300 pointer-events-auto cursor-pointer"
-          >
-            <div className="relative w-full max-w-5xl max-h-[92vh] bg-[#0c0c0c] border border-neutral-800 rounded-3xl overflow-hidden shadow-[0_30px_90px_rgba(0,0,0,0.9)] flex flex-col my-auto animate-in zoom-in-95 duration-300 text-white cursor-default">
-              {/* Top Modal Header */}
-              <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-800/90 bg-neutral-950 shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#ff3b30] animate-pulse shadow-[0_0_8px_#ff3b30]" />
-                  <span className="font-mono text-xs uppercase tracking-widest text-neutral-300">
-                    4K Ultra-HD 3D Showcase Video
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTheaterProject(null)}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
-                  aria-label="Close"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Fullscreen Video Player */}
-              <div className="relative w-full aspect-video max-h-[75vh] bg-black flex items-center justify-center overflow-hidden">
-                <video
-                  src={activeTheaterProject.videoUrl}
-                  poster={activeTheaterProject.posterUrl}
-                  autoPlay
-                  controls
-                  playsInline
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      {activeTheaterProject && (
+        <TheaterModal
+          project={activeTheaterProject}
+          onClose={() => setActiveTheaterProject(null)}
+        />
+      )}
     </section>
+  );
+};
+
+const TheaterModal: React.FC<{
+  project: ThreeDProject;
+  onClose: () => void;
+}> = ({ project, onClose }) => {
+  const theaterPoster = useCachedMedia(project.posterUrl);
+
+  return createPortal(
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[9999999] bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-300 pointer-events-auto cursor-pointer"
+    >
+      <div className="relative w-full max-w-5xl max-h-[92vh] bg-[#0c0c0c] border border-neutral-800 rounded-3xl overflow-hidden shadow-[0_30px_90px_rgba(0,0,0,0.9)] flex flex-col my-auto animate-in zoom-in-95 duration-300 text-white cursor-default">
+        {/* Top Modal Header */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-800/90 bg-neutral-950 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#ff3b30] animate-pulse shadow-[0_0_8px_#ff3b30]" />
+            <span className="font-mono text-xs uppercase tracking-widest text-neutral-300">
+              4K Ultra-HD 3D Showcase Video
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Fullscreen Video Player */}
+        <div className="relative w-full aspect-video max-h-[75vh] bg-black flex items-center justify-center overflow-hidden">
+          <video
+            src={project.videoUrl}
+            poster={theaterPoster || project.posterUrl}
+            autoPlay
+            controls
+            playsInline
+            className="w-full h-full object-contain"
+          />
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 };
 
