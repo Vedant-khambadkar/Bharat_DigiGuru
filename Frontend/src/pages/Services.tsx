@@ -5,6 +5,7 @@ import ScrollExploreBadge from "../components/ScrollExploreBadge";
 import ServiceItem from "../components/ServiceItem";
 import type { ServiceData } from "../components/ServiceItem";
 import LensText from "../components/LensText";
+import MilestoneShowcase from "../components/MilestoneShowcase";
 
 // Local WebP & Video Assets for offline readiness and zero external latency
 import pic1 from "../assets/Picture/Picture1.webp";
@@ -612,6 +613,9 @@ const Services: React.FC = () => {
                             />
                         ))}
                     </div>
+
+                    {/* Interactive Animated Digital Media Milestone Showcase */}
+                    <MilestoneShowcase />
                 </section>
             </div>
         </div>
