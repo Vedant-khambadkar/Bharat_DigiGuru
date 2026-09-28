@@ -24,10 +24,10 @@ import videoLaptop from "../assets/Video/Laptop.mp4";
 import PhotographyImg1 from "../assets/photography/photography-1.webp";
 import PhotographyImg2 from "../assets/photography/photography-2.webp";
 import PhotographyImg3 from "../assets/photography/photography-3.webp";
-import DigitalMediaImg1 from "../assets/digitalmedia/DigitalMedia-1.jpg";
-import DigitalMediaImg2 from "../assets/digitalmedia/DigitalMedia-2.jpg";
-import DigitalMediaImg3 from "../assets/digitalmedia/DigitalMedia-3.jpg";
-import DigitalMediaImg4 from "../assets/digitalmedia/DigitalMedia-4.jpg";
+import DigitalMediaImg1 from "../assets/DigitalMedia/DigitalMedia-1.jpg";
+import DigitalMediaImg2 from "../assets/DigitalMedia/DigitalMedia-2.jpg";
+import DigitalMediaImg3 from "../assets/DigitalMedia/DigitalMedia-3.jpg";
+import DigitalMediaImg4 from "../assets/DigitalMedia/DigitalMedia-4.jpg";
 
 
 gsap.registerPlugin(ScrollTrigger);
