@@ -162,7 +162,6 @@ export const MilestoneShowcase: React.FC = () => {
       { opacity: 1, scale: 1, duration: 0.45, ease: "power2.out" }
     );
   }, [activeIndex]);
-
   return (
     <div
       ref={containerRef}
