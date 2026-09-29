@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "lenis/dist/lenis.css";
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
 @font-face {
   font-family: 'Neuropol X';
@@ -23,6 +25,11 @@
   --font-sans: 'Italiana', 'Cormorant Garamond', serif;
   --font-neuropol: 'Italiana', 'Cormorant Garamond', serif;
   --font-symbols: 'Material Symbols Rounded', sans-serif;
+  --font-archivo: 'Archivo Black', sans-serif;
+}
+
+.font-archivo {
+  font-family: 'Archivo Black', sans-serif !important;
 }
 
 .font-neuropol,
@@ -32,7 +39,12 @@
 }
 
 /* Global Heading & Typography */
-h1, h2, h3, h4, h5, h6,
+h1:not(.font-archivo),
+h2:not(.font-archivo),
+h3:not(.font-archivo),
+h4:not(.font-archivo),
+h5:not(.font-archivo),
+h6:not(.font-archivo),
 .font-display,
 .font-neuropol,
 .neuropol-title {
@@ -50,7 +62,7 @@ h1, h2, h3, h4, h5, h6,
 html,
 body,
 #root {
-  font-family: 'Italiana', 'Cormorant Garamond', serif;
+  /* font-family: 'Italiana', 'Cormorant Garamond', serif; */
   background-color: #050505;
   color: #ffffff;
   min-height: 100%;

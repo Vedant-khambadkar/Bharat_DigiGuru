@@ -47,7 +47,7 @@ export const Footer: React.FC = () => {
             title="Bharat DigiGuru"
           >
             <img
-              src="/Logo/BDG Extended.png"
+              src="/Logo/BDG Extended.webp"
               alt="Bharat DigiGuru Logo"
               className="h-9 sm:h-11 md:h-12 lg:h-14 w-auto object-contain transition-all duration-300 group-hover:brightness-110 drop-shadow-[0_2px_18px_rgba(255,255,255,0.2)]"
               loading="lazy"

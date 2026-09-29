@@ -127,7 +127,7 @@ export const MissionVision: React.FC = () => {
     <section
       id="mission-vision-section"
       ref={sectionRef}
-      className="relative w-full h-screen bg-[#050505] text-white overflow-hidden select-none"
+      className="relative w-full h-screen bg-transparent text-white overflow-hidden select-none"
     >
       {/* Background Subtle Dot-Matrix Texture (Monochrome) */}
       <div

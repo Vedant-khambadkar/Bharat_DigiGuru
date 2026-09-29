@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 import LensText from "./LensText";
 
-import DigitalMedia1 from "../assets/DigitalMedia/DigitalMedia-1.jpg";
-import DigitalMedia2 from "../assets/DigitalMedia/DigitalMedia-2.jpg";
-import DigitalMedia3 from "../assets/DigitalMedia/DigitalMedia-3.jpg";
-import DigitalMedia4 from "../assets/DigitalMedia/DigitalMedia-4.jpg";
+import DigitalMedia1 from "../assets/DigitalMedia/DigitalMedia-1.webp";
+import DigitalMedia2 from "../assets/DigitalMedia/DigitalMedia-2.webp";
+import DigitalMedia3 from "../assets/DigitalMedia/DigitalMedia-3.webp";
+import DigitalMedia4 from "../assets/DigitalMedia/DigitalMedia-4.webp";
 
 export interface MilestoneItem {
   id: string;
@@ -218,11 +218,10 @@ export const MilestoneShowcase: React.FC = () => {
                 key={item.id}
                 type="button"
                 onClick={() => setActiveIndex(idx)}
-                className={`relative text-left p-3 sm:p-4 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[72px] sm:min-h-[78px] ${
-                  isActive
+                className={`relative text-left p-3 sm:p-4 rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[72px] sm:min-h-[78px] ${isActive
                     ? "bg-neutral-900 border-neutral-600 text-white shadow-sm"
                     : "bg-[#090909] border-neutral-800/80 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between w-full mb-1.5">
                   <span className="font-['Cormorant_Garamond',serif] italic text-xs sm:text-sm text-neutral-400">

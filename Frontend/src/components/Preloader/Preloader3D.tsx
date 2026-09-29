@@ -34,13 +34,13 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     }
   };
 
-  // Smoothly interpolate counter towards realProgress
+  // Smoothly interpolate counter towards realProgress with high responsiveness
   useEffect(() => {
     const target = Math.max(counterRef.current.value, Math.min(100, realProgress));
 
     const tween = gsap.to(counterRef.current, {
       value: target,
-      duration: target >= 100 ? 0.35 : 0.25,
+      duration: target >= 100 ? 0.15 : 0.8,
       ease: "power2.out",
       onUpdate: () => {
         const val = Math.round(counterRef.current.value);
@@ -51,7 +51,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
           isExitingRef.current = true;
           setTimeout(() => {
             triggerExit();
-          }, 250);
+          }, 20);
         }
       },
     });
@@ -66,7 +66,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     if (isReady && !isExitingRef.current) {
       const tween = gsap.to(counterRef.current, {
         value: 100,
-        duration: 0.35,
+        duration: 0.25,
         ease: "power2.out",
         onUpdate: () => {
           const val = Math.round(counterRef.current.value);
@@ -77,7 +77,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
             isExitingRef.current = true;
             setTimeout(() => {
               triggerExit();
-            }, 250);
+            }, 60);
           }
         },
       });
@@ -98,23 +98,23 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       },
     });
 
-    // Brief impact hold at 100
+    // Elegant fade out of internal text elements
     tl.to(contentRef.current, {
       opacity: 0,
-      y: -20,
-      duration: 0.4,
-      ease: "power3.in",
+      y: -25,
+      duration: 0.5,
+      ease: "power2.inOut",
     });
 
-    // Clean, modern curtain slide-up
+    // 1.5 Second High-End Cinematic Curtain Slide-Up to the top
     tl.to(
       containerRef.current,
       {
         yPercent: -100,
-        duration: 0.85,
-        ease: "power4.inOut",
+        duration: 1.5,
+        ease: "power3.inOut",
       },
-      "-=0.1"
+      "-=0.3"
     );
   };
 

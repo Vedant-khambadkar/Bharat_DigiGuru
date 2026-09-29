@@ -254,7 +254,7 @@ export const AdminLoginPage: React.FC = () => {
           <div className="flex flex-col items-center text-center gap-3 mb-6">
             <div className="flex items-center justify-center p-2">
               <img
-                src="/Logo/BDG Extended.png"
+                src="/Logo/BDG Extended.webp"
                 alt="Bharat DigiGuru Logo"
                 className="h-9 sm:h-11 w-auto object-contain drop-shadow-[0_4px_16px_rgba(255,59,48,0.4)]"
               />

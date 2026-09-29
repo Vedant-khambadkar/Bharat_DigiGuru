@@ -62,7 +62,7 @@ export const TopHeader: React.FC = () => {
           title="Bharat DigiGuru"
         >
           <img
-            src="/Logo/BDG Extended.png"
+            src="/Logo/BDG Extended.webp"
             alt="Bharat DigiGuru Logo"
             className="h-8 sm:h-10 md:h-11 lg:h-12 w-auto object-contain transition-all duration-300 group-hover:brightness-110 drop-shadow-[0_2px_14px_rgba(255,255,255,0.2)]"
             decoding="async"

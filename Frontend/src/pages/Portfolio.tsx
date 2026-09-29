@@ -193,7 +193,7 @@ export const Portfolio: React.FC = () => {
     <section
       ref={sectionRef}
       id="portfolio-section"
-      className="relative w-full h-screen min-h-[640px] overflow-hidden bg-[#050505] text-white font-['Italiana','Cormorant_Garamond',serif] select-none"
+      className="relative w-full h-screen min-h-[640px] overflow-hidden bg-transparent text-white font-['Italiana','Cormorant_Garamond',serif] select-none"
     >
       {/* Background Subtle Dot-Matrix Texture matching MissionVision */}
       <div

@@ -88,7 +88,7 @@ export const PlatformsWeManage: React.FC = () => {
     <section
       ref={containerRef}
       id="platforms-we-manage-section"
-      className="relative w-full bg-[#050505] text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none "
+      className="relative w-full bg-transparent text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none "
     >
       {/* Background ambient lighting */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -209,7 +209,7 @@ export const PlatformsWeManage: React.FC = () => {
                 style={{ animationDelay: '2.4s' }}
               />
 
-              {/* 4. Curve along bottom from Facebook to TikTok */}
+              {/* 4. Curve along bottom from Meta to TikTok */}
               <path
                 d="M 500 410 C 620 430, 740 420, 850 380"
                 stroke="rgba(255, 255, 255, 0.22)"
@@ -228,14 +228,24 @@ export const PlatformsWeManage: React.FC = () => {
                 style={{ animationDelay: '3.1s' }}
               />
 
-              {/* 5. Curve from Twitter/X down to Facebook */}
+              {/* 5. Curve from Twitter/X down to Pinterest */}
               <path
-                d="M 80 270 C 110 360, 240 420, 440 425"
+                d="M 80 270 C 90 330, 130 380, 200 400"
                 stroke="rgba(255, 255, 255, 0.18)"
                 strokeWidth="1.4"
                 strokeDasharray="6 6"
                 className="animate-spline-stream"
                 style={{ animationDuration: '8s' }}
+              />
+
+              {/* 6. Curve from Pinterest to Meta */}
+              <path
+                d="M 230 400 C 310 420, 390 425, 470 420"
+                stroke="rgba(255, 255, 255, 0.18)"
+                strokeWidth="1.4"
+                strokeDasharray="6 6"
+                className="animate-spline-stream"
+                style={{ animationDuration: '8.5s' }}
               />
             </svg>
 
@@ -318,13 +328,26 @@ export const PlatformsWeManage: React.FC = () => {
               </div>
             </div>
 
-            {/* 6. Facebook (Bottom Center) */}
+            {/* 6. Pinterest (Lower Left) */}
+            <div className="floating-3d-node absolute top-[62%] left-[10%] sm:left-[14%] md:left-[18%] z-10 group cursor-default">
+              <div className="relative flex items-center justify-center w-13 h-13 sm:w-15 sm:h-15 p-3 rounded-2xl bg-gradient-to-b from-[#1c1c1e] to-[#0d0d0f] border border-white/10 shadow-[0_12px_28px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.15)] group-hover:scale-110 group-hover:border-red-500/40 transition-all duration-300">
+                <svg className="w-7 h-7 sm:w-8 sm:h-8 fill-[#E60023]" viewBox="0 0 24 24">
+                  <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
+                </svg>
+                {/* 3D Pin Badge */}
+                <div className="absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 text-white font-mono text-[9px] font-bold shadow-[0_4px_10px_rgba(230,0,35,0.5)] border border-red-400/40">
+                  Pins
+                </div>
+              </div>
+            </div>
+
+            {/* 7. Facebook (Bottom Center) */}
             <div className="floating-3d-node absolute bottom-[4%] left-[48%] sm:left-[46%] md:left-[45%] -translate-x-1/2 z-10 group cursor-default">
               <div className="relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-[#1c1c1e] to-[#0d0d0f] border border-white/10 shadow-[0_12px_28px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.15)] group-hover:scale-110 group-hover:border-blue-500/40 transition-all duration-300">
                 <svg className="w-8 h-8 fill-[#1877F2]" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
-                {/* 3D Red Ads Badge */}
+                {/* 3D Ads Badge */}
                 <div className="absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-mono text-[9px] font-bold shadow-[0_4px_10px_rgba(37,99,235,0.5)] border border-blue-400/40">
                   Ads
                 </div>

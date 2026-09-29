@@ -131,16 +131,17 @@ const App = () => {
   // Triggered concurrently the exact moment the preloader begins sliding up
   const handleStartPageReveal = () => {
     (window as any).lenis?.start();
+    window.dispatchEvent(new CustomEvent("start-hero-letters"));
     const homeSection = document.getElementById("home-section");
     if (homeSection) {
       gsap.fromTo(
         homeSection,
-        { opacity: 0, scale: 0.97 },
+        { opacity: 0.3, scale: 0.96 },
         {
           opacity: 1,
           scale: 1,
-          duration: 1.25,
-          ease: "power4.out",
+          duration: 1.5,
+          ease: "power3.out",
           clearProps: "all",
           onComplete: () => {
             ScrollTrigger.refresh();
@@ -152,6 +153,7 @@ const App = () => {
 
   const handlePreloaderComplete = () => {
     setIsLoading(false);
+    window.dispatchEvent(new CustomEvent("start-hero-letters"));
     (window as any).lenis?.scrollTo(0, { immediate: true });
     window.scrollTo(0, 0);
     ScrollTrigger.refresh();

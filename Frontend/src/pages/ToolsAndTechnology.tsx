@@ -198,7 +198,7 @@ export const ToolsAndTechnology: React.FC = () => {
               strokeWidth="2.2"
             />
 
-            {/* 6. Wire to ChatGPT / AI Tools (Bottom Node) */}
+            {/* 6. Wire to AI Tools (Bottom Node) */}
             <path
               className="connection-wire wire-pulse"
               d="M 500 348 C 480 395 455 435 430 475"
@@ -215,22 +215,33 @@ export const ToolsAndTechnology: React.FC = () => {
             />
           </svg>
 
-          {/* ---------------- 1. CENTRAL HUB: GOOGLE WORKSPACE ---------------- */}
+          {/* ---------------- 1. CENTRAL HUB: GOOGLE WORKSPACE / GOOGLE ---------------- */}
           <div className="center-hub-card absolute top-[48%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-20 group cursor-pointer">
             <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-[22px] sm:rounded-[26px] md:rounded-[30px] bg-gradient-to-b from-[#2c2d35] via-[#1f2026] to-[#15161a] border border-white/[0.18] shadow-[0_16px_40px_rgba(0,0,0,0.9),inset_0_1.5px_2px_rgba(255,255,255,0.28),inset_0_-2px_4px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-300">
 
-              {/* Google Workspace SVG */}
-              <svg className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14" viewBox="0 0 48 48" fill="none">
-                <path d="M6 13.5V36C6 38.21 7.79 40 10 40H14V21.5L6 13.5Z" fill="#4285F4" />
-                <path d="M42 13.5L34 21.5V40H38C40.21 40 42 38.21 42 36V13.5Z" fill="#34A853" />
-                <path d="M34 10.5V21.5L42 13.5V12C42 8.67 38.16 6.8 35.5 8.8L34 10.5Z" fill="#FBBC04" />
-                <path d="M14 21.5V10.5L24 18L34 10.5V21.5L24 29L14 21.5Z" fill="#EA4335" />
-                <path d="M6 12V13.5L14 21.5V10.5L12.5 8.8C9.84 6.8 6 8.67 6 12Z" fill="#C5221F" />
+              {/* Official Google 4-Color Logo SVG */}
+              <svg className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
               </svg>
             </div>
             {/* Tooltip */}
             <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
-              Google Workspace
+              Google
             </div>
           </div>
 
@@ -272,10 +283,8 @@ export const ToolsAndTechnology: React.FC = () => {
 
           {/* ---------------- 4. META BUSINESS SUITE (Far Left) ---------------- */}
           <div className="tech-card-badge anim-badge-3 absolute top-[44%] left-[6%] sm:left-[10%] z-10 group cursor-pointer">
-            <div className="flex items-center justify-center w-13 h-13 sm:w-15 sm:h-15 md:w-17 md:h-17 rounded-[16px] sm:rounded-[18px] md:rounded-[20px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-110 transition-transform duration-300">
-              <svg className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 fill-[#0081FB]" viewBox="0 0 24 24">
-                <path d="M23.998 12c0-3.26-1.5-6.17-4.1-8.15-2.61-1.99-6.02-2.75-9.37-2.11C5.74 2.66 2.06 6.34.99 11.12c-1.1 4.9 1.1 9.9 5.3 12.07 1.34.69 2.81 1.05 4.3 1.05 1.88 0 3.73-.57 5.32-1.66 3.65-2.51 5.74-6.68 5.74-11.08l-.65.5zM12.05 14.88c-1.63 0-3.07-.86-3.86-2.27-.79-1.41-.75-3.12.11-4.48.86-1.37 2.37-2.18 3.99-2.14 1.62.03 3.09.91 3.86 2.32.77 1.42.71 3.13-.17 4.49-.88 1.35-2.37 2.13-3.93 2.08zm-7.61-3.23c.31-1.33 1.08-2.5 2.18-3.3 1.09-.8 2.43-1.19 3.78-1.09-1.55 1.47-2.36 3.51-2.24 5.61-.92-.27-1.74-.83-2.35-1.58-.6-.74-.95-1.64-.99-2.59l-.38 2.95zm14.8 1.2c-.44 1.29-1.32 2.36-2.48 3.01-1.17.65-2.52.82-3.81.47 1.54-1.48 2.34-3.53 2.2-5.63.92.29 1.73.86 2.32 1.62.6.76.93 1.68.95 2.64l.82-2.11z" />
-              </svg>
+            <div className="flex items-center justify-center w-13 h-13 sm:w-15 sm:h-15 md:w-17 md:h-17 rounded-[16px] sm:rounded-[18px] md:rounded-[20px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-110 transition-transform duration-300 p-3">
+              <svg fill="#428bff" viewBox="0 0 32 32" id="Camada_1" version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" stroke="#428bff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M5,19.5c0-4.6,2.3-9.4,5-9.4c1.5,0,2.7,0.9,4.6,3.6c-1.8,2.8-2.9,4.5-2.9,4.5c-2.4,3.8-3.2,4.6-4.5,4.6 C5.9,22.9,5,21.7,5,19.5 M20.7,17.8L19,15c-0.4-0.7-0.9-1.4-1.3-2c1.5-2.3,2.7-3.5,4.2-3.5c3,0,5.4,4.5,5.4,10.1 c0,2.1-0.7,3.3-2.1,3.3S23.3,22,20.7,17.8 M16.4,11c-2.2-2.9-4.1-4-6.3-4C5.5,7,2,13.1,2,19.5c0,4,1.9,6.5,5.1,6.5 c2.3,0,3.9-1.1,6.9-6.3c0,0,1.2-2.2,2.1-3.7c0.3,0.5,0.6,1,0.9,1.6l1.4,2.4c2.7,4.6,4.2,6.1,6.9,6.1c3.1,0,4.8-2.6,4.8-6.7 C30,12.6,26.4,7,22.1,7C19.8,7,18,8.8,16.4,11"></path></g></svg>
             </div>
             <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
               Meta Suite
@@ -318,15 +327,36 @@ export const ToolsAndTechnology: React.FC = () => {
             </div>
           </div>
 
-          {/* ---------------- 7. CHATGPT / AI TOOLS (Bottom Inner Left) ---------------- */}
+          {/* ---------------- 7. AI / ARTIFICIAL INTELLIGENCE (Bottom Inner Left) ---------------- */}
           <div className="tech-card-badge anim-badge-3 absolute top-[76%] left-[36%] sm:left-[38%] z-10 group cursor-pointer">
             <div className="flex items-center justify-center w-14 h-14 sm:w-17 sm:h-17 md:w-19 md:h-19 rounded-[17px] sm:rounded-[20px] md:rounded-[22px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_12px_28px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-110 transition-transform duration-300">
-              <svg className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10 fill-white" viewBox="0 0 24 24">
-                <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 8.737a4.485 4.485 0 0 1 2.345-2.02v5.67a.78.78 0 0 0 .392.682l5.843 3.37-2.02 1.168a.071.071 0 0 1-.065.007L4.015 14.82A4.503 4.503 0 0 1 2.34 8.737zm16.597 3.846-5.843-3.37 2.02-1.168a.076.076 0 0 1 .065-.008l4.82 2.782a4.504 4.504 0 0 1-.676 8.105v-5.659a.79.79 0 0 0-.386-.682zm2.011-3.024-.141-.085-4.784-2.759a.776.776 0 0 0-.78 0L9.4 10.084V7.752a.08.08 0 0 1 .033-.062l4.84-2.795a4.5 4.5 0 0 1 6.678 4.818zM10.74 1.57a4.476 4.476 0 0 1 2.876 1.04l-.141.081-4.779 2.758a.795.795 0 0 0-.392.681v6.737L6.284 11.7a.071.071 0 0 1-.038-.052V6.065a4.504 4.504 0 0 1 4.494-4.494zM12 9.584l3.182 1.838v3.676L12 16.936l-3.182-1.838v-3.676L12 9.584z" />
+              <svg className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none">
+                <defs>
+                  <linearGradient id="aiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#C084FC" />
+                    <stop offset="50%" stopColor="#E879F9" />
+                    <stop offset="100%" stopColor="#60A5FA" />
+                  </linearGradient>
+                </defs>
+                {/* Primary AI Sparkle Star */}
+                <path
+                  d="M12 2C12 7.2 7.2 12 2 12C7.2 12 12 16.8 12 22C12 16.8 16.8 12 22 12C16.8 12 12 7.2 12 2Z"
+                  fill="url(#aiSparkleGrad)"
+                />
+                {/* Top-Right Secondary Sparkle */}
+                <path
+                  d="M19 1.5C19 3.5 17.5 5 15.5 5C17.5 5 19 6.5 19 8.5C19 6.5 20.5 5 22.5 5C20.5 5 19 3.5 19 1.5Z"
+                  fill="#FFFFFF"
+                />
+                {/* Bottom-Left Micro Sparkle */}
+                <path
+                  d="M5.5 16.5C5.5 18 4.2 19 3 19C4.2 19 5.5 20 5.5 21.5C5.5 20 6.8 19 8 19C6.8 19 5.5 18 5.5 16.5Z"
+                  fill="#A78BFA"
+                />
               </svg>
             </div>
             <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
-              ChatGPT / AI
+              AI
             </div>
           </div>
 

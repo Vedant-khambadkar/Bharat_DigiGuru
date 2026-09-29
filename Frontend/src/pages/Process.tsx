@@ -151,7 +151,7 @@ export const Process: React.FC = () => {
     <section
       ref={sectionRef}
       id="process-section"
-      className="relative w-full min-h-screen bg-[#050505] text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none border-t border-b border-neutral-900 flex flex-col justify-center py-10 lg:py-0"
+      className="relative w-full min-h-screen bg-transparent text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none border-t border-b border-neutral-900 flex flex-col justify-center py-10 lg:py-0"
     >
       {/* Background Subtle Ambient Lighting */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -184,7 +184,7 @@ export const Process: React.FC = () => {
         <div ref={containerRef} className="relative w-full overflow-hidden pt-2 pb-4">
 
           {/* Horizontal Timeline Connector Bar */}
-          <div className="absolute top-[38px] left-8 right-8 h-[2px] bg-neutral-800/80 pointer-events-none z-0" />
+          <div className="absolute top-[38px] left-8 right-8 h-[2px]  pointer-events-none z-0" />
 
           {/* Animated Horizontal Track */}
           <div

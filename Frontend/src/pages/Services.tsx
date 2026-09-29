@@ -20,14 +20,13 @@ import pic10 from "../assets/Picture/Picture10.webp";
 import pic11 from "../assets/Picture/Picture11.webp";
 import pic12 from "../assets/Picture/Picture12.webp";
 import pic13 from "../assets/Picture/Picture13.webp";
-import videoLaptop from "../assets/Video/Laptop.mp4";
 import PhotographyImg1 from "../assets/photography/photography-1.webp";
 import PhotographyImg2 from "../assets/photography/photography-2.webp";
 import PhotographyImg3 from "../assets/photography/photography-3.webp";
-import DigitalMediaImg1 from "../assets/DigitalMedia/DigitalMedia-1.jpg";
-import DigitalMediaImg2 from "../assets/DigitalMedia/DigitalMedia-2.jpg";
-import DigitalMediaImg3 from "../assets/DigitalMedia/DigitalMedia-3.jpg";
-import DigitalMediaImg4 from "../assets/DigitalMedia/DigitalMedia-4.jpg";
+import DigitalMediaImg1 from "../assets/DigitalMedia/DigitalMedia-1.webp";
+import DigitalMediaImg2 from "../assets/DigitalMedia/DigitalMedia-2.webp";
+import DigitalMediaImg3 from "../assets/DigitalMedia/DigitalMedia-3.webp";
+import DigitalMediaImg4 from "../assets/DigitalMedia/DigitalMedia-4.webp";
 
 
 gsap.registerPlugin(ScrollTrigger);
@@ -174,7 +173,7 @@ const SERVICES_DATA: ServiceData[] = [
                 id: "video-work-1",
                 title: "4K Cinematic Commercial Reel",
                 type: "video",
-                url: videoLaptop,
+                url: pic8,
                 thumbnail: pic7,
                 tag: "Cinematic Film",
                 description: "4K cinematic brand film with bespoke color grading, sound design, and drone shots.",
@@ -353,7 +352,7 @@ const SERVICES_DATA: ServiceData[] = [
                 id: "ai-vid-work-1",
                 title: "Neural Motion Synthesis Ad",
                 type: "video",
-                url: videoLaptop,
+                url: pic3,
                 thumbnail: pic3,
                 tag: "AI Commercial Teaser",
                 description: "Generative video production with high-fidelity camera motion synthesis and VFX.",

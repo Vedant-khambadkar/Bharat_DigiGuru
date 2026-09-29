@@ -446,7 +446,7 @@ export const AdminDashboardPage: React.FC = () => {
         <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
           <a href="/" className="flex items-center gap-2.5 shrink-0 group">
             <img
-              src="/Logo/BDG Extended.png"
+              src="/Logo/BDG Extended.webp"
               alt="Bharat DigiGuru"
               className="h-6 sm:h-7.5 w-auto object-contain drop-shadow-[0_2px_12px_rgba(255,59,48,0.35)] transition-transform group-hover:scale-105"
             />

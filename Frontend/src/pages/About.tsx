@@ -83,7 +83,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
   return (
     <section
       id={id}
-      className="relative z-10 min-h-screen bg-[#050505] text-white px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-20 md:py-24 mx-auto w-full max-w-8xl overflow-hidden flex flex-col justify-center"
+      className="relative z-10 min-h-screen bg-transparent text-white px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-20 md:py-24 mx-auto w-full max-w-8xl overflow-hidden flex flex-col justify-center"
     >
       {/* Subtle Dedicated Ambient Lighting for About Us */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">

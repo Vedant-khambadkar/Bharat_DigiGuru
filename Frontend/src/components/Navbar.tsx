@@ -332,7 +332,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
             <div className="flex items-center justify-between pb-3 mb-1 border-b border-white/10">
               <div className="flex items-center gap-2">
                 <img
-                  src="/Logo/BDG Extended.png"
+                  src="/Logo/BDG Extended.webp"
                   alt="Bharat DigiGuru Logo"
                   className="h-6 w-auto object-contain drop-shadow-[0_2px_8px_rgba(255,255,255,0.2)]"
                   loading="lazy"
