@@ -1,7 +1,5 @@
 @import "tailwindcss";
 @import "lenis/dist/lenis.css";
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 
 @font-face {
   font-family: 'Neuropol X';
@@ -26,10 +24,15 @@
   --font-neuropol: 'Italiana', 'Cormorant Garamond', serif;
   --font-symbols: 'Material Symbols Rounded', sans-serif;
   --font-archivo: 'Archivo Black', sans-serif;
+  --font-bebas: 'Bebas Neue', sans-serif;
 }
 
 .font-archivo {
   font-family: 'Archivo Black', sans-serif !important;
+}
+
+.font-bebas {
+  font-family: 'Bebas Neue', sans-serif !important;
 }
 
 .font-neuropol,

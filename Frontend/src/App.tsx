@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
@@ -18,10 +18,12 @@ import Navbar from "./components/Navbar";
 import TopHeader from "./components/TopHeader";
 import Preloader3D from "./components/Preloader/Preloader3D";
 import MissionVision from "./pages/MissionVision";
-import AdminAuthModal from "./components/Admin/AdminAuthModal";
-import AdminDashboardModal from "./components/Admin/AdminDashboardModal";
-import AdminLoginPage from "./pages/AdminLoginPage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
+
+// Lazy-load Admin routes & modals so they don't bloat the main landing page bundle
+const AdminAuthModal = lazy(() => import("./components/Admin/AdminAuthModal"));
+const AdminDashboardModal = lazy(() => import("./components/Admin/AdminDashboardModal"));
+const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
+const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -39,7 +41,11 @@ const App = () => {
 
   // 1. DEDICATED SEPARATE PAGE: Admin Login (/admin/login)
   if (currentPath === "/admin/login" || currentPath === "/admin/login/") {
-    return <AdminLoginPage />;
+    return (
+      <Suspense fallback={<div className="w-screen h-screen bg-[#050505]" />}>
+        <AdminLoginPage />
+      </Suspense>
+    );
   }
 
   // 2. DEDICATED SEPARATE PAGE: Admin Dashboard (/admin or /admin/dashboard)
@@ -49,7 +55,11 @@ const App = () => {
     currentPath === "/admin/dashboard" ||
     currentPath === "/admin/dashboard/"
   ) {
-    return <AdminDashboardPage />;
+    return (
+      <Suspense fallback={<div className="w-screen h-screen bg-[#050505]" />}>
+        <AdminDashboardPage />
+      </Suspense>
+    );
   }
 
   const boxRef = useRef<HTMLDivElement>(null);
@@ -443,18 +453,26 @@ const App = () => {
       </div>
 
       {/* Admin Auth Modal */}
-      <AdminAuthModal
-        isOpen={isAdminAuthOpen}
-        onClose={() => setIsAdminAuthOpen(false)}
-        onLoginSuccess={handleAdminLoginSuccess}
-      />
+      {isAdminAuthOpen && (
+        <Suspense fallback={null}>
+          <AdminAuthModal
+            isOpen={isAdminAuthOpen}
+            onClose={() => setIsAdminAuthOpen(false)}
+            onLoginSuccess={handleAdminLoginSuccess}
+          />
+        </Suspense>
+      )}
 
       {/* Admin Dashboard Modal */}
-      <AdminDashboardModal
-        isOpen={isAdminDashboardOpen}
-        onClose={() => setIsAdminDashboardOpen(false)}
-        onLogout={handleAdminLogout}
-      />
+      {isAdminDashboardOpen && (
+        <Suspense fallback={null}>
+          <AdminDashboardModal
+            isOpen={isAdminDashboardOpen}
+            onClose={() => setIsAdminDashboardOpen(false)}
+            onLogout={handleAdminLogout}
+          />
+        </Suspense>
+      )}
     </>
   );
 };

@@ -14,6 +14,12 @@ export default defineConfig({
           if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
             return 'vendor-react';
           }
+          if (
+            id.includes('node_modules/three') ||
+            id.includes('node_modules/@react-three')
+          ) {
+            return 'vendor-three';
+          }
           if (id.includes('node_modules/gsap/')) {
             return 'vendor-gsap';
           }
@@ -26,6 +32,6 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 800,
   },
 })
