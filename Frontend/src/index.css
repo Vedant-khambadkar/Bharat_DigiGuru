@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "lenis/dist/lenis.css";
-
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
 @font-face {
   font-family: 'Neuropol X';
   src: url('/Font/Neuropol X Rg.otf') format('opentype');
@@ -25,6 +25,7 @@
   --font-symbols: 'Material Symbols Rounded', sans-serif;
   --font-archivo: 'Archivo Black', sans-serif;
   --font-bebas: 'Bebas Neue', sans-serif;
+  --font-lato: 'Lato', sans-serif;
 }
 
 .font-archivo {
@@ -35,6 +36,10 @@
   font-family: 'Bebas Neue', sans-serif !important;
 }
 
+.font-lato {
+  font-family: 'Lato', sans-serif !important;
+}
+
 .font-neuropol,
 .font-display,
 .neuropol-title {
@@ -42,12 +47,12 @@
 }
 
 /* Global Heading & Typography */
-h1:not(.font-archivo),
-h2:not(.font-archivo),
-h3:not(.font-archivo),
-h4:not(.font-archivo),
-h5:not(.font-archivo),
-h6:not(.font-archivo),
+h1:not(.font-archivo):not(.font-lato):not(.font-bebas):not([class*="font-"]),
+h2:not(.font-archivo):not(.font-lato):not(.font-bebas):not([class*="font-"]),
+h3:not(.font-archivo):not(.font-lato):not(.font-bebas):not([class*="font-"]),
+h4:not(.font-archivo):not(.font-lato):not(.font-bebas):not([class*="font-"]),
+h5:not(.font-archivo):not(.font-lato):not(.font-bebas):not([class*="font-"]),
+h6:not(.font-archivo):not(.font-lato):not(.font-bebas):not([class*="font-"]),
 .font-display,
 .font-neuropol,
 .neuropol-title {

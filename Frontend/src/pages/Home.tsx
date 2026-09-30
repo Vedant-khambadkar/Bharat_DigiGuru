@@ -27,18 +27,12 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
   const containerRef = useRef<HTMLDivElement>(null);
   const timerIntervalRef = useRef<number | null>(null);
 
-  // High-Performance Hero Background Preloader & Decoder
+  // High-Performance Verified Hero Background Preloader & GPU Decoder
   useEffect(() => {
     let isMounted = true;
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     const primaryBg = isMobile ? mobileBg : windowBg;
     const secondaryBg = isMobile ? windowBg : mobileBg;
-
-    // 1. Notify preloader of start
-    onFramesProgress?.(30, false);
-
-    const img = new Image();
-    img.src = primaryBg;
 
     let hasCompleted = false;
     const markComplete = () => {
@@ -50,32 +44,54 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
       }
     };
 
-    // Use Modern Image.decode() API if supported (ensures GPU rasterization before display)
-    const imgObj = img as HTMLImageElement;
-    if (typeof imgObj.decode === "function") {
-      onFramesProgress?.(65, false);
-      imgObj
-        .decode()
-        .then(() => {
-          markComplete();
-        })
-        .catch(() => {
-          // Fallback if decode fails
-          markComplete();
-        });
-    } else {
-      imgObj.onload = () => {
-        markComplete();
-      };
-      imgObj.onerror = () => {
-        markComplete();
-      };
-    }
+    // Load and verify background image
+    const verifyAndLoadBackground = async () => {
+      onFramesProgress?.(20, false);
 
-    // Safety fallback: Never keep the preloader waiting more than 1.8s
+      try {
+        // 1. Fetch image directly to force network buffer into browser cache
+        const res = await fetch(primaryBg);
+        onFramesProgress?.(60, false);
+
+        if (res.ok) {
+          await res.blob();
+          onFramesProgress?.(80, false);
+        }
+
+        // 2. Decode in browser GPU memory
+        const img = new Image();
+        img.src = primaryBg;
+
+        if (typeof img.decode === "function") {
+          await img.decode();
+        } else {
+          await new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        }
+
+        onFramesProgress?.(100, true);
+        markComplete();
+      } catch (err) {
+        console.warn("[Hero Image Loader] Falling back to standard image decoding:", err);
+        const img = new Image();
+        img.src = primaryBg;
+        if (typeof img.decode === "function") {
+          img.decode().then(markComplete).catch(markComplete);
+        } else {
+          img.onload = markComplete;
+          img.onerror = markComplete;
+        }
+      }
+    };
+
+    verifyAndLoadBackground();
+
+    // Safety fallback: Never keep the preloader waiting indefinitely if network drops
     const safetyTimer = setTimeout(() => {
       markComplete();
-    }, 1800);
+    }, 8000);
 
     // Preload secondary background & media thumbnails during idle time
     const preloadSecondaryAssets = () => {
@@ -113,7 +129,7 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
 
       const tl = gsap.timeline({ delay: 0.1 });
 
-      // 1. Randomized letter-by-letter reveal for DIGITAL & STUDIO
+      // 1. Snappy letter-by-letter reveal for DIGITAL & STUDIO
       if (letters && letters.length > 0) {
         gsap.killTweensOf(letters);
         tl.fromTo(
@@ -123,7 +139,6 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
             scale: 0.82,
           },
           {
-            delay: 1,
             opacity: 1,
             scale: 1,
             duration: 1.95,
@@ -136,18 +151,19 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
         );
       }
 
-      // 2. Sub-header service lists fade & slide in
+      // 2. Sub-header service lists fade & slide in with overlap
       if (subItems && subItems.length > 0) {
         tl.fromTo(
           subItems,
-          { opacity: 0, y: 20 },
+          { opacity: 0, y: 14 },
           {
             opacity: 1,
             y: 0,
-            duration: 0.8,
-            stagger: 0.06,
+            duration: 0.45,
+            stagger: 0.04,
             ease: "power2.out",
-          }
+          },
+          "-=0.35"
         );
       }
 
@@ -155,13 +171,14 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
       if (bottomItems && bottomItems.length > 0) {
         tl.fromTo(
           bottomItems,
-          { opacity: 0, y: 25 },
+          { opacity: 0, y: 16 },
           {
             opacity: 1,
             y: 0,
-            duration: 0.85,
+            duration: 0.45,
             ease: "power3.out",
-          }
+          },
+          "-=0.3"
         );
       }
     };
@@ -172,7 +189,7 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
     // 2. Fallback safety timer (only in case preloader is disabled or already unmounted)
     const fallbackTimer = setTimeout(() => {
       playHomeEntranceAnimation();
-    }, 4500);
+    }, 1200);
 
     return () => {
       window.removeEventListener("start-hero-letters", playHomeEntranceAnimation);
@@ -234,7 +251,8 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
             // @ts-expect-error fetchpriority is standard in modern browsers
             fetchpriority="high"
             decoding="async"
-            className={`w-full h-full object-cover object-center filter contrast-[1.04] brightness-[0.96] transition-opacity duration-700 ease-out ${
+            onLoad={() => setBgLoaded(true)}
+            className={`w-full h-full object-cover object-center filter contrast-[1.04] brightness-[0.96] transition-opacity duration-300 ease-out ${
               bgLoaded ? "opacity-100" : "opacity-0"
             }`}
           />
@@ -252,7 +270,7 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
             {/* Left Giant Title */}
             <div className="flex-shrink-0">
               <h1
-                className="font-archivo  text-[4.5rem] lg:text-[6.5rem] xl:text-[7.8rem] 2xl:text-[9rem] whitespace-nowrap leading-none text-white uppercase text-left tracking-tight"
+                className="font-lato font-semibold text-[4.5rem] lg:text-[6.5rem] xl:text-[7.8rem] 2xl:text-[9rem] whitespace-nowrap leading-none text-white uppercase text-left tracking-tight"
               >
                 {renderRandomChars("DIGITAL")}
               </h1>
@@ -264,7 +282,7 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
             {/* Right Giant Title */}
             <div className="flex-shrink-0 flex justify-end">
               <h1
-                className="font-archivo text-[4.5rem] lg:text-[6.5rem] xl:text-[7.8rem] 2xl:text-[9rem] whitespace-nowrap leading-none text-white uppercase text-right tracking-tight"
+                className="font-lato font-semibold text-[4.5rem] lg:text-[6.5rem] xl:text-[7.8rem] 2xl:text-[9rem] whitespace-nowrap leading-none text-white uppercase text-right tracking-tight"
               >
                 {renderRandomChars("STUDIO")}
               </h1>
@@ -274,7 +292,7 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
           {/* Sub-Header Side Columns (Chinese on Left, English Services on Right) */}
           <div className="home-sub-item flex justify-between items-start w-full -mt-2 lg:mt-6 text-[13px] lg:text-[14px]">
             {/* Left Chinese services list */}
-            <div className="flex flex-col space-y-1.5 text-neutral-300 font-sans tracking-wide">
+            <div className="flex flex-col space-y-1.5 text-neutral-300 font-lato tracking-wide">
               <p className="hover:text-white transition-colors">用心创造美好</p>
               <p className="hover:text-white transition-colors">品牌策略</p>
               <p className="hover:text-white transition-colors">内容创新</p>
@@ -282,7 +300,7 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
             </div>
 
             {/* Right English services list */}
-            <div className="flex flex-col space-y-1.5 text-neutral-300  text-right tracking-wide ">
+            <div className="flex flex-col space-y-1.5 text-neutral-300  text-right tracking-wide font-lato ">
               <a href="#services" className="hover:text-white transition-colors cursor-pointer ">
                 Creative Strategy
               </a>
@@ -396,7 +414,7 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
           </div>
 
           {/* Bottom Footer Info Strip */}
-          <div className="flex items-end justify-between w-full text-[12px] lg:text-[13px] text-neutral-400 font-sans pt-2">
+          <div className="flex items-end justify-between w-full text-[12px] lg:text-[13px] text-neutral-400 font-lato pt-2">
             {/* Left Copy */}
             <div className="leading-snug">
               <p className="text-neutral-300">Bringing Design and</p>
