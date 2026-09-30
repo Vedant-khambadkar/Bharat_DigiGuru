@@ -158,7 +158,7 @@ export const Process: React.FC = () => {
     <section
       ref={sectionRef}
       id="process-section"
-      className="relative w-full min-h-screen bg-transparent text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none border-t border-b border-neutral-900 flex flex-col justify-center py-10 lg:py-0"
+      className="relative w-full min-h-screen bg-transparent text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none flex flex-col justify-center py-10 lg:py-0"
     >
       {/* Background Subtle Ambient Lighting */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -174,7 +174,7 @@ export const Process: React.FC = () => {
             <span className="font-['Space_Grotesk',sans-serif] text-xs uppercase tracking-widest text-neutral-500 select-none">
               Execution Roadmap
             </span>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white flex items-center gap-3">
+            <h2 className="font-neuropol uppercase text-3xl sm:text-4xl md:text-5xl  tracking-tight text-white flex items-center gap-3">
               <span>Our Process</span>
               <span className="inline-block translate-y-1 text-3xl sm:text-4xl font-light text-neutral-500">
                 ↴

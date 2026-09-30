@@ -118,7 +118,7 @@ export const Contact: React.FC = () => {
           </div>
 
           {/* Main Title with LensText */}
-          <h2 className="font-neuropol font-normal text-6xl uppercase tracking-wider text-white leading-none select-none">
+          <h2 className="font-neuropol font-normal text-3xl sm:text-4xl lg:text-5xl uppercase tracking-wider text-white leading-none select-none">
             <LensText text="CONTACT US" strokeWidth="2px" strokeColor="#ffffff" />
           </h2>
 

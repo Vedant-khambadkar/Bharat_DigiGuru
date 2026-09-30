@@ -183,7 +183,7 @@ export const WhyWorkWithUs: React.FC = () => {
              ========================================================================= */}
           <div className="why-us-left-col lg:col-span-4 flex flex-col justify-between gap-6 sm:gap-10">
             <div className="flex flex-col gap-4 sm:gap-6">
-              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-neuropol uppercase tracking-tight text-white leading-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-neuropol uppercase tracking-tight text-white leading-tight">
                 Why us
               </h2>
 
@@ -223,7 +223,7 @@ export const WhyWorkWithUs: React.FC = () => {
             
             {/* Top Mission Statement */}
             <div className="why-us-statement max-w-3xl mt-15">
-              <p className="text-base sm:text-xl md:text-2xl lg:text-3xl font-normal text-neutral-200 leading-relaxed sm:leading-snug">
+              <p className="text-base sm:text-xl md:text-2xl font-normal text-neutral-200 leading-relaxed sm:leading-snug">
                 We design and build tailored digital experiences that not only elevate your brand visually but also deliver measurable results that support long-term business growth.
               </p>
             </div>

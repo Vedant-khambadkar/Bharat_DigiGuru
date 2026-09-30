@@ -168,7 +168,7 @@ export const MissionVision: React.FC = () => {
             <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col justify-center">
               {/* Heading */}
               <div className="w-full mb-3 sm:mb-4 relative z-20 pointer-events-none text-left pl-1 sm:pl-2">
-                <h2 className="font-['Syne',sans-serif] font-black text-2xl sm:text-3xl md:text-4xl lg:text-[44px] xl:text-[50px] uppercase tracking-tight text-white leading-tight">
+                <h2 className="font-neuropol text-2xl sm:text-3xl md:text-4xl lg:text-[44px] xl:text-[50px] uppercase tracking-tight text-white leading-tight">
                   {slide.headlineWord2 ? (
                     <>
                       <span className="text-white">{slide.headlineWord1} </span>
@@ -233,7 +233,7 @@ export const MissionVision: React.FC = () => {
                 </div>
 
                 {/* 3. Giant Background Numeral Watermark */}
-                <div className="hidden lg:block absolute right-[-1.5rem] bottom-[-2rem] font-['Syne',sans-serif] font-black text-[150px] xl:text-[180px] leading-none text-white/[0.035] select-none pointer-events-none z-0">
+                <div className="hidden lg:block absolute right-[-1.5rem] bottom-[-2rem] font-neuropol text-[150px] xl:text-[180px] leading-none text-white/[0.035] select-none pointer-events-none z-0">
                   {slide.backdropNumber}
                 </div>
 

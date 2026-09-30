@@ -317,7 +317,7 @@ export const ThreeDProjects: React.FC = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="font-neuropol font-normal text-6xl uppercase tracking-wider text-white leading-none select-none">
+            <h2 className="font-neuropol font-normal text-3xl sm:text-4xl lg:text-5xl uppercase tracking-wider text-white leading-none select-none">
               <LensText text="3D SHOWCASE" strokeWidth="2px" strokeColor="#ffffff" />
             </h2>
 
