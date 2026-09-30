@@ -1,7 +1,6 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { getCachedMediaUrl } from "../utils/mediaCache";
 
 const WIDTH = 4.0;
 const HEIGHT = 2.5;
@@ -21,7 +20,7 @@ function createSkinnedPlaneData(
   width: number,
   height: number,
   segments: number,
-  _textureUrl?: string,
+  initialTexture?: THREE.Texture,
   color: string = "#6c8ebb"
 ) {
   // 1. Plane geometry subdivided horizontally along X-axis
@@ -69,7 +68,8 @@ function createSkinnedPlaneData(
   const skeleton = new THREE.Skeleton(bones);
 
   const material = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(color),
+    color: initialTexture ? new THREE.Color("#ffffff") : new THREE.Color(color),
+    map: initialTexture || null,
     side: THREE.DoubleSide,
     roughness: 0.35,
     metalness: 0.05,
@@ -101,6 +101,69 @@ interface SingleSkinnedPlaneProps {
   onHoverPlane?: (plane: PlaneItem) => void;
 }
 
+// Fast in-memory texture cache to provide 0ms instant rendering
+const textureMemoryCache = new Map<string, THREE.Texture>();
+const inFlightTexturePromises = new Map<string, Promise<THREE.Texture>>();
+
+/**
+ * Preloads and decodes a Three.js texture into GPU memory in the background.
+ */
+export function preloadSkinnedTexture(url?: string): Promise<THREE.Texture> {
+  if (!url || !url.trim()) return Promise.reject("Empty URL");
+  const cleanUrl = url.trim();
+
+  if (textureMemoryCache.has(cleanUrl)) {
+    return Promise.resolve(textureMemoryCache.get(cleanUrl)!);
+  }
+
+  if (inFlightTexturePromises.has(cleanUrl)) {
+    return inFlightTexturePromises.get(cleanUrl)!;
+  }
+
+  const promise = new Promise<THREE.Texture>((resolve, reject) => {
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
+
+    const loadDirect = (targetUrl: string, isFallback = false) => {
+      loader.load(
+        targetUrl,
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.generateMipmaps = true;
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.magFilter = THREE.LinearFilter;
+          tex.needsUpdate = true;
+          textureMemoryCache.set(cleanUrl, tex);
+          inFlightTexturePromises.delete(cleanUrl);
+          resolve(tex);
+        },
+        undefined,
+        (err) => {
+          if (!isFallback && (cleanUrl.includes("amazonaws.com") || cleanUrl.includes("cloudfront.net"))) {
+            const baseApi = import.meta.env.VITE_API_URL || "http://localhost:5000";
+            try {
+              const urlObj = new URL(cleanUrl);
+              const key = urlObj.pathname.replace(/^\/+/, "");
+              const proxyUrl = `${baseApi}/api/media/stream?key=${encodeURIComponent(key)}`;
+              loadDirect(proxyUrl, true);
+              return;
+            } catch {
+              // ignore and fail
+            }
+          }
+          inFlightTexturePromises.delete(cleanUrl);
+          reject(err);
+        }
+      );
+    };
+
+    loadDirect(cleanUrl);
+  });
+
+  inFlightTexturePromises.set(cleanUrl, promise);
+  return promise;
+}
+
 export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
   plane,
   width = WIDTH,
@@ -120,10 +183,12 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const { mesh, skeletonHelper } = useMemo(() => {
-    return createSkinnedPlaneData(width, height, segments, undefined, color);
-  }, [width, height, segments, color]);
+    const cleanUrl = textureUrl ? textureUrl.trim() : "";
+    const cachedTex = cleanUrl ? textureMemoryCache.get(cleanUrl) : undefined;
+    return createSkinnedPlaneData(width, height, segments, cachedTex, color);
+  }, [width, height, segments, color, textureUrl]);
 
-  // Load texture asynchronously with CORS anonymous and proper Three.js lifecycle
+  // Load texture: 0ms instant hit if cached, or fast progressive load with zero double-fetch overhead
   useEffect(() => {
     if (!textureUrl || textureUrl.trim().length === 0) {
       if (meshRef.current) {
@@ -137,72 +202,43 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
       return;
     }
 
-    let isCancelled = false;
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin("anonymous");
+    const cleanUrl = textureUrl.trim();
 
-    const tryLoad = (url: string, isRetry = false) => {
-      loader.load(
-        url,
-        (tex) => {
-          if (isCancelled) {
-            tex.dispose();
-            return;
-          }
-          tex.colorSpace = THREE.SRGBColorSpace;
-          tex.generateMipmaps = true;
-          tex.minFilter = THREE.LinearMipmapLinearFilter;
-          tex.magFilter = THREE.LinearFilter;
-          tex.needsUpdate = true;
-
-          if (meshRef.current) {
-            const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-            if (mat) {
-              mat.map = tex;
-              mat.color.set("#ffffff");
-              mat.needsUpdate = true;
-            }
-          }
-        },
-        undefined,
-        (err) => {
-          if (!isRetry && (url.includes("amazonaws.com") || url.includes("cloudfront.net"))) {
-            // Attempt fallback through backend media streaming endpoint
-            const baseApi = import.meta.env.VITE_API_URL || "http://localhost:5000";
-            try {
-              const urlObj = new URL(url);
-              const key = urlObj.pathname.replace(/^\/+/, "");
-              const proxyUrl = `${baseApi}/api/media/stream?key=${encodeURIComponent(key)}`;
-              tryLoad(proxyUrl, true);
-              return;
-            } catch {
-              // Ignore URL parse error and proceed to error handler
-            }
-          }
-
-          console.warn(`[SkinnedPlane] Texture load warning for: ${url}`, err);
-          if (!isCancelled && meshRef.current) {
-            const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-            if (mat) {
-              mat.map = null;
-              mat.color.set(color);
-              mat.needsUpdate = true;
-            }
-          }
+    // 1. Instant Texture Hit (0ms) from Texture Cache!
+    if (textureMemoryCache.has(cleanUrl)) {
+      const tex = textureMemoryCache.get(cleanUrl)!;
+      if (meshRef.current) {
+        const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+        if (mat) {
+          mat.map = tex;
+          mat.color.set("#ffffff");
+          mat.needsUpdate = true;
         }
-      );
-    };
- 
-    // Fetch via browser CacheStorage/Blob cache to eliminate repeated CloudFront hits
-    getCachedMediaUrl(textureUrl)
-      .then((cachedUrl) => {
-        if (!isCancelled) {
-          tryLoad(cachedUrl || textureUrl);
+      }
+      return;
+    }
+
+    let isCancelled = false;
+    preloadSkinnedTexture(cleanUrl)
+      .then((tex) => {
+        if (!isCancelled && meshRef.current) {
+          const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+          if (mat) {
+            mat.map = tex;
+            mat.color.set("#ffffff");
+            mat.needsUpdate = true;
+          }
         }
       })
-      .catch(() => {
-        if (!isCancelled) {
-          tryLoad(textureUrl);
+      .catch((err) => {
+        console.warn(`[SkinnedPlane] Texture load warning for: ${cleanUrl}`, err);
+        if (!isCancelled && meshRef.current) {
+          const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+          if (mat) {
+            mat.map = null;
+            mat.color.set(color);
+            mat.needsUpdate = true;
+          }
         }
       });
 
@@ -304,6 +340,7 @@ interface SkinnedPlaneProps {
   scrollProgress?: number;
   planes?: PlaneItem[];
   onSelectPlane?: (plane: PlaneItem) => void;
+  onReady?: () => void;
 }
 
 export default function SkinnedPlane({
@@ -312,12 +349,14 @@ export default function SkinnedPlane({
   scrollProgress = 0,
   planes = [],
   onSelectPlane,
+  onReady,
 }: SkinnedPlaneProps) {
   // Dynamically derive geometry count directly from the API planes array
   const activePlanes = planes || [];
   const total = activePlanes.length;
   const groupRef = useRef<THREE.Group>(null!);
 
+  const hasNotifiedReady = useRef(false);
   const isDragging = useRef(false);
   const prevPointerX = useRef(0);
   const targetRotation = useRef(0);
@@ -326,10 +365,10 @@ export default function SkinnedPlane({
   const bendState = useRef(0);
   const [isRotating, setIsRotating] = useState(false);
 
-  // Intro entrance animation state (starts below screen with initial spin & scale)
-  const introY = useRef(-5.2);
-  const introRotation = useRef(-Math.PI * 8.4);
-  const introScale = useRef(0);
+  // Intro entrance animation state (starts in full pose ready to view)
+  const introY = useRef(0);
+  const introRotation = useRef(0);
+  const introScale = useRef(1.0);
 
   // Scroll rotation damped state (full 360 degree revolution = 2 * PI)
   const scrollRotDamped = useRef(0);
@@ -391,6 +430,13 @@ export default function SkinnedPlane({
 
   // Frame loop: smooth intro rise, scroll-driven 360 degree rotation, drag damping, and bone flexing physics
   useFrame((_, delta) => {
+    if (!hasNotifiedReady.current) {
+      hasNotifiedReady.current = true;
+      if (onReady) {
+        onReady();
+      }
+    }
+
     // 0. Smoothly damp intro entrance values up to resting pose (y=0, rot=0, scale=1.0)
     introY.current = THREE.MathUtils.damp(introY.current, 0, 3.2, delta);
     introRotation.current = THREE.MathUtils.damp(introRotation.current, 0, 2.6, delta);

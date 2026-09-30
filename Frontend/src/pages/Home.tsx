@@ -54,16 +54,13 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
           letters,
           {
             opacity: 0,
-            y: 40,
             scale: 0.82,
-            filter: "blur(10px)",
           },
           {
+            delay:1,
             opacity: 1,
-            y: 0,
             scale: 1,
-            filter: "blur(0px)",
-            duration: 0.95,
+            duration: 1.95,
             ease: "power3.out",
             stagger: {
               each: 0.055,

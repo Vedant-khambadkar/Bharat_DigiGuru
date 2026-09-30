@@ -3,21 +3,24 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import Home from "./pages/Home";
-import Services from "./pages/Services";
-import Process from "./pages/Process";
-import PlatformsWeManage from "./pages/PlatformsWeManage";
-import ToolsAndTechnology from "./pages/ToolsAndTechnology";
-import WorkWithUs from "./pages/WorkWithUs";
-import Portfolio from "./pages/Portfolio";
-import ThreeDProjects from "./pages/ThreeDProjects";
-import About from "./pages/About";
-import Blogs from "./pages/Blogs";
-import Contact from "./pages/Contact";
-import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import TopHeader from "./components/TopHeader";
 import Preloader3D from "./components/Preloader/Preloader3D";
-import MissionVision from "./pages/MissionVision";
+import LazySection from "./components/LazySection";
+
+// Lazy-load below-the-fold sections on demand as user scrolls
+const Services = lazy(() => import("./pages/Services"));
+const About = lazy(() => import("./pages/About"));
+const MissionVision = lazy(() => import("./pages/MissionVision"));
+const ToolsAndTechnology = lazy(() => import("./pages/ToolsAndTechnology"));
+const PlatformsWeManage = lazy(() => import("./pages/PlatformsWeManage"));
+const Process = lazy(() => import("./pages/Process"));
+const Portfolio = lazy(() => import("./pages/Portfolio"));
+const ThreeDProjects = lazy(() => import("./pages/ThreeDProjects"));
+const WorkWithUs = lazy(() => import("./pages/WorkWithUs"));
+const Blogs = lazy(() => import("./pages/Blogs"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Footer = lazy(() => import("./components/Footer"));
 
 // Lazy-load Admin routes & modals so they don't bloat the main landing page bundle
 const AdminAuthModal = lazy(() => import("./components/Admin/AdminAuthModal"));
@@ -131,6 +134,8 @@ const App = () => {
     };
   }, []);
 
+
+
   const handleFramesProgress = (progress: number, isComplete: boolean) => {
     setFramesProgress(progress);
     if (isComplete) {
@@ -168,6 +173,37 @@ const App = () => {
     window.scrollTo(0, 0);
     ScrollTrigger.refresh();
   };
+
+  // Background idle preloading of 3D Portfolio data & textures after Preloader exits
+  useEffect(() => {
+    if (isLoading) return;
+
+    let isDisposed = false;
+    const triggerPortfolioPreload = () => {
+      if (isDisposed) return;
+      import("./pages/Portfolio").then((mod) => {
+        if (mod && mod.preloadPortfolioAssets) {
+          mod.preloadPortfolioAssets();
+        }
+      });
+    };
+
+    if ("requestIdleCallback" in window) {
+      const idleId = (window as any).requestIdleCallback(triggerPortfolioPreload, { timeout: 1200 });
+      return () => {
+        isDisposed = true;
+        if ("cancelIdleCallback" in window) {
+          (window as any).cancelIdleCallback(idleId);
+        }
+      };
+    } else {
+      const timerId = setTimeout(triggerPortfolioPreload, 600);
+      return () => {
+        isDisposed = true;
+        clearTimeout(timerId);
+      };
+    }
+  }, [isLoading]);
 
   // Global Lenis Smooth Momentum Scrolling synchronized with GSAP ScrollTrigger
   useEffect(() => {
@@ -438,18 +474,54 @@ const App = () => {
       {/* Main Sections Flow */}
       <div ref={mainContentRef} className="relative z-10">
         <Home onFramesProgress={handleFramesProgress} />
-        <Services />
-        <About />
-        <MissionVision/>
-        <ToolsAndTechnology /> 
-        <PlatformsWeManage />
-        <Process />
-        <Portfolio />
-        <ThreeDProjects />
-        <WorkWithUs />
-        <Blogs />
-        <Contact />
-        <Footer />
+
+        <LazySection id="services-section" minHeight="750px">
+          <Services />
+        </LazySection>
+
+        <LazySection id="about-section" minHeight="750px">
+          <About />
+        </LazySection>
+
+        <LazySection id="mission-vision-section" minHeight="600px">
+          <MissionVision />
+        </LazySection>
+
+        <LazySection id="tools-section" minHeight="650px">
+          <ToolsAndTechnology />
+        </LazySection>
+
+        <LazySection id="platforms-section" minHeight="650px">
+          <PlatformsWeManage />
+        </LazySection>
+
+        <LazySection id="process-section" minHeight="600px">
+          <Process />
+        </LazySection>
+
+        <LazySection id="portfolio-section" minHeight="100vh" rootMargin="1200px 0px">
+          <Portfolio />
+        </LazySection>
+
+        <LazySection id="threed-section" minHeight="750px" rootMargin="900px 0px">
+          <ThreeDProjects />
+        </LazySection>
+
+        <LazySection id="workwithus-section" minHeight="500px">
+          <WorkWithUs />
+        </LazySection>
+
+        <LazySection id="blogs-section" minHeight="700px">
+          <Blogs />
+        </LazySection>
+
+        <LazySection id="contact-section" minHeight="650px">
+          <Contact />
+        </LazySection>
+
+        <LazySection id="footer-section" minHeight="350px">
+          <Footer />
+        </LazySection>
       </div>
 
       {/* Admin Auth Modal */}

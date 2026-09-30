@@ -128,6 +128,7 @@ const BLOGS_DATA: BlogItem[] = [
 export const Blogs: React.FC = () => {
   const blogs = BLOGS_DATA;
   const sectionRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeBlog, setActiveBlog] = useState<BlogItem | null>(null);
 
@@ -136,12 +137,14 @@ export const Blogs: React.FC = () => {
     const section = sectionRef.current;
     if (!track || !section) return;
 
-    // Calculate total horizontal scroll distance needed
-    const getScrollAmount = () => {
-      return track.scrollWidth - window.innerWidth + 140;
-    };
+    const mm = gsap.matchMedia();
 
-    const ctx = gsap.context(() => {
+    // Desktop Layout (>= 1024px): Pinned Horizontal Glide
+    mm.add("(min-width: 1024px)", () => {
+      const getScrollAmount = () => {
+        return track.scrollWidth - window.innerWidth + 140;
+      };
+
       gsap.to(track, {
         x: () => -getScrollAmount(),
         ease: "none",
@@ -151,21 +154,26 @@ export const Blogs: React.FC = () => {
           end: () => `+=${getScrollAmount() + 500}`,
           pin: true,
           pinSpacing: true,
-          scrub: 0.3,
+          scrub: 0.5,
           fastScrollEnd: true,
           invalidateOnRefresh: true,
         },
       });
-    }, section);
+    });
 
-    return () => ctx.revert();
+    // Mobile / Tablet (< 1024px): Reset horizontal transform for fluid touch scroll
+    mm.add("(max-width: 1023px)", () => {
+      gsap.set(track, { clearProps: "transform,x" });
+    });
+
+    return () => mm.revert();
   }, []);
 
   return (
     <section
       id="blogs-section"
       ref={sectionRef}
-      className="relative z-10 bg-transparent text-white w-full overflow-hidden"
+      className="relative z-10 bg-transparent text-white w-full overflow-hidden py-10 sm:py-16 lg:py-0"
     >
       {/* Ambient background glows */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -180,16 +188,16 @@ export const Blogs: React.FC = () => {
         </span>
       </div>
 
-      {/* Main Pinned Viewport Container (Refined vertical rhythm so cards are fully visible) */}
-      <div className="mt-12 relative z-10 h-screen w-full max-w-8xl mx-auto flex flex-col justify-between py-6 sm:py-8 md:py-10 px-6 sm:px-10 md:px-12 lg:px-16">
+      {/* Main Container */}
+      <div className="relative z-10 min-h-screen lg:h-screen w-full max-w-8xl mx-auto flex flex-col justify-between py-6 sm:py-8 md:py-10 px-4 sm:px-8 md:px-12 lg:px-16">
         {/* =========================================================================
-            HEADER SECTION (Matching Reference Image)
+            HEADER SECTION
            ========================================================================= */}
         <div className="flex flex-col gap-2 shrink-0 max-w-5xl">
           {/* Studio Emblem + Tagline */}
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#ff3b30] shadow-[0_0_10px_#ff3b30] animate-pulse" />
-            <span className="font-['Space_Grotesk',sans-serif] text-xs uppercase tracking-widest text-neutral-400 font-semibold flex items-center gap-1.5">
+            <span className="font-['Space_Grotesk',sans-serif] text-[10px] sm:text-xs uppercase tracking-widest text-neutral-400 font-semibold flex items-center gap-1.5">
               Bharat DigiGuru Editorial & Insights
               <span className="text-orange-500">✦</span>
             </span>
@@ -198,19 +206,19 @@ export const Blogs: React.FC = () => {
           {/* Main Title with LensText */}
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3">
             <div>
-              <h2 className="font-neuropol font-normal text-6xl uppercase tracking-wider text-white leading-none select-none">
-                <LensText text="REDEFINE DIGITAL STORIES" strokeWidth="2px" strokeColor="#ffffff" />
+              <h2 className="font-neuropol font-normal text-3xl sm:text-4xl md:text-5xl lg:text-6xl uppercase tracking-wider text-white leading-tight select-none">
+                <LensText text="REDEFINE DIGITAL STORIES" strokeWidth="1.5px" strokeColor="#ffffff" />
               </h2>
 
               {/* Sub-statement with Molten Capsule Pills */}
               <div className="mt-2 font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-400 tracking-wide uppercase leading-normal max-w-2xl flex flex-wrap items-center gap-y-1.5 py-0.5">
                 <span>Bharat DigiGuru — is an editorial agency of bold</span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 shadow-[0_0_12px_rgba(255,69,0,0.6)] text-white text-[10px] font-bold uppercase tracking-wider mx-1.5 align-middle shrink-0">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 shadow-[0_0_12px_rgba(255,69,0,0.6)] text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mx-1.5 align-middle shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-white mr-1.5 animate-ping" />
                   Creators
                 </span>
                 <span>that delivers the power of media with</span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-red-600 shadow-[0_0_12px_rgba(255,80,0,0.6)] text-white text-[10px] font-bold uppercase tracking-wider mx-1.5 align-middle shrink-0">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-red-600 shadow-[0_0_12px_rgba(255,80,0,0.6)] text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mx-1.5 align-middle shrink-0">
                   Cutting-Edge
                 </span>
                 <span>strategy.</span>
@@ -228,36 +236,40 @@ export const Blogs: React.FC = () => {
         </div>
 
         {/* =========================================================================
-            HORIZONTAL CAROUSEL TRACK (Ensuring cards have generous top & bottom padding)
+            HORIZONTAL CAROUSEL TRACK (Fluid scroll on mobile, Pinned on desktop)
            ========================================================================= */}
-        <div className="my-auto overflow-visible py-6 sm:py-8">
+        <div
+          ref={containerRef}
+          className="my-auto overflow-x-auto lg:overflow-visible py-4 sm:py-6 lg:py-8 scrollbar-none snap-x snap-mandatory lg:snap-none"
+        >
           <div
             ref={trackRef}
-            className="flex gap-6 sm:gap-8 items-center will-change-transform pl-2 sm:pl-6 pr-32 select-none"
+            className="flex gap-4 sm:gap-6 lg:gap-8 items-center will-change-transform pl-1 sm:pl-4 lg:pl-6 pr-6 lg:pr-32 select-none"
+            style={{ width: "max-content" }}
           >
             {blogs.map((blog) => (
-              <BlogCard
-                key={blog.id}
-                blog={blog}
-                onClick={(selected) => setActiveBlog(selected)}
-              />
+              <div key={blog.id} className="snap-start shrink-0">
+                <BlogCard
+                  blog={blog}
+                  onClick={(selected) => setActiveBlog(selected)}
+                />
+              </div>
             ))}
           </div>
         </div>
       </div>
 
-
       {activeBlog && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/90 backdrop-blur-2xl"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 md:p-10 bg-black/90 backdrop-blur-2xl"
           onClick={() => setActiveBlog(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
             data-lenis-prevent="true"
-            className="relative w-full max-w-4xl max-h-[88vh] overflow-y-auto rounded-2xl bg-[#0d0d0d] border border-neutral-800 p-6 sm:p-10 shadow-2xl flex flex-col gap-6 text-neutral-200 animate-in fade-in zoom-in-95 duration-300"
+            className="relative w-full max-w-4xl max-h-[88vh] overflow-y-auto rounded-2xl bg-[#0d0d0d] border border-neutral-800 p-5 sm:p-8 md:p-10 shadow-2xl flex flex-col gap-5 sm:gap-6 text-neutral-200 animate-in fade-in zoom-in-95 duration-300"
           >
             {/* Modal Top Navigation */}
             <div className="flex items-center justify-between border-b border-neutral-800 pb-4 sticky top-0 bg-[#0d0d0d]/95 backdrop-blur-md z-20">
@@ -291,14 +303,14 @@ export const Blogs: React.FC = () => {
             )}
 
             {/* Title & Metadata */}
-            <div className="flex flex-col gap-3">
-              <span className="font-['Cormorant_Garamond',serif] italic text-sm text-neutral-400">
+            <div className="flex flex-col gap-2.5 sm:gap-3">
+              <span className="font-['Cormorant_Garamond',serif] italic text-xs sm:text-sm text-neutral-400">
                 {activeBlog.number} · Bharat DigiGuru Official Editorial
               </span>
-              <h2 className="font-['Syne',sans-serif] font-bold text-2xl sm:text-3xl md:text-4xl uppercase tracking-tight text-white leading-tight">
+              <h2 className="font-['Syne',sans-serif] font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl uppercase tracking-tight text-white leading-tight">
                 {activeBlog.title}
               </h2>
-              <div className="flex items-center gap-4 text-xs font-['Space_Grotesk',sans-serif] uppercase tracking-wider text-neutral-400 pt-1">
+              <div className="flex items-center gap-4 text-[11px] sm:text-xs font-['Space_Grotesk',sans-serif] uppercase tracking-wider text-neutral-400 pt-1">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" />
                   {activeBlog.date}
@@ -311,7 +323,7 @@ export const Blogs: React.FC = () => {
             </div>
 
             {/* Editorial Body Content */}
-            <div className="flex flex-col gap-5 text-sm sm:text-base text-neutral-300 leading-relaxed font-['Space_Grotesk',sans-serif] pt-2 border-t border-neutral-800/80">
+            <div className="flex flex-col gap-4 sm:gap-5 text-xs sm:text-sm md:text-base text-neutral-300 leading-relaxed font-['Space_Grotesk',sans-serif] pt-2 border-t border-neutral-800/80">
               {activeBlog.content?.map((paragraph, idx) => (
                 <p key={idx} className="leading-relaxed sm:leading-loose">
                   {paragraph}
@@ -322,15 +334,15 @@ export const Blogs: React.FC = () => {
             {/* Bullet Points Checklist (for full solution breakdown) */}
             {activeBlog.bullets && activeBlog.bullets.length > 0 && (
               <div className="flex flex-col gap-3 pt-4 border-t border-neutral-800/80">
-                <h3 className="font-['Syne',sans-serif] text-sm sm:text-base font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                <h3 className="font-['Syne',sans-serif] text-xs sm:text-sm md:text-base font-bold uppercase tracking-wider text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#ff3b30]" />
                   Explore Our Comprehensive Array of Solutions:
                 </h3>
-                <ul className="grid grid-cols-1 gap-2.5 pt-2">
+                <ul className="grid grid-cols-1 gap-2 sm:gap-2.5 pt-2">
                   {activeBlog.bullets.map((bullet, i) => (
                     <li
                       key={i}
-                      className="flex items-start gap-3 text-xs sm:text-sm text-neutral-300 bg-neutral-900/60 p-3 rounded-lg border border-neutral-800/80 font-['Space_Grotesk',sans-serif]"
+                      className="flex items-start gap-2.5 sm:gap-3 text-xs sm:text-sm text-neutral-300 bg-neutral-900/60 p-2.5 sm:p-3 rounded-lg border border-neutral-800/80 font-['Space_Grotesk',sans-serif]"
                     >
                       <CheckCircle2 className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
                       <span>{bullet}</span>
@@ -341,14 +353,14 @@ export const Blogs: React.FC = () => {
             )}
 
             {/* Modal Footer CTA */}
-            <div className="pt-6 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <span className="text-xs text-neutral-400 font-['Space_Grotesk',sans-serif] uppercase tracking-wider text-center sm:text-left">
+            <div className="pt-4 sm:pt-6 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+              <span className="text-[11px] sm:text-xs text-neutral-400 font-['Space_Grotesk',sans-serif] uppercase tracking-wider text-center sm:text-left">
                 Published by Bharat DigiGuru Digital Media Company
               </span>
               <button
                 type="button"
                 onClick={() => setActiveBlog(null)}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-white text-black text-xs font-['Space_Grotesk',sans-serif] font-semibold uppercase tracking-wider hover:bg-neutral-200 transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-white text-black text-xs font-['Space_Grotesk',sans-serif] font-semibold uppercase tracking-wider hover:bg-neutral-200 transition-colors cursor-pointer"
               >
                 Close Article
               </button>

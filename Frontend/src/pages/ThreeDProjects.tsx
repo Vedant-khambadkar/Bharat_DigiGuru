@@ -43,10 +43,28 @@ const ThreeDCard: React.FC<ThreeDCardProps> = ({
   onOpenTheater,
   setVideoRef,
 }) => {
-  const cachedPoster = useCachedMedia(project.posterUrl);
+  const [isInView, setIsInView] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.1, rootMargin: "300px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
+      ref={cardRef}
       className="group relative bg-[#0c0c0c] border border-neutral-800/90 hover:border-neutral-500 rounded-3xl overflow-hidden shadow-[0_20px_45px_rgba(0,0,0,0.6)] hover:shadow-[0_25px_60px_-15px_rgba(255,59,48,0.22)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col text-white cursor-pointer"
       onClick={onOpenTheater}
     >
@@ -54,13 +72,13 @@ const ThreeDCard: React.FC<ThreeDCardProps> = ({
       <div className="relative aspect-[16/10] w-full bg-neutral-950 overflow-hidden">
         <video
           ref={setVideoRef}
-          src={project.videoUrl}
-          poster={cachedPoster || project.posterUrl}
-          autoPlay
+          src={isInView ? project.videoUrl : undefined}
+          poster={project.posterUrl}
+          autoPlay={isInView}
           loop
           muted={isMuted}
           playsInline
-          preload="metadata"
+          preload="none"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
 
@@ -142,13 +160,16 @@ export const ThreeDProjects: React.FC = () => {
   const [mutedStates, setMutedStates] = useState<{ [key: string]: boolean }>({});
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
 
-  // Initial fetch from API / Database and Socket.IO listener for real-time synchronization
+  // Initial fetch from API / Database only if not cached, + Socket.IO listener for real-time synchronization
   useEffect(() => {
-    if (projects.length > 0) {
-      preloadMediaList(projects.map((p) => p.posterUrl));
-    }
-
     const fetchThreeD = async () => {
+      const cached = getApiCache<ThreeDProject[]>("threed_projects");
+      if (cached && cached.length > 0) {
+        setProjects(cached);
+        setIsLoading(false);
+        return; // Zero network call on page reload!
+      }
+
       try {
         const res = await userService.getThreeD();
         const items = Array.isArray(res)
@@ -160,7 +181,6 @@ export const ThreeDProjects: React.FC = () => {
           : [];
         setProjects(items);
         setApiCache("threed_projects", items);
-        preloadMediaList(items.map((p: ThreeDProject) => p.posterUrl));
       } catch (err) {
         console.error("Error loading 3D projects from database:", err);
       } finally {

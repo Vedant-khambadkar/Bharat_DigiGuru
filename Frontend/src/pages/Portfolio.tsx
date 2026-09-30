@@ -2,13 +2,92 @@ import React, { useState, useEffect, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import SkinnedPlane, { type PlaneItem } from "../components/SkinnedPlane";
+import SkinnedPlane, { type PlaneItem, preloadSkinnedTexture } from "../components/SkinnedPlane";
+import Portfolio3DLoader from "../components/Portfolio3DLoader";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 import { getApiCache, setApiCache } from "../utils/apiCache";
-import { preloadMediaList } from "../utils/mediaCache";
 
 gsap.registerPlugin(ScrollTrigger);
+
+// Helper to resolve full image URLs
+export const getFullUrl = (url?: string): string => {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:")
+  ) {
+    return trimmed;
+  }
+  const cdnBase = import.meta.env.VITE_CLOUDFRONT_URL;
+  if (cdnBase && (trimmed.startsWith("uploads/") || trimmed.startsWith("/uploads/"))) {
+    const cleanKey = trimmed.replace(/^\/+/, "");
+    return `${cdnBase.replace(/\/+$/, "")}/${cleanKey}`;
+  }
+  const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const cleanUrl = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return `${base}${cleanUrl}`;
+};
+
+// Helper to format backend portfolio records to PlaneItem structure
+export const formatPortfolioItem = (item: any, index: number): PlaneItem => {
+  const rawImg = item.image || item.imageUrl || item.textureUrl || item.posterUrl || "";
+  const imgUrl = getFullUrl(rawImg);
+
+  return {
+    id: item.id || item._id || index + 1,
+    title: item.title || `Project 0${index + 1}`,
+    category: item.category || item.subtitle || "3D CGI & ArchViz",
+    textureUrl: imgUrl,
+    color: item.color || "#6c8ebb",
+  };
+};
+
+/**
+ * Background preloader function: fetches portfolio items & pre-decodes Three.js textures in memory
+ */
+export const preloadPortfolioAssets = async (): Promise<PlaneItem[]> => {
+  try {
+    const cached = getApiCache<PlaneItem[]>("portfolio_items");
+    if (cached && cached.length > 0) {
+      // 0ms Cache Hit: Preload textures into Three.js memory cache directly without DB request
+      cached.forEach((item) => {
+        if (item.textureUrl) {
+          preloadSkinnedTexture(item.textureUrl).catch(() => {});
+        }
+      });
+      return cached;
+    }
+
+    const res = await userService.getPortfolio();
+    const rawItems = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.items)
+      ? res.items
+      : Array.isArray(res?.data)
+      ? res.data
+      : [];
+
+    const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
+    if (formatted.length > 0) {
+      setApiCache("portfolio_items", formatted);
+      // Preload Three.js textures in parallel in background memory
+      formatted.forEach((item) => {
+        if (item.textureUrl) {
+          preloadSkinnedTexture(item.textureUrl).catch(() => {});
+        }
+      });
+    }
+    return formatted;
+  } catch (err) {
+    console.warn("Background portfolio preload error:", err);
+    return [];
+  }
+};
 
 export const Portfolio: React.FC = () => {
   const [planes, setPlanes] = useState<PlaneItem[]>(() => {
@@ -24,54 +103,36 @@ export const Portfolio: React.FC = () => {
     const cached = getApiCache<PlaneItem[]>("portfolio_items");
     return !(cached && cached.length > 0);
   });
+  const [is3DReady, setIs3DReady] = useState<boolean>(false);
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
-  // Helper to resolve full image URLs
-  const getFullUrl = (url?: string): string => {
-    if (!url || typeof url !== "string") return "";
-    const trimmed = url.trim();
-    if (!trimmed) return "";
-    if (
-      trimmed.startsWith("http://") ||
-      trimmed.startsWith("https://") ||
-      trimmed.startsWith("data:") ||
-      trimmed.startsWith("blob:")
-    ) {
-      return trimmed;
+  // Preload textures immediately if cached planes already exist on mount
+  useEffect(() => {
+    if (planes.length > 0) {
+      planes.forEach((p) => {
+        if (p.textureUrl) {
+          preloadSkinnedTexture(p.textureUrl).catch(() => {});
+        }
+      });
     }
-    const cdnBase = import.meta.env.VITE_CLOUDFRONT_URL;
-    if (cdnBase && (trimmed.startsWith("uploads/") || trimmed.startsWith("/uploads/"))) {
-      const cleanKey = trimmed.replace(/^\/+/, "");
-      return `${cdnBase.replace(/\/+$/, "")}/${cleanKey}`;
-    }
-    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
-    const cleanUrl = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-    return `${base}${cleanUrl}`;
-  };
-
-  // Helper to format backend portfolio records to PlaneItem structure
-  const formatPortfolioItem = (item: any, index: number): PlaneItem => {
-    const rawImg = item.image || item.imageUrl || item.textureUrl || item.posterUrl || "";
-    const imgUrl = getFullUrl(rawImg);
-
-    return {
-      id: item.id || item._id || index + 1,
-      title: item.title || `Project 0${index + 1}`,
-      category: item.category || item.subtitle || "3D CGI & ArchViz",
-      textureUrl: imgUrl,
-      color: item.color || "#6c8ebb",
-    };
-  };
+  }, []);
 
   // 1. Fetch Dynamic Portfolio directly from API / Database (with Cache Sync)
   useEffect(() => {
-    // Pre-cache textures from initial cache immediately
-    if (planes.length > 0) {
-      preloadMediaList(planes.map((p) => p.textureUrl));
-    }
-
     const fetchPortfolioData = async () => {
+      const cached = getApiCache<PlaneItem[]>("portfolio_items");
+      if (cached && cached.length > 0) {
+        setPlanes(cached);
+        setIsLoading(false);
+        cached.forEach((item) => {
+          if (item.textureUrl) {
+            preloadSkinnedTexture(item.textureUrl).catch(() => {});
+          }
+        });
+        return; // Zero network call on page reload!
+      }
+
       try {
         const res = await userService.getPortfolio();
         const rawItems = Array.isArray(res)
@@ -85,7 +146,13 @@ export const Portfolio: React.FC = () => {
         const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
         setPlanes(formatted);
         setApiCache("portfolio_items", formatted);
-        preloadMediaList(formatted.map((p: PlaneItem) => p.textureUrl));
+
+        // Preload any un-cached textures
+        formatted.forEach((item) => {
+          if (item.textureUrl) {
+            preloadSkinnedTexture(item.textureUrl).catch(() => {});
+          }
+        });
 
         if (formatted.length > 0) {
           setSelectedPlane((current) => {
@@ -116,7 +183,6 @@ export const Portfolio: React.FC = () => {
         if (exists) return prev;
         const updated = [formatted, ...prev];
         setApiCache("portfolio_items", updated);
-        preloadMediaList([formatted.textureUrl]);
         if (!selectedPlane) setSelectedPlane(formatted);
         return updated;
       });
@@ -131,8 +197,6 @@ export const Portfolio: React.FC = () => {
             : p
         );
         setApiCache("portfolio_items", updated);
-        const updatedItem = formatPortfolioItem(updatedCard, 0);
-        preloadMediaList([updatedItem.textureUrl]);
         return updated;
       });
       setSelectedPlane((current) =>
@@ -239,6 +303,15 @@ export const Portfolio: React.FC = () => {
 
       {/* 3. Center 3D Interactive SkinnedMesh Carousel */}
       <div className="absolute inset-0 z-[1]">
+        {/* Futuristic 3D Model Animated Loader HUD */}
+        {(!is3DReady || isLoading) && (
+          <Portfolio3DLoader
+            className={`transition-opacity duration-700 ${
+              is3DReady ? "opacity-0 pointer-events-none" : "opacity-100"
+            }`}
+          />
+        )}
+
         {planes.length > 0 ? (
           <Canvas
             camera={{
@@ -246,6 +319,9 @@ export const Portfolio: React.FC = () => {
               fov: 46,
               near: 0.1,
               far: 100,
+            }}
+            onCreated={() => {
+              // Ensure canvas context is active
             }}
           >
             {/* Dark Background matching website */}
@@ -265,16 +341,14 @@ export const Portfolio: React.FC = () => {
               selectedId={selectedPlane?.id}
               scrollProgress={scrollProgress}
               onSelectPlane={setSelectedPlane}
+              onReady={() => {
+                setIs3DReady(true);
+              }}
             />
           </Canvas>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 pointer-events-none">
-            {isLoading ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 rounded-full border-2 border-red-500/30 border-t-red-500 animate-spin" />
-                <span className="text-xs font-mono uppercase tracking-widest text-neutral-400">Loading Portfolio...</span>
-              </div>
-            ) : (
+            {!isLoading && (
               <div className="text-stone-500 text-sm font-mono uppercase tracking-widest">
                 No portfolio items available in the database.
               </div>
