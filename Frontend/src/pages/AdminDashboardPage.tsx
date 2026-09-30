@@ -29,8 +29,33 @@ import { adminService } from "../services/service/adminService";
 import { socket, onSocketEvent } from "../utils/socket";
 import { ConfirmDeleteModal } from "../components/Admin/ConfirmDeleteModal";
 import CachedImage from "../components/CachedImage";
+import { getApiCache, setApiCache } from "../utils/apiCache";
 
 type TabType = "overview" | "portfolio" | "threed" | "inquiries";
+
+const extractPaginatedData = (res: any) => {
+  if (!res) return { items: [], total: 0, totalPages: 1, page: 1 };
+  if (Array.isArray(res)) {
+    return { items: res, total: res.length, totalPages: 1, page: 1 };
+  }
+  if (res.items && Array.isArray(res.items)) {
+    return {
+      items: res.items,
+      total: res.total ?? res.items.length,
+      totalPages: res.totalPages ?? 1,
+      page: res.page ?? 1,
+    };
+  }
+  if (res.data && Array.isArray(res.data)) {
+    return {
+      items: res.data,
+      total: res.total ?? res.data.length,
+      totalPages: res.totalPages ?? 1,
+      page: res.page ?? 1,
+    };
+  }
+  return { items: [], total: 0, totalPages: 1, page: 1 };
+};
 
 export const AdminDashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
@@ -41,46 +66,70 @@ export const AdminDashboardPage: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState<boolean>(false);
 
-  // Overview Counts
-  const [stats, setStats] = useState({
-    totalPortfolio: 0,
-    totalThreeD: 0,
-    totalInquiries: 0,
-    newInquiries: 0,
+  // Overview Counts from cache (0ms delay)
+  const [stats, setStats] = useState(() => {
+    return (
+      getApiCache<{
+        totalPortfolio: number;
+        totalThreeD: number;
+        totalInquiries: number;
+        newInquiries: number;
+      }>("admin_stats") || {
+        totalPortfolio: 0,
+        totalThreeD: 0,
+        totalInquiries: 0,
+        newInquiries: 0,
+      }
+    );
   });
 
   // ==========================================
-  // PORTFOLIO STATE (SERVER-SIDE PAGINATION)
+  // PORTFOLIO STATE (SERVER-SIDE PAGINATION + CACHE)
   // ==========================================
-  const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
+  const initialPortCache = extractPaginatedData(
+    getApiCache<any>("admin_portfolio_category=&limit=6&page=1&search=")
+  );
+  const [portfolioItems, setPortfolioItems] = useState<any[]>(initialPortCache.items);
   const [portfolioPage, setPortfolioPage] = useState<number>(1);
   const [portfolioLimit, setPortfolioLimit] = useState<number>(6);
-  const [portfolioTotalPages, setPortfolioTotalPages] = useState<number>(1);
-  const [portfolioTotal, setPortfolioTotal] = useState<number>(0);
+  const [portfolioTotalPages, setPortfolioTotalPages] = useState<number>(
+    initialPortCache.totalPages || 1
+  );
+  const [portfolioTotal, setPortfolioTotal] = useState<number>(initialPortCache.total || 0);
   const [portfolioSearch, setPortfolioSearch] = useState<string>("");
   const [portfolioCategory, setPortfolioCategory] = useState<string>("All");
   const [portfolioLoading, setPortfolioLoading] = useState<boolean>(false);
 
   // ==========================================
-  // 3D SHOWCASE STATE (SERVER-SIDE PAGINATION)
+  // 3D SHOWCASE STATE (SERVER-SIDE PAGINATION + CACHE)
   // ==========================================
-  const [threeDItems, setThreeDItems] = useState<any[]>([]);
+  const initialThreeDCache = extractPaginatedData(
+    getApiCache<any>("admin_threed_category=&limit=6&page=1&search=")
+  );
+  const [threeDItems, setThreeDItems] = useState<any[]>(initialThreeDCache.items);
   const [threeDPage, setThreeDPage] = useState<number>(1);
   const [threeDLimit, setThreeDLimit] = useState<number>(6);
-  const [threeDTotalPages, setThreeDTotalPages] = useState<number>(1);
-  const [threeDTotal, setThreeDTotal] = useState<number>(0);
+  const [threeDTotalPages, setThreeDTotalPages] = useState<number>(
+    initialThreeDCache.totalPages || 1
+  );
+  const [threeDTotal, setThreeDTotal] = useState<number>(initialThreeDCache.total || 0);
   const [threeDSearch, setThreeDSearch] = useState<string>("");
   const [threeDCategory, setThreeDCategory] = useState<string>("All");
   const [threeDLoading, setThreeDLoading] = useState<boolean>(false);
 
   // ==========================================
-  // INQUIRIES STATE (SERVER-SIDE PAGINATION)
+  // INQUIRIES STATE (SERVER-SIDE PAGINATION + CACHE)
   // ==========================================
-  const [inquiriesList, setInquiriesList] = useState<any[]>([]);
+  const initialInqCache = extractPaginatedData(
+    getApiCache<any>("admin_inquiries_limit=6&page=1&search=&status=")
+  );
+  const [inquiriesList, setInquiriesList] = useState<any[]>(initialInqCache.items);
   const [inquiriesPage, setInquiriesPage] = useState<number>(1);
   const [inquiriesLimit, setInquiriesLimit] = useState<number>(6);
-  const [inquiriesTotalPages, setInquiriesTotalPages] = useState<number>(1);
-  const [inquiriesTotal, setInquiriesTotal] = useState<number>(0);
+  const [inquiriesTotalPages, setInquiriesTotalPages] = useState<number>(
+    initialInqCache.totalPages || 1
+  );
+  const [inquiriesTotal, setInquiriesTotal] = useState<number>(initialInqCache.total || 0);
   const [inquiriesSearch, setInquiriesSearch] = useState<string>("");
   const [inquiriesStatusFilter, setInquiriesStatusFilter] = useState<string>("ALL");
   const [inquiriesLoading, setInquiriesLoading] = useState<boolean>(false);
@@ -125,93 +174,111 @@ export const AdminDashboardPage: React.FC = () => {
     setTimeout(() => setNotification(null), 3500);
   };
 
-  const extractPaginatedData = (res: any) => {
-    if (!res) return { items: [], total: 0, totalPages: 1, page: 1 };
-    if (Array.isArray(res)) {
-      return { items: res, total: res.length, totalPages: 1, page: 1 };
-    }
-    if (res.items && Array.isArray(res.items)) {
-      return {
-        items: res.items,
-        total: res.total ?? res.items.length,
-        totalPages: res.totalPages ?? 1,
-        page: res.page ?? 1,
-      };
-    }
-    if (res.data && Array.isArray(res.data)) {
-      return {
-        items: res.data,
-        total: res.total ?? res.data.length,
-        totalPages: res.totalPages ?? 1,
-        page: res.page ?? 1,
-      };
-    }
-    return { items: [], total: 0, totalPages: 1, page: 1 };
-  };
-
   // ==========================================
-  // FETCHERS (SERVER-SIDE PAGINATED)
+  // FETCHERS (SERVER-SIDE PAGINATED + CACHED)
   // ==========================================
   const fetchPortfolio = useCallback(
-    async (page = portfolioPage, limit = portfolioLimit, search = portfolioSearch, category = portfolioCategory) => {
-      setPortfolioLoading(true);
+    async (
+      page = portfolioPage,
+      limit = portfolioLimit,
+      search = portfolioSearch,
+      category = portfolioCategory,
+      forceRefresh = false
+    ) => {
+      // If we don't have items in memory, show subtle loader
+      if (portfolioItems.length === 0) {
+        setPortfolioLoading(true);
+      }
       try {
-        const res = await adminService.getPortfolio({
-          page,
-          limit,
-          search: search.trim() || undefined,
-          category: category !== "All" ? category : undefined,
-        });
+        const res = await adminService.getPortfolio(
+          {
+            page,
+            limit,
+            search: search.trim() || undefined,
+            category: category !== "All" ? category : undefined,
+          },
+          forceRefresh
+        );
         const clean = extractPaginatedData(res);
         setPortfolioItems(clean.items);
         setPortfolioTotal(clean.total);
         setPortfolioTotalPages(clean.totalPages);
         setPortfolioPage(clean.page);
-        setStats((prev) => ({ ...prev, totalPortfolio: clean.total }));
+        setStats((prev) => {
+          const updated = { ...prev, totalPortfolio: clean.total };
+          setApiCache("admin_stats", updated);
+          return updated;
+        });
       } catch (err) {
         console.error("Failed to load portfolio:", err);
       } finally {
         setPortfolioLoading(false);
       }
     },
-    [portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory]
+    [portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory, portfolioItems.length]
   );
 
   const fetchThreeD = useCallback(
-    async (page = threeDPage, limit = threeDLimit, search = threeDSearch, category = threeDCategory) => {
-      setThreeDLoading(true);
+    async (
+      page = threeDPage,
+      limit = threeDLimit,
+      search = threeDSearch,
+      category = threeDCategory,
+      forceRefresh = false
+    ) => {
+      if (threeDItems.length === 0) {
+        setThreeDLoading(true);
+      }
       try {
-        const res = await adminService.getThreeD({
-          page,
-          limit,
-          search: search.trim() || undefined,
-          category: category !== "All" ? category : undefined,
-        });
+        const res = await adminService.getThreeD(
+          {
+            page,
+            limit,
+            search: search.trim() || undefined,
+            category: category !== "All" ? category : undefined,
+          },
+          forceRefresh
+        );
         const clean = extractPaginatedData(res);
         setThreeDItems(clean.items);
         setThreeDTotal(clean.total);
         setThreeDTotalPages(clean.totalPages);
         setThreeDPage(clean.page);
-        setStats((prev) => ({ ...prev, totalThreeD: clean.total }));
+        setStats((prev) => {
+          const updated = { ...prev, totalThreeD: clean.total };
+          setApiCache("admin_stats", updated);
+          return updated;
+        });
       } catch (err) {
         console.error("Failed to load 3D Studio:", err);
       } finally {
         setThreeDLoading(false);
       }
     },
-    [threeDPage, threeDLimit, threeDSearch, threeDCategory]
+    [threeDPage, threeDLimit, threeDSearch, threeDCategory, threeDItems.length]
   );
 
   const fetchInquiries = useCallback(
-    async (page = inquiriesPage, limit = inquiriesLimit, search = inquiriesSearch, status = inquiriesStatusFilter) => {
-      setInquiriesLoading(true);
+    async (
+      page = inquiriesPage,
+      limit = inquiriesLimit,
+      search = inquiriesSearch,
+      status = inquiriesStatusFilter,
+      forceRefresh = false
+    ) => {
+      if (inquiriesList.length === 0) {
+        setInquiriesLoading(true);
+      }
       try {
-        const res = await adminService.getInquiries({
-          page,
-          limit,
-          search: search.trim() || undefined,
-          status: status !== "ALL" ? status : undefined,
-        });
+        const res = await adminService.getInquiries(
+          {
+            page,
+            limit,
+            search: search.trim() || undefined,
+            status: status !== "ALL" ? status : undefined,
+          },
+          forceRefresh
+        );
         const clean = extractPaginatedData(res);
         setInquiriesList(clean.items);
         setInquiriesTotal(clean.total);
@@ -219,24 +286,28 @@ export const AdminDashboardPage: React.FC = () => {
         setInquiriesPage(clean.page);
 
         const newCount = clean.items.filter((i: any) => i.status === "NEW").length;
-        setStats((prev) => ({
-          ...prev,
-          totalInquiries: clean.total,
-          newInquiries: newCount,
-        }));
+        setStats((prev) => {
+          const updated = {
+            ...prev,
+            totalInquiries: clean.total,
+            newInquiries: newCount,
+          };
+          setApiCache("admin_stats", updated);
+          return updated;
+        });
       } catch (err) {
         console.error("Failed to load inquiries:", err);
       } finally {
         setInquiriesLoading(false);
       }
     },
-    [inquiriesPage, inquiriesLimit, inquiriesSearch, inquiriesStatusFilter]
+    [inquiriesPage, inquiriesLimit, inquiriesSearch, inquiriesStatusFilter, inquiriesList.length]
   );
 
   const reloadAll = () => {
-    fetchPortfolio();
-    fetchThreeD();
-    fetchInquiries();
+    fetchPortfolio(portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory, true);
+    fetchThreeD(threeDPage, threeDLimit, threeDSearch, threeDCategory, true);
+    fetchInquiries(inquiriesPage, inquiriesLimit, inquiriesSearch, inquiriesStatusFilter, true);
   };
 
   useEffect(() => {
@@ -255,11 +326,15 @@ export const AdminDashboardPage: React.FC = () => {
 
     const unsubInquiryNew = onSocketEvent("inquiry:new", (newInquiry) => {
       showNotification(`New Inquiry from ${newInquiry.name || newInquiry.fullName || "Client"}!`, "success");
-      setStats((prev) => ({
-        ...prev,
-        totalInquiries: prev.totalInquiries + 1,
-        newInquiries: prev.newInquiries + 1,
-      }));
+      setStats((prev) => {
+        const updated = {
+          ...prev,
+          totalInquiries: prev.totalInquiries + 1,
+          newInquiries: prev.newInquiries + 1,
+        };
+        setApiCache("admin_stats", updated);
+        return updated;
+      });
       setInquiriesList((prev) => [newInquiry, ...prev]);
     });
 
@@ -269,16 +344,20 @@ export const AdminDashboardPage: React.FC = () => {
 
     const unsubInquiryDeleted = onSocketEvent("inquiry:deleted", (id) => {
       setInquiriesList((prev) => prev.filter((inq) => inq.id !== id));
-      setStats((prev) => ({ ...prev, totalInquiries: Math.max(0, prev.totalInquiries - 1) }));
+      setStats((prev) => {
+        const updated = { ...prev, totalInquiries: Math.max(0, prev.totalInquiries - 1) };
+        setApiCache("admin_stats", updated);
+        return updated;
+      });
     });
 
-    const unsubPortCreated = onSocketEvent("portfolio:created", () => fetchPortfolio());
-    const unsubPortUpdated = onSocketEvent("portfolio:updated", () => fetchPortfolio());
-    const unsubPortDeleted = onSocketEvent("portfolio:deleted", () => fetchPortfolio());
+    const unsubPortCreated = onSocketEvent("portfolio:created", () => fetchPortfolio(undefined, undefined, undefined, undefined, true));
+    const unsubPortUpdated = onSocketEvent("portfolio:updated", () => fetchPortfolio(undefined, undefined, undefined, undefined, true));
+    const unsubPortDeleted = onSocketEvent("portfolio:deleted", () => fetchPortfolio(undefined, undefined, undefined, undefined, true));
 
-    const unsubThreeDCreated = onSocketEvent("threed:created", () => fetchThreeD());
-    const unsubThreeDUpdated = onSocketEvent("threed:updated", () => fetchThreeD());
-    const unsubThreeDDeleted = onSocketEvent("threed:deleted", () => fetchThreeD());
+    const unsubThreeDCreated = onSocketEvent("threed:created", () => fetchThreeD(undefined, undefined, undefined, undefined, true));
+    const unsubThreeDUpdated = onSocketEvent("threed:updated", () => fetchThreeD(undefined, undefined, undefined, undefined, true));
+    const unsubThreeDDeleted = onSocketEvent("threed:deleted", () => fetchThreeD(undefined, undefined, undefined, undefined, true));
 
     return () => {
       socket.off("connect", handleConnect);
@@ -352,7 +431,7 @@ export const AdminDashboardPage: React.FC = () => {
           await adminService.updatePortfolio(data.id, data);
           showNotification("Portfolio project updated!");
         }
-        fetchPortfolio();
+        fetchPortfolio(portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory, true);
       } else if (type === "threed") {
         if (!data.videoUrl) {
           showNotification("Please upload a video file or provide a video URL.", "error");
@@ -372,7 +451,7 @@ export const AdminDashboardPage: React.FC = () => {
           await adminService.updateThreeD(data.id, threedPayload);
           showNotification("3D showcase video updated!");
         }
-        fetchThreeD();
+        fetchThreeD(threeDPage, threeDLimit, threeDSearch, threeDCategory, true);
       }
 
       setEditingItem(null);
@@ -399,15 +478,15 @@ export const AdminDashboardPage: React.FC = () => {
       if (type === "portfolio") {
         await adminService.deletePortfolio(String(id));
         showNotification("Portfolio project removed.");
-        fetchPortfolio();
+        fetchPortfolio(portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory, true);
       } else if (type === "threed") {
         await adminService.deleteThreeD(String(id));
         showNotification("3D showcase removed.");
-        fetchThreeD();
+        fetchThreeD(threeDPage, threeDLimit, threeDSearch, threeDCategory, true);
       } else if (type === "inquiries") {
         await adminService.deleteInquiry(String(id));
         showNotification("Inquiry deleted.");
-        fetchInquiries();
+        fetchInquiries(inquiriesPage, inquiriesLimit, inquiriesSearch, inquiriesStatusFilter, true);
       }
       setDeleteModal((prev) => ({ ...prev, isOpen: false, isDeleting: false }));
     } catch (err: any) {

@@ -98,7 +98,7 @@ export const Portfolio: React.FC = () => {
     const cached = getApiCache<PlaneItem[]>("portfolio_items");
     return cached && cached.length > 0 ? cached[0] : null;
   });
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const scrollProgressRef = useRef<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(() => {
     const cached = getApiCache<PlaneItem[]>("portfolio_items");
     return !(cached && cached.length > 0);
@@ -240,9 +240,11 @@ export const Portfolio: React.FC = () => {
         pin: true,
         pinSpacing: true,
         scrub: 0.6,
+        anticipatePin: 1,
+        fastScrollEnd: true,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
-          setScrollProgress(self.progress);
+          scrollProgressRef.current = self.progress;
           if (progressBarRef.current) {
             progressBarRef.current.style.width = `${self.progress * 100}%`;
           }
@@ -339,7 +341,7 @@ export const Portfolio: React.FC = () => {
             <SkinnedPlane
               planes={planes}
               selectedId={selectedPlane?.id}
-              scrollProgress={scrollProgress}
+              scrollProgressRef={scrollProgressRef}
               onSelectPlane={setSelectedPlane}
               onReady={() => {
                 setIs3DReady(true);

@@ -23,14 +23,80 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeThumb, setActiveThumb] = useState<number | null>(null);
   const [audioTimer, setAudioTimer] = useState("00 - 00");
+  const [bgLoaded, setBgLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const timerIntervalRef = useRef<number | null>(null);
 
+  // High-Performance Hero Background Preloader & Decoder
   useEffect(() => {
-    // Notify preloader that initial home assets are ready
-    if (onFramesProgress) {
-      onFramesProgress(100, true);
+    let isMounted = true;
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    const primaryBg = isMobile ? mobileBg : windowBg;
+    const secondaryBg = isMobile ? windowBg : mobileBg;
+
+    // 1. Notify preloader of start
+    onFramesProgress?.(30, false);
+
+    const img = new Image();
+    img.src = primaryBg;
+
+    let hasCompleted = false;
+    const markComplete = () => {
+      if (hasCompleted) return;
+      hasCompleted = true;
+      if (isMounted) {
+        setBgLoaded(true);
+        onFramesProgress?.(100, true);
+      }
+    };
+
+    // Use Modern Image.decode() API if supported (ensures GPU rasterization before display)
+    const imgObj = img as HTMLImageElement;
+    if (typeof imgObj.decode === "function") {
+      onFramesProgress?.(65, false);
+      imgObj
+        .decode()
+        .then(() => {
+          markComplete();
+        })
+        .catch(() => {
+          // Fallback if decode fails
+          markComplete();
+        });
+    } else {
+      imgObj.onload = () => {
+        markComplete();
+      };
+      imgObj.onerror = () => {
+        markComplete();
+      };
     }
+
+    // Safety fallback: Never keep the preloader waiting more than 1.8s
+    const safetyTimer = setTimeout(() => {
+      markComplete();
+    }, 1800);
+
+    // Preload secondary background & media thumbnails during idle time
+    const preloadSecondaryAssets = () => {
+      const secondaryImg = new Image();
+      secondaryImg.src = secondaryBg;
+      mediaThumbnails.forEach((thumb) => {
+        const thumbImg = new Image();
+        thumbImg.src = thumb.src;
+      });
+    };
+
+    if ("requestIdleCallback" in window) {
+      (window as any).requestIdleCallback(preloadSecondaryAssets, { timeout: 1500 });
+    } else {
+      setTimeout(preloadSecondaryAssets, 600);
+    }
+
+    return () => {
+      isMounted = false;
+      clearTimeout(safetyTimer);
+    };
   }, [onFramesProgress]);
 
   // Synchronized Entrance Animation (Triggered ONLY when preloader finishes & Home is revealed)
@@ -57,7 +123,7 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
             scale: 0.82,
           },
           {
-            delay:1,
+            delay: 1,
             opacity: 1,
             scale: 1,
             duration: 1.95,
@@ -81,8 +147,7 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
             duration: 0.8,
             stagger: 0.06,
             ease: "power2.out",
-          },
-          "-=0.6"
+          }
         );
       }
 
@@ -96,8 +161,7 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
             y: 0,
             duration: 0.85,
             ease: "power3.out",
-          },
-          "-=0.5"
+          }
         );
       }
     };
@@ -137,7 +201,6 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
     };
   }, [isPlaying]);
 
-
   // Helper to split text into individual animated letter spans
   const renderRandomChars = (text: string) => {
     return text.split("").map((char, i) => (
@@ -155,44 +218,33 @@ export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgres
     <section
       id={id}
       ref={containerRef}
-      className="relative z-10 w-full min-h-screen bg-transparent text-white select-none overflow-hidden flex flex-col justify-between"
+      className="relative z-10 w-full min-h-screen bg-[#050505] text-white select-none overflow-hidden flex flex-col justify-between"
       style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
     >
-      {/* ========================================================================= */}
-      {/* LAYER 1: BOTTOM LAYER (BACKGROUND IMAGES - DESKTOP & MOBILE RESPONSIVE) */}
-      {/* ========================================================================= */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Desktop / Window View Background */}
-        <div className="hidden md:block absolute inset-0 w-full h-full">
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-[#050505]">
+        <picture className="absolute inset-0 w-full h-full block">
+          {/* Mobile Viewport Source */}
+          <source media="(max-width: 767px)" srcSet={mobileBg} type="image/webp" />
+          {/* Desktop / Window Viewport Source */}
+          <source media="(min-width: 768px)" srcSet={windowBg} type="image/webp" />
           <img
             src={windowBg}
-            alt="Digital Studio Window Background"
-            className="w-full h-full object-cover object-center filter contrast-[1.04] brightness-[0.96]"
+            alt="Bharat DigiGuru Studio Background"
+            loading="eager"
+            // @ts-expect-error fetchpriority is standard in modern browsers
+            fetchpriority="high"
+            decoding="async"
+            className={`w-full h-full object-cover object-center filter contrast-[1.04] brightness-[0.96] transition-opacity duration-700 ease-out ${
+              bgLoaded ? "opacity-100" : "opacity-0"
+            }`}
           />
-          {/* Subtle vignette gradients to ensure pristine blend */}
-          <div className="absolute inset-0 " />
-        </div>
-
-        {/* Mobile View Background */}
-        <div className="block md:hidden absolute inset-0 w-full h-full">
-          <img
-            src={mobileBg}
-            alt="Digital Studio Mobile Background"
-            className="w-full h-full object-cover object-center filter contrast-[1.04] brightness-[0.96]"
-          />
-          {/* Mobile ambient gradient */}
-          <div className="absolute inset-0 " />
-        </div>
+        </picture>
+        {/* Ambient subtle vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30 pointer-events-none" />
       </div>
 
-      {/* ========================================================================= */}
-      {/* LAYER 2: AMBIENT SHIMMER & LIGHT OVERLAY */}
-      {/* ========================================================================= */}
       <div className="absolute inset-0 z-[1] pointer-events-none " />
 
-      {/* ========================================================================= */}
-      {/* LAYER 3: TOP LAYER (DESKTOP INTERFACE & EDITORIAL DESIGN) */}
-      {/* ========================================================================= */}
       <div className="relative z-10 bg-black/60 hidden md:flex flex-col justify-between w-full h-screen px-8 lg:px-20 py-6 lg:py-8">
         {/* Top Row: Giant STUDIO - [LOGO] - DIGITAL Header */}
         <div className="w-full">

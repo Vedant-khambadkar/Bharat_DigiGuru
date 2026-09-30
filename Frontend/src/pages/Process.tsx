@@ -111,6 +111,8 @@ export const Process: React.FC = () => {
         return Math.max(track.scrollWidth - container.clientWidth + 80, 500);
       };
 
+      let lastStep = 1;
+
       const tween = gsap.to(track, {
         x: () => -getScrollDistance(),
         ease: "none",
@@ -121,10 +123,15 @@ export const Process: React.FC = () => {
           end: () => `+=${getScrollDistance() + 800}`,
           scrub: 1,
           anticipatePin: 1,
+          fastScrollEnd: true,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
-            const index = Math.round(self.progress * (PROCESS_STEPS.length - 1));
-            setActiveStep(Math.min(Math.max(index + 1, 1), PROCESS_STEPS.length));
+            const index = Math.round(self.progress * (PROCESS_STEPS.length - 1)) + 1;
+            const clamped = Math.min(Math.max(index, 1), PROCESS_STEPS.length);
+            if (clamped !== lastStep) {
+              lastStep = clamped;
+              setActiveStep(clamped);
+            }
           },
         },
       });

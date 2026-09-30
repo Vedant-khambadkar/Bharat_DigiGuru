@@ -55,7 +55,7 @@ export function setApiCache<T>(key: string, data: T): void {
   }
 }
 
-export function invalidateApiCache(keyOrPrefix?: string): void {
+export function invalidateApiCache(keyOrPrefix?: string | string[]): void {
   try {
     if (!keyOrPrefix) {
       memoryStore.clear();
@@ -69,16 +69,25 @@ export function invalidateApiCache(keyOrPrefix?: string): void {
       return;
     }
 
-    // Remove exact match or prefix matches
+    const targets = Array.isArray(keyOrPrefix) ? keyOrPrefix : [keyOrPrefix];
+
+    // Remove exact match or prefix/substring matches
     Array.from(memoryStore.keys()).forEach((k) => {
-      if (k === keyOrPrefix || k.startsWith(keyOrPrefix)) {
+      if (targets.some((target) => k === target || k.startsWith(target) || k.includes(target))) {
         memoryStore.delete(k);
       }
     });
 
     if (typeof window !== "undefined" && window.localStorage) {
       Object.keys(localStorage).forEach((k) => {
-        if (k.startsWith(`${CACHE_PREFIX}${keyOrPrefix}`)) {
+        if (
+          k.startsWith(CACHE_PREFIX) &&
+          targets.some(
+            (target) =>
+              k.startsWith(`${CACHE_PREFIX}${target}`) ||
+              k.includes(target)
+          )
+        ) {
           localStorage.removeItem(k);
         }
       });

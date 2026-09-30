@@ -86,6 +86,8 @@ export const WhyWorkWithUs: React.FC = () => {
         return Math.max(track.scrollWidth - container.clientWidth + 80, 400);
       };
 
+      let lastIndex = 0;
+
       const tween = gsap.to(track, {
         x: () => -getScrollDistance(),
         ease: "none",
@@ -96,10 +98,15 @@ export const WhyWorkWithUs: React.FC = () => {
           end: () => `+=${getScrollDistance() + 500}`,
           scrub: 0.8,
           anticipatePin: 1,
+          fastScrollEnd: true,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             const index = Math.round(self.progress * (PILLARS.length - 1));
-            setActiveIndex(Math.min(Math.max(index, 0), PILLARS.length - 1));
+            const clamped = Math.min(Math.max(index, 0), PILLARS.length - 1);
+            if (clamped !== lastIndex) {
+              lastIndex = clamped;
+              setActiveIndex(clamped);
+            }
           },
         },
       });
@@ -215,7 +222,7 @@ export const WhyWorkWithUs: React.FC = () => {
           <div className="lg:col-span-8 flex flex-col gap-6 sm:gap-8 lg:gap-10 overflow-hidden">
             
             {/* Top Mission Statement */}
-            <div className="why-us-statement max-w-3xl">
+            <div className="why-us-statement max-w-3xl mt-15">
               <p className="text-base sm:text-xl md:text-2xl lg:text-3xl font-normal text-neutral-200 leading-relaxed sm:leading-snug">
                 We design and build tailored digital experiences that not only elevate your brand visually but also deliver measurable results that support long-term business growth.
               </p>

@@ -17,6 +17,7 @@ import {
 import { adminService } from "../../services/service/adminService";
 import { socket, onSocketEvent } from "../../utils/socket";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
+import { getApiCache, setApiCache } from "../../utils/apiCache";
 
 interface AdminDashboardModalProps {
   isOpen: boolean;
@@ -26,6 +27,30 @@ interface AdminDashboardModalProps {
 
 type TabType = "overview" | "portfolio" | "threed" | "inquiries";
 
+const extractPaginatedData = (res: any) => {
+  if (!res) return { items: [], total: 0, totalPages: 1, page: 1 };
+  if (Array.isArray(res)) {
+    return { items: res, total: res.length, totalPages: 1, page: 1 };
+  }
+  if (res.items && Array.isArray(res.items)) {
+    return {
+      items: res.items,
+      total: res.total ?? res.items.length,
+      totalPages: res.totalPages ?? 1,
+      page: res.page ?? 1,
+    };
+  }
+  if (res.data && Array.isArray(res.data)) {
+    return {
+      items: res.data,
+      total: res.total ?? res.data.length,
+      totalPages: res.totalPages ?? 1,
+      page: res.page ?? 1,
+    };
+  }
+  return { items: [], total: 0, totalPages: 1, page: 1 };
+};
+
 export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   isOpen,
   onClose,
@@ -34,39 +59,63 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [isSocketOnline, setIsSocketOnline] = useState<boolean>(socket.connected);
 
-  // Overview Counts
-  const [stats, setStats] = useState({
-    totalPortfolio: 0,
-    totalThreeD: 0,
-    totalInquiries: 0,
-    newInquiries: 0,
+  // Overview Counts from cache
+  const [stats, setStats] = useState(() => {
+    return (
+      getApiCache<{
+        totalPortfolio: number;
+        totalThreeD: number;
+        totalInquiries: number;
+        newInquiries: number;
+      }>("admin_stats") || {
+        totalPortfolio: 0,
+        totalThreeD: 0,
+        totalInquiries: 0,
+        newInquiries: 0,
+      }
+    );
   });
 
   // ==========================================
   // PORTFOLIO STATE (SERVER-SIDE PAGINATION)
   // ==========================================
-  const [portfolioItems, setPortfolioItems] = useState<any[]>([]);
+  const initialPortCache = extractPaginatedData(
+    getApiCache<any>("admin_portfolio_category=&limit=6&page=1&search=")
+  );
+  const [portfolioItems, setPortfolioItems] = useState<any[]>(initialPortCache.items);
   const [portfolioPage, setPortfolioPage] = useState<number>(1);
-  const [portfolioTotalPages, setPortfolioTotalPages] = useState<number>(1);
-  const [portfolioTotal, setPortfolioTotal] = useState<number>(0);
+  const [portfolioTotalPages, setPortfolioTotalPages] = useState<number>(
+    initialPortCache.totalPages || 1
+  );
+  const [portfolioTotal, setPortfolioTotal] = useState<number>(initialPortCache.total || 0);
   const [portfolioSearch, setPortfolioSearch] = useState<string>("");
 
   // ==========================================
   // 3D SHOWCASE STATE (SERVER-SIDE PAGINATION)
   // ==========================================
-  const [threeDItems, setThreeDItems] = useState<any[]>([]);
+  const initialThreeDCache = extractPaginatedData(
+    getApiCache<any>("admin_threed_category=&limit=6&page=1&search=")
+  );
+  const [threeDItems, setThreeDItems] = useState<any[]>(initialThreeDCache.items);
   const [threeDPage, setThreeDPage] = useState<number>(1);
-  const [threeDTotalPages, setThreeDTotalPages] = useState<number>(1);
-  const [threeDTotal, setThreeDTotal] = useState<number>(0);
+  const [threeDTotalPages, setThreeDTotalPages] = useState<number>(
+    initialThreeDCache.totalPages || 1
+  );
+  const [threeDTotal, setThreeDTotal] = useState<number>(initialThreeDCache.total || 0);
   const [threeDSearch, setThreeDSearch] = useState<string>("");
 
   // ==========================================
   // INQUIRIES STATE (SERVER-SIDE PAGINATION)
   // ==========================================
-  const [inquiriesList, setInquiriesList] = useState<any[]>([]);
+  const initialInqCache = extractPaginatedData(
+    getApiCache<any>("admin_inquiries_limit=6&page=1&search=&status=")
+  );
+  const [inquiriesList, setInquiriesList] = useState<any[]>(initialInqCache.items);
   const [inquiriesPage, setInquiriesPage] = useState<number>(1);
-  const [inquiriesTotalPages, setInquiriesTotalPages] = useState<number>(1);
-  const [inquiriesTotal, setInquiriesTotal] = useState<number>(0);
+  const [inquiriesTotalPages, setInquiriesTotalPages] = useState<number>(
+    initialInqCache.totalPages || 1
+  );
+  const [inquiriesTotal, setInquiriesTotal] = useState<number>(initialInqCache.total || 0);
 
   // Detail Modal
   const [viewingInquiry, setViewingInquiry] = useState<any | null>(null);
@@ -100,44 +149,27 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     setTimeout(() => setNotification(null), 3500);
   };
 
-  const extractPaginatedData = (res: any) => {
-    if (!res) return { items: [], total: 0, totalPages: 1, page: 1 };
-    if (Array.isArray(res)) {
-      return { items: res, total: res.length, totalPages: 1, page: 1 };
-    }
-    if (res.items && Array.isArray(res.items)) {
-      return {
-        items: res.items,
-        total: res.total ?? res.items.length,
-        totalPages: res.totalPages ?? 1,
-        page: res.page ?? 1,
-      };
-    }
-    if (res.data && Array.isArray(res.data)) {
-      return {
-        items: res.data,
-        total: res.total ?? res.data.length,
-        totalPages: res.totalPages ?? 1,
-        page: res.page ?? 1,
-      };
-    }
-    return { items: [], total: 0, totalPages: 1, page: 1 };
-  };
-
   const fetchPortfolio = useCallback(
-    async (page = portfolioPage, search = portfolioSearch) => {
+    async (page = portfolioPage, search = portfolioSearch, forceRefresh = false) => {
       try {
-        const res = await adminService.getPortfolio({
-          page,
-          limit: 6,
-          search: search.trim() || undefined,
-        });
+        const res = await adminService.getPortfolio(
+          {
+            page,
+            limit: 6,
+            search: search.trim() || undefined,
+          },
+          forceRefresh
+        );
         const clean = extractPaginatedData(res);
         setPortfolioItems(clean.items);
         setPortfolioTotal(clean.total);
         setPortfolioTotalPages(clean.totalPages);
         setPortfolioPage(clean.page);
-        setStats((prev) => ({ ...prev, totalPortfolio: clean.total }));
+        setStats((prev) => {
+          const updated = { ...prev, totalPortfolio: clean.total };
+          setApiCache("admin_stats", updated);
+          return updated;
+        });
       } catch (err) {
         console.error("Failed to load portfolio:", err);
       }
@@ -146,19 +178,26 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   );
 
   const fetchThreeD = useCallback(
-    async (page = threeDPage, search = threeDSearch) => {
+    async (page = threeDPage, search = threeDSearch, forceRefresh = false) => {
       try {
-        const res = await adminService.getThreeD({
-          page,
-          limit: 6,
-          search: search.trim() || undefined,
-        });
+        const res = await adminService.getThreeD(
+          {
+            page,
+            limit: 6,
+            search: search.trim() || undefined,
+          },
+          forceRefresh
+        );
         const clean = extractPaginatedData(res);
         setThreeDItems(clean.items);
         setThreeDTotal(clean.total);
         setThreeDTotalPages(clean.totalPages);
         setThreeDPage(clean.page);
-        setStats((prev) => ({ ...prev, totalThreeD: clean.total }));
+        setStats((prev) => {
+          const updated = { ...prev, totalThreeD: clean.total };
+          setApiCache("admin_stats", updated);
+          return updated;
+        });
       } catch (err) {
         console.error("Failed to load 3D Studio:", err);
       }
@@ -167,12 +206,15 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   );
 
   const fetchInquiries = useCallback(
-    async (page = inquiriesPage) => {
+    async (page = inquiriesPage, forceRefresh = false) => {
       try {
-        const res = await adminService.getInquiries({
-          page,
-          limit: 6,
-        });
+        const res = await adminService.getInquiries(
+          {
+            page,
+            limit: 6,
+          },
+          forceRefresh
+        );
         const clean = extractPaginatedData(res);
         setInquiriesList(clean.items);
         setInquiriesTotal(clean.total);
@@ -180,11 +222,15 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
         setInquiriesPage(clean.page);
 
         const newCount = clean.items.filter((i: any) => i.status === "NEW").length;
-        setStats((prev) => ({
-          ...prev,
-          totalInquiries: clean.total,
-          newInquiries: newCount,
-        }));
+        setStats((prev) => {
+          const updated = {
+            ...prev,
+            totalInquiries: clean.total,
+            newInquiries: newCount,
+          };
+          setApiCache("admin_stats", updated);
+          return updated;
+        });
       } catch (err) {
         console.error("Failed to load inquiries:", err);
       }
@@ -193,9 +239,9 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   );
 
   const loadAllData = () => {
-    fetchPortfolio(1);
-    fetchThreeD(1);
-    fetchInquiries(1);
+    fetchPortfolio(1, undefined, true);
+    fetchThreeD(1, undefined, true);
+    fetchInquiries(1, true);
   };
 
   useEffect(() => {
@@ -214,11 +260,15 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 
     const unsubInquiry = onSocketEvent("inquiry:new", (newInquiry) => {
       setInquiriesList((prev) => [newInquiry, ...prev]);
-      setStats((prev) => ({
-        ...prev,
-        totalInquiries: prev.totalInquiries + 1,
-        newInquiries: prev.newInquiries + 1,
-      }));
+      setStats((prev) => {
+        const updated = {
+          ...prev,
+          totalInquiries: prev.totalInquiries + 1,
+          newInquiries: prev.newInquiries + 1,
+        };
+        setApiCache("admin_stats", updated);
+        return updated;
+      });
       showNotification("New Client Inquiry Received via Socket.io!", "success");
     });
 
@@ -228,16 +278,20 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 
     const unsubInqDeleted = onSocketEvent("inquiry:deleted", (id) => {
       setInquiriesList((prev) => prev.filter((i) => i.id !== id));
-      setStats((prev) => ({ ...prev, totalInquiries: Math.max(0, prev.totalInquiries - 1) }));
+      setStats((prev) => {
+        const updated = { ...prev, totalInquiries: Math.max(0, prev.totalInquiries - 1) };
+        setApiCache("admin_stats", updated);
+        return updated;
+      });
     });
 
-    const unsubPortCreated = onSocketEvent("portfolio:created", () => fetchPortfolio());
-    const unsubPortUpdated = onSocketEvent("portfolio:updated", () => fetchPortfolio());
-    const unsubPortDeleted = onSocketEvent("portfolio:deleted", () => fetchPortfolio());
+    const unsubPortCreated = onSocketEvent("portfolio:created", () => fetchPortfolio(undefined, undefined, true));
+    const unsubPortUpdated = onSocketEvent("portfolio:updated", () => fetchPortfolio(undefined, undefined, true));
+    const unsubPortDeleted = onSocketEvent("portfolio:deleted", () => fetchPortfolio(undefined, undefined, true));
 
-    const unsubThreeDCreated = onSocketEvent("threed:created", () => fetchThreeD());
-    const unsubThreeDUpdated = onSocketEvent("threed:updated", () => fetchThreeD());
-    const unsubThreeDDeleted = onSocketEvent("threed:deleted", () => fetchThreeD());
+    const unsubThreeDCreated = onSocketEvent("threed:created", () => fetchThreeD(undefined, undefined, true));
+    const unsubThreeDUpdated = onSocketEvent("threed:updated", () => fetchThreeD(undefined, undefined, true));
+    const unsubThreeDDeleted = onSocketEvent("threed:deleted", () => fetchThreeD(undefined, undefined, true));
 
     return () => {
       socket.off("connect", handleConnect);
@@ -269,14 +323,14 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
         } else {
           await adminService.updatePortfolio(data.id, data);
         }
-        fetchPortfolio();
+        fetchPortfolio(portfolioPage, portfolioSearch, true);
       } else if (type === "threed") {
         if (isNew) {
           await adminService.createThreeD(data);
         } else {
           await adminService.updateThreeD(data.id, data);
         }
-        fetchThreeD();
+        fetchThreeD(threeDPage, threeDSearch, true);
       }
 
       showNotification(`${type.toUpperCase()} saved & synchronized successfully!`);
@@ -303,13 +357,13 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     try {
       if (type === "portfolio") {
         await adminService.deletePortfolio(String(id));
-        fetchPortfolio();
+        fetchPortfolio(portfolioPage, portfolioSearch, true);
       } else if (type === "threed") {
         await adminService.deleteThreeD(String(id));
-        fetchThreeD();
+        fetchThreeD(threeDPage, threeDSearch, true);
       } else if (type === "inquiries") {
         await adminService.deleteInquiry(String(id));
-        fetchInquiries();
+        fetchInquiries(inquiriesPage, true);
       }
 
       showNotification("Record deleted successfully.");

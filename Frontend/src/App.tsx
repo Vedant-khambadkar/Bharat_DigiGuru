@@ -3,24 +3,21 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import Home from "./pages/Home";
+import Services from "./pages/Services";
+import About from "./pages/About";
+import MissionVision from "./pages/MissionVision";
+import ToolsAndTechnology from "./pages/ToolsAndTechnology";
+import PlatformsWeManage from "./pages/PlatformsWeManage";
+import Process from "./pages/Process";
+import Portfolio, { preloadPortfolioAssets } from "./pages/Portfolio";
+import ThreeDProjects from "./pages/ThreeDProjects";
+import WorkWithUs from "./pages/WhyWorkWithUs";
+import Blogs from "./pages/Blogs";
+import Contact from "./pages/Contact";
+import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import TopHeader from "./components/TopHeader";
 import Preloader3D from "./components/Preloader/Preloader3D";
-import LazySection from "./components/LazySection";
-
-// Lazy-load below-the-fold sections on demand as user scrolls
-const Services = lazy(() => import("./pages/Services"));
-const About = lazy(() => import("./pages/About"));
-const MissionVision = lazy(() => import("./pages/MissionVision"));
-const ToolsAndTechnology = lazy(() => import("./pages/ToolsAndTechnology"));
-const PlatformsWeManage = lazy(() => import("./pages/PlatformsWeManage"));
-const Process = lazy(() => import("./pages/Process"));
-const Portfolio = lazy(() => import("./pages/Portfolio"));
-const ThreeDProjects = lazy(() => import("./pages/ThreeDProjects"));
-const WorkWithUs = lazy(() => import("./pages/WorkWithUs"));
-const Blogs = lazy(() => import("./pages/Blogs"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Footer = lazy(() => import("./components/Footer"));
 
 // Lazy-load Admin routes & modals so they don't bloat the main landing page bundle
 const AdminAuthModal = lazy(() => import("./components/Admin/AdminAuthModal"));
@@ -181,11 +178,7 @@ const App = () => {
     let isDisposed = false;
     const triggerPortfolioPreload = () => {
       if (isDisposed) return;
-      import("./pages/Portfolio").then((mod) => {
-        if (mod && mod.preloadPortfolioAssets) {
-          mod.preloadPortfolioAssets();
-        }
-      });
+      preloadPortfolioAssets();
     };
 
     if ("requestIdleCallback" in window) {
@@ -213,15 +206,18 @@ const App = () => {
     }
     window.scrollTo(0, 0);
 
+    const isMobile = window.innerWidth < 768;
+
     const lenis = new Lenis({
-      duration: 2.25,
+      duration: isMobile ? 1.0 : 1.25,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 1.1,
-      touchMultiplier: 1.8,
+      wheelMultiplier: 0.92,
+      touchMultiplier: 1.0,
       infinite: false,
+      autoRaf: false,
     });
 
     (window as any).lenis = lenis;
@@ -238,21 +234,34 @@ const App = () => {
     }
 
     // Synchronize Lenis scroll updates with GSAP ScrollTrigger
-    lenis.on("scroll", ScrollTrigger.update);
+    lenis.on("scroll", () => {
+      ScrollTrigger.update();
+    });
 
     // Drive Lenis directly via GSAP's high-precision RAF ticker
     const tickerCallback = (time: number) => {
       lenis.raf(time * 1000);
     };
     gsap.ticker.add(tickerCallback);
-    // Crucial for Lenis + WebGL: lagSmoothing(0) prevents GSAP ticker from pausing Lenis during 3D loads
-    gsap.ticker.lagSmoothing(0);
+    // Smooth lag compensation prevents frame delta explosions during 3D/canvas loads
+    gsap.ticker.lagSmoothing(500, 33);
 
     // Reset to top before page unload
     const handleBeforeUnload = () => {
       window.scrollTo(0, 0);
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Debounced window resize handler for ScrollTrigger & Lenis
+    let resizeTimer: number;
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        lenis.resize();
+        ScrollTrigger.refresh();
+      }, 150);
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
 
     // Global Lenis smooth scroll handler for all internal anchor links (#...)
     const handleAnchorClick = (e: MouseEvent) => {
@@ -265,7 +274,7 @@ const App = () => {
           e.preventDefault();
           lenis.scrollTo(targetEl as HTMLElement, {
             offset: 0,
-            duration: 1.4,
+            duration: 1.2,
             easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
           });
         }
@@ -275,7 +284,9 @@ const App = () => {
 
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("resize", handleResize);
       document.removeEventListener("click", handleAnchorClick);
+      clearTimeout(resizeTimer);
       gsap.ticker.remove(tickerCallback);
       lenis.destroy();
       delete (window as any).lenis;
@@ -471,58 +482,22 @@ const App = () => {
       {/* Floating Glassmorphism Navbar */}
       <Navbar />
 
-      {/* Main Sections Flow */}
-      <div ref={mainContentRef} className="relative z-10">
+      {/* Main Sections Flow (Permanent Stable Layout) */}
+      <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
         <Home onFramesProgress={handleFramesProgress} />
-
-        <LazySection id="services-section" minHeight="750px">
-          <Services />
-        </LazySection>
-
-        <LazySection id="about-section" minHeight="750px">
-          <About />
-        </LazySection>
-
-        <LazySection id="mission-vision-section" minHeight="600px">
-          <MissionVision />
-        </LazySection>
-
-        <LazySection id="tools-section" minHeight="650px">
-          <ToolsAndTechnology />
-        </LazySection>
-
-        <LazySection id="platforms-section" minHeight="650px">
-          <PlatformsWeManage />
-        </LazySection>
-
-        <LazySection id="process-section" minHeight="600px">
-          <Process />
-        </LazySection>
-
-        <LazySection id="portfolio-section" minHeight="100vh" rootMargin="1200px 0px">
-          <Portfolio />
-        </LazySection>
-
-        <LazySection id="threed-section" minHeight="750px" rootMargin="900px 0px">
-          <ThreeDProjects />
-        </LazySection>
-
-        <LazySection id="workwithus-section" minHeight="500px">
-          <WorkWithUs />
-        </LazySection>
-
-        <LazySection id="blogs-section" minHeight="700px">
-          <Blogs />
-        </LazySection>
-
-        <LazySection id="contact-section" minHeight="650px">
-          <Contact />
-        </LazySection>
-
-        <LazySection id="footer-section" minHeight="350px">
-          <Footer />
-        </LazySection>
-      </div>
+        <Services />
+        <About />
+        <MissionVision />
+        <ToolsAndTechnology />
+        <PlatformsWeManage />
+        <Process />
+        <Portfolio />
+        <ThreeDProjects />
+        <WorkWithUs />
+        <Blogs />
+        <Contact />
+        <Footer />
+      </main>
 
       {/* Admin Auth Modal */}
       {isAdminAuthOpen && (

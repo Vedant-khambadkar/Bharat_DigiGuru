@@ -14,8 +14,6 @@ import pic3 from "../assets/Picture/Picture3.webp";
 import pic4 from "../assets/Picture/Picture4.webp";
 import pic5 from "../assets/Picture/Picture5.webp";
 import pic7 from "../assets/Picture/Picture7.webp";
-import pic8 from "../assets/Picture/Picture8.webp";
-import pic9 from "../assets/Picture/Picture9.webp";
 import pic10 from "../assets/Picture/Picture10.webp";
 import pic11 from "../assets/Picture/Picture11.webp";
 import pic12 from "../assets/Picture/Picture12.webp";
@@ -171,33 +169,47 @@ const SERVICES_DATA: ServiceData[] = [
         works: [
             {
                 id: "video-work-1",
-                title: "4K Cinematic Commercial Reel",
-                type: "video",
-                url: pic8,
-                thumbnail: pic7,
-                tag: "Cinematic Film",
-                description: "4K cinematic brand film with bespoke color grading, sound design, and drone shots.",
-                metrics: "4K 60FPS • Dolby Audio",
+                title: "Abhishek & Nitya — Rajasthan Destination Wedding",
+                type: "youtube",
+                url: "https://www.youtube.com/watch?v=-nWIdh4-PeA",
+                youtubeId: "-nWIdh4-PeA",
+                thumbnail: "https://img.youtube.com/vi/-nWIdh4-PeA/hqdefault.jpg",
+                tag: "Destination Wedding",
+                description: "Cinematic royal destination wedding film captured across the palaces and heritage locales of Rajasthan.",
+                metrics: "4K Cinema • Drone Master",
             },
             {
                 id: "video-work-2",
-                title: "Viral TikTok & Reels Showcase",
-                type: "image",
-                url: pic8,
-                thumbnail: pic8,
-                tag: "High-Cadence Social",
-                description: "Fast-paced, kinetic motion short videos optimized for maximum retention and shares.",
-                metrics: "12M+ Social Views",
+                title: "Kush & Venu — Varanasi Pre-Wedding Film",
+                type: "youtube",
+                url: "https://www.youtube.com/watch?v=KgXOwkM9o30",
+                youtubeId: "KgXOwkM9o30",
+                thumbnail: "https://img.youtube.com/vi/KgXOwkM9o30/hqdefault.jpg",
+                tag: "Pre-Wedding Cinema",
+                description: "Soulful pre-wedding film set against the ethereal morning ghats and sacred architecture of Varanasi.",
+                metrics: "Ghats of Kashi • 4K Master",
             },
             {
                 id: "video-work-3",
-                title: "Brand Documentary Spotlight",
-                type: "image",
-                url: pic9,
-                thumbnail: pic9,
-                tag: "Docu-Style Feature",
-                description: "Behind-the-scenes narrative highlighting founder stories and brand heritage.",
-                metrics: "Broadcast Quality",
+                title: "Bhavesh & Kusum — Leh Ladakh Visual Odyssey",
+                type: "youtube",
+                url: "https://www.youtube.com/watch?v=PybqBUGmTkE",
+                youtubeId: "PybqBUGmTkE",
+                thumbnail: "https://img.youtube.com/vi/PybqBUGmTkE/hqdefault.jpg",
+                tag: "Mountain Odyssey",
+                description: "Epic cinematic visual narrative through the dramatic mountain passes and blue waters of Leh Ladakh.",
+                metrics: "High Altitude • 4K 60FPS",
+            },
+            {
+                id: "video-work-4",
+                title: "Kumar Kanti & Dr. Ankita — Jaisalmer & Jaipur Reel",
+                type: "youtube",
+                url: "https://www.youtube.com/watch?v=cl6LdLUealA",
+                youtubeId: "cl6LdLUealA",
+                thumbnail: "https://img.youtube.com/vi/cl6LdLUealA/hqdefault.jpg",
+                tag: "Royal Heritage",
+                description: "Grand romantic film shot in the royal dunes of Jaisalmer and iconic forts of Jaipur.",
+                metrics: "Golden Dunes • Ultra-HD",
             },
         ],
         details: {

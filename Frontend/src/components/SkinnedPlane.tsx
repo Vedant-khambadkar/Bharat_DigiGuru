@@ -338,6 +338,7 @@ interface SkinnedPlaneProps {
   radius?: number;
   selectedId?: number | string;
   scrollProgress?: number;
+  scrollProgressRef?: React.MutableRefObject<number>;
   planes?: PlaneItem[];
   onSelectPlane?: (plane: PlaneItem) => void;
   onReady?: () => void;
@@ -347,6 +348,7 @@ export default function SkinnedPlane({
   showSkeleton = false,
   radius = RADIUS,
   scrollProgress = 0,
+  scrollProgressRef,
   planes = [],
   onSelectPlane,
   onReady,
@@ -443,7 +445,8 @@ export default function SkinnedPlane({
     introScale.current = THREE.MathUtils.damp(introScale.current, 1.0, 3.5, delta);
 
     // 1. Scroll-driven 360-degree rotation (progress 0..1 maps to 0..2*PI)
-    const targetScrollRot = -scrollProgress * Math.PI * 2;
+    const effectiveScrollProg = scrollProgressRef ? scrollProgressRef.current : scrollProgress;
+    const targetScrollRot = -effectiveScrollProg * Math.PI * 2;
     scrollRotDamped.current = THREE.MathUtils.damp(
       scrollRotDamped.current,
       targetScrollRot,

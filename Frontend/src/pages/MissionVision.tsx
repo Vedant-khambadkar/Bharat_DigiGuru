@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import LensText from "../components/LensText";
@@ -74,7 +74,7 @@ export const MissionVision: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
-  const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
+  const hudSlideRef = useRef<HTMLSpanElement>(null);
 
   // GSAP Horizontal Pin & ScrollTrigger Scrub along X-Axis
   useEffect(() => {
@@ -101,6 +101,7 @@ export const MissionVision: React.FC = () => {
         pinSpacing: true,
         scrub: 0.85,
         anticipatePin: 1,
+        fastScrollEnd: true,
         animation: horizontalTween,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
@@ -114,7 +115,9 @@ export const MissionVision: React.FC = () => {
           const idx = Math.min(numSlides - 1, Math.floor(self.progress * numSlides + 0.15));
           if (idx !== lastActive) {
             lastActive = idx;
-            setCurrentSlideIndex(idx);
+            if (hudSlideRef.current) {
+              hudSlideRef.current.textContent = `DISCIPLINE // 0${idx + 1} OF 0${numSlides}`;
+            }
           }
         },
       });
@@ -260,8 +263,8 @@ export const MissionVision: React.FC = () => {
               Bharat DigiGuru
             </span>
             <span className="text-neutral-600">/</span>
-            <span className="text-neutral-400">
-              DISCIPLINE // 0{currentSlideIndex + 1} OF 0{SLIDES.length}
+            <span ref={hudSlideRef} className="text-neutral-400">
+              DISCIPLINE // 01 OF 0{SLIDES.length}
             </span>
           </div>
 

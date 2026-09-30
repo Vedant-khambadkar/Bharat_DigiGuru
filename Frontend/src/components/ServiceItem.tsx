@@ -18,12 +18,20 @@ import LensText from "./LensText";
 export interface ServiceWorkItem {
   id: string;
   title: string;
-  type: "video" | "image";
+  type: "video" | "image" | "youtube";
   url: string;
   thumbnail?: string;
   tag: string;
   description?: string;
   metrics?: string;
+  youtubeId?: string;
+}
+
+export function extractYouTubeId(url?: string): string {
+  if (!url) return "";
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : url;
 }
 
 export interface ServiceData {
@@ -189,7 +197,7 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                         <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)] animate-pulse" />
                         Scope & Solution Overview
                       </h4>
-                      <p className="text-xs sm:text-sm text-neutral-300 leading-loose sm:leading-relaxed uppercase font-['Space_Grotesk',sans-serif] tracking-wide sm:tracking-normal">
+                      <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed font-['Space_Grotesk',sans-serif]">
                         {service.details.description}
                       </p>
 
@@ -210,7 +218,7 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                     </div>
 
                     {/* Column 2: Service Delivery & Direct CTAs Card */}
-                    <div className="flex flex-col justify-between gap-5 p-5 sm:p-6 rounded-xl bg-neutral-900/80 border border-neutral-800 shadow-lg relative overflow-hidden group/card">
+                    <div className="flex flex-col justify-between gap-5 p-5 sm:p-6 rounded-xl bg-neutral-900/80  relative overflow-hidden group/card">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
 
                       <div>
@@ -218,7 +226,7 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                           <h4 className="text-xs font-['Space_Grotesk',sans-serif] uppercase tracking-wider text-neutral-400 font-semibold">
                             Service Delivery
                           </h4>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-blue-500/20 text-blue-300 ">
                             Active Slot
                           </span>
                         </div>
@@ -236,9 +244,8 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                             e.stopPropagation();
                             scrollToSection("#portfolio-section");
                           }}
-                          className="group/btn relative inline-flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs uppercase tracking-wider font-bold bg-neutral-800 text-white border border-neutral-700/80 hover:bg-neutral-700 hover:border-neutral-500 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all duration-300 cursor-pointer overflow-hidden"
+                          className="group/btn relative inline-flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-xs uppercase tracking-wider font-bold bg-neutral-800 text-white  hover:bg-neutral-700  hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-all duration-300 cursor-pointer overflow-hidden"
                         >
-                          <Briefcase className="w-4 h-4 text-blue-400 transition-transform group-hover/btn:scale-110" />
                           <span>View My Work</span>
                           <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400 group-hover/btn:text-white transition-transform group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5" />
                         </button>
@@ -261,10 +268,10 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                   </div>
 
                   {/* =========================================================================
-                      ANIMATED WORK SHOWCASE (2 to 3 Images / Videos per Service)
+                      ANIMATED WORK SHOWCASE (Images / Videos / Live YouTube per Service)
                      ========================================================================= */}
                   {service.works && service.works.length > 0 && (
-                    <div className="flex flex-col gap-4 pt-6 border-t border-neutral-800/80">
+                    <div className="flex flex-col gap-4 pt-6 ">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
                           <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse" />
@@ -273,12 +280,12 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                           </h4>
                         </div>
                         <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 hidden sm:inline-block">
-                          {service.works.length} Animated Showcases • Click to Expand
+                          {service.works.length} Live Showcases • Click to Watch
                         </span>
                       </div>
 
-                      {/* 2-3 Animated Interactive Cards */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {/* Animated Interactive Cards (Adaptive 3 or 4 column grid) */}
+                      <div className={`grid grid-cols-1 sm:grid-cols-2 ${service.works.length >= 4 ? "lg:grid-cols-4" : "md:grid-cols-3"} gap-4`}>
                         {service.works.map((work, wIdx) => (
                           <WorkCard
                             key={work.id || wIdx}
@@ -380,9 +387,19 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
               </button>
             </div>
 
-            {/* Modal Media Display (Adapts to both Portrait & Landscape Media seamlessly) */}
-            <div className="relative w-full flex-1 min-h-[260px] max-h-[58vh] sm:max-h-[64vh] bg-black flex items-center justify-center overflow-hidden p-2 sm:p-3">
-              {activeModalWork.type === "video" ? (
+            {/* Modal Media Display (Adapts to YouTube, Native Video, and High-Res Images) */}
+            <div className="relative w-full flex-1 min-h-[260px] max-h-[60vh] sm:max-h-[66vh] bg-black flex items-center justify-center overflow-hidden p-2 sm:p-3">
+              {activeModalWork.type === "youtube" ? (
+                <div className="relative w-full aspect-video max-h-[56vh] sm:max-h-[62vh] rounded-xl overflow-hidden bg-black shadow-2xl">
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${activeModalWork.youtubeId || extractYouTubeId(activeModalWork.url)}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                    title={activeModalWork.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full border-0"
+                  />
+                </div>
+              ) : activeModalWork.type === "video" ? (
                 <div className="relative w-full h-full flex items-center justify-center">
                   <video
                     src={activeModalWork.url}
@@ -442,6 +459,17 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                 </p>
               </div>
               <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
+                {activeModalWork.type === "youtube" && (
+                  <a
+                    href={activeModalWork.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs uppercase tracking-wider font-semibold bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 transition-colors cursor-pointer"
+                  >
+                    <span>YouTube</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </a>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -501,6 +529,10 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, index, onOpenModal }) => {
     }
   };
 
+  const isYouTube = work.type === "youtube";
+  const ytId = work.youtubeId || (isYouTube ? extractYouTubeId(work.url) : "");
+  const thumbnailSrc = work.thumbnail || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : work.url);
+
   return (
     <div
       onMouseEnter={handleMouseEnter}
@@ -519,7 +551,22 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, index, onOpenModal }) => {
 
       {/* Media Container */}
       <div className="relative w-full h-44 sm:h-48 overflow-hidden bg-black">
-        {work.type === "video" ? (
+        {isYouTube ? (
+          <>
+            <img
+              src={thumbnailSrc}
+              alt={work.title}
+              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/work:scale-105 brightness-90 group-hover/work:brightness-100"
+              loading="lazy"
+            />
+            {/* YouTube Live Animated Play Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover/work:bg-black/10 transition-colors duration-300">
+              <div className="w-11 h-11 rounded-full bg-red-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.7)] group-hover/work:scale-115 transition-transform duration-300">
+                <Play className="w-4 h-4 fill-white translate-x-0.5" />
+              </div>
+            </div>
+          </>
+        ) : work.type === "video" ? (
           <>
             <video
               ref={videoRef}
@@ -557,7 +604,13 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, index, onOpenModal }) => {
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
           <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase bg-black/70 backdrop-blur-md border border-white/20 text-neutral-200">
-            {work.type === "video" ? (
+            {isYouTube ? (
+              <>
+                <Film className="w-2.5 h-2.5 text-red-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                YouTube 4K
+              </>
+            ) : work.type === "video" ? (
               <>
                 <Film className="w-2.5 h-2.5 text-blue-400" />
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
@@ -601,7 +654,7 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, index, onOpenModal }) => {
         <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-neutral-800/60 text-[10px] font-mono text-neutral-400 group-hover/work:text-white">
           <span>{work.metrics || "Interactive View"}</span>
           <span className="flex items-center gap-1 text-blue-400">
-            Preview <ArrowUpRight className="w-3 h-3 transition-transform group-hover/work:translate-x-0.5 group-hover/work:-translate-y-0.5" />
+            {isYouTube ? "Watch Film" : "Preview"} <ArrowUpRight className="w-3 h-3 transition-transform group-hover/work:translate-x-0.5 group-hover/work:-translate-y-0.5" />
           </span>
         </div>
       </div>
