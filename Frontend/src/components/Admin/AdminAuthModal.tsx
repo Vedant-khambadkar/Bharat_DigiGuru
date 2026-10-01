@@ -38,6 +38,13 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
       }
       localStorage.setItem("accessToken", token);
       sessionStorage.setItem("accessToken", token);
+      if ((res as any)?.user) {
+        const userObj = (res as any).user;
+        localStorage.setItem("adminUser", JSON.stringify(userObj));
+        localStorage.setItem("adminRole", userObj.role || "admin");
+        sessionStorage.setItem("adminUser", JSON.stringify(userObj));
+        sessionStorage.setItem("adminRole", userObj.role || "admin");
+      }
       setIsLoading(false);
       onLoginSuccess();
     } catch (err: any) {

@@ -11,9 +11,19 @@ export const getInitialSeedData = (): IDatabaseSchema => {
       email: "admin@bharatdigiguru.com",
       passwordHash: defaultPasswordHash,
       name: "Bharat DigiGuru Administrator",
-      role: "superadmin",
+      role: "managedAdmin",
       createdAt: new Date().toISOString(),
     },
+    adminUsers: [
+      {
+        id: "admin-master-001",
+        email: "admin@bharatdigiguru.com",
+        passwordHash: defaultPasswordHash,
+        name: "Bharat DigiGuru Administrator",
+        role: "managedAdmin",
+        createdAt: new Date().toISOString(),
+      },
+    ],
     portfolio: [
       {
         id: 1,

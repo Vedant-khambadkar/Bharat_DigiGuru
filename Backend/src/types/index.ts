@@ -54,15 +54,19 @@ export interface IInquiry {
   updatedAt?: string;
 }
 
+export type AdminRole = "managedAdmin" | "superAdmin" | "admin" | "superadmin" | "managedadmin";
+
 export interface IAdminUser {
   id: string;
   email: string;
   passwordHash: string;
   name: string;
-  role: "superadmin" | "admin";
+  role: AdminRole;
   resetPasswordOtp?: string;
   resetPasswordExpires?: string;
+  createdBy?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface IDatabaseSchema {
@@ -70,4 +74,6 @@ export interface IDatabaseSchema {
   threed: IThreeDProject[];
   inquiries: IInquiry[];
   adminUser: IAdminUser;
+  adminUsers?: IAdminUser[];
 }
+

@@ -4,9 +4,19 @@
     "email": "admin@bharatdigiguru.com",
     "passwordHash": "$2a$10$OhU6WSGMHVYhnAvb6JAM6.Zart4dtbBVihwBP3L/zUaRxzyCwy6Fi",
     "name": "Bharat DigiGuru Administrator",
-    "role": "superadmin",
+    "role": "managedAdmin",
     "createdAt": "2026-09-21T06:42:10.092Z"
   },
+  "adminUsers": [
+    {
+      "id": "admin-master-001",
+      "email": "admin@bharatdigiguru.com",
+      "passwordHash": "$2a$10$OhU6WSGMHVYhnAvb6JAM6.Zart4dtbBVihwBP3L/zUaRxzyCwy6Fi",
+      "name": "Bharat DigiGuru Administrator",
+      "role": "managedAdmin",
+      "createdAt": "2026-09-21T06:42:10.092Z"
+    }
+  ],
   "portfolio": [
     {
       "id": 1,

@@ -439,3 +439,230 @@ export async function sendInquiryNotificationEmail(inquiry: {
     console.error("❌ [EMAIL NOTIFICATION ERROR]:", err.message);
   }
 }
+
+interface SendAdminCredentialsOptions {
+  toEmail: string;
+  recipientName: string;
+  password: string;
+  role: string;
+  creatorName?: string;
+}
+
+/**
+ * Sends a welcome email containing admin login credentials to a newly created admin.
+ */
+export async function sendAdminCredentialsEmail({
+  toEmail,
+  recipientName,
+  password,
+  role,
+  creatorName = "Super Administrator",
+}: SendAdminCredentialsOptions): Promise<{ sent: boolean; message: string }> {
+  const normalizedRole = role.toLowerCase().includes("managed")
+    ? "Managed Administrator"
+    : role.toLowerCase().includes("super")
+    ? "Super Administrator"
+    : "Administrator";
+
+  const roleBadgeColor = role.toLowerCase().includes("managed")
+    ? "#9333ea"
+    : role.toLowerCase().includes("super")
+    ? "#ff3b30"
+    : "#2563eb";
+
+  console.log("\n=======================================================");
+  console.log("🚀 [BHARAT DIGIGURU] NEW ADMIN CREDENTIALS GENERATED");
+  console.log(`👤 Recipient: ${recipientName} (${toEmail})`);
+  console.log(`🛡️ Assigned Role: ${normalizedRole}`);
+  console.log(`🔑 Temporary Password: >>> ${password} <<<`);
+  console.log(`👨‍💼 Created By: ${creatorName}`);
+  console.log("=======================================================\n");
+
+  const transporter = createTransporter();
+  const fromAddress =
+    process.env.SMTP_FROM ||
+    process.env.SMTP_USER ||
+    process.env.GMAIL_USER ||
+    `"Bharat DigiGuru" <no-reply@bharatdigiguru.com>`;
+
+  const { attachments, logoSrc } = getLogoAttachment();
+  const portalUrl =
+    process.env.ADMIN_PORTAL_URL ||
+    process.env.FRONTEND_URL ||
+    "https://bharatdigiguru.com/admin/login";
+
+  const formattedDate = new Date().toLocaleDateString("en-IN", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Admin Portal Credentials</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #08090e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #e5e7eb;">
+      <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #08090e; padding: 48px 16px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; background: #11131c; border: 1px solid #232738; border-radius: 16px; overflow: hidden; text-align: left; box-shadow: 0 20px 60px rgba(0,0,0,0.6);">
+              
+              <!-- Header with Logo -->
+              <tr>
+                <td style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #232738; background: #141724;">
+                  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td align="left" valign="middle">
+                        <img src="${logoSrc}" alt="Bharat DigiGuru" style="height: 32px; width: auto; display: block;" />
+                      </td>
+                      <td align="right" valign="middle">
+                        <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px;">
+                          ${formattedDate}
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Body Title & Greeting -->
+              <tr>
+                <td style="padding: 32px 32px 12px 32px;">
+                  <div style="display: inline-block; padding: 4px 12px; background: ${roleBadgeColor}20; border: 1px solid ${roleBadgeColor}50; border-radius: 9999px; margin-bottom: 16px;">
+                    <span style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; font-weight: 700; color: ${roleBadgeColor}; letter-spacing: 1px; text-transform: uppercase;">
+                      ${normalizedRole}
+                    </span>
+                  </div>
+
+                  <h1 style="font-size: 22px; font-weight: 700; color: #ffffff; margin: 0 0 10px 0; letter-spacing: -0.3px;">
+                    Welcome to Bharat DigiGuru Admin Portal
+                  </h1>
+                  
+                  <p style="font-size: 14px; line-height: 1.6; color: #9ca3af; margin: 0 0 20px 0;">
+                    Hello <strong style="color: #ffffff;">${recipientName}</strong>,<br>
+                    An administrative account has been created for you by <strong style="color: #e5e7eb;">${creatorName}</strong>. You now have access to manage the Bharat DigiGuru platform.
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Credentials Card -->
+              <tr>
+                <td style="padding: 0 32px 24px 32px;">
+                  <div style="background: #090a10; border: 1px solid #1f2333; border-radius: 12px; padding: 20px 24px;">
+                    
+                    <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin-bottom: 14px; font-family: ui-monospace, monospace;">
+                      Your Account Credentials
+                    </div>
+
+                    <!-- Email Field -->
+                    <div style="margin-bottom: 14px;">
+                      <div style="font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: uppercase; font-family: ui-monospace, monospace; letter-spacing: 0.5px;">
+                        Login Email
+                      </div>
+                      <div style="font-size: 15px; font-weight: 600; color: #ffffff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;">
+                        ${toEmail}
+                      </div>
+                    </div>
+
+                    <!-- Password Field -->
+                    <div style="padding-top: 12px; border-top: 1px solid #191c29;">
+                      <div style="font-size: 11px; color: #9ca3af; margin-bottom: 4px; text-transform: uppercase; font-family: ui-monospace, monospace; letter-spacing: 0.5px;">
+                        Assigned Password
+                      </div>
+                      <div style="display: inline-block; background: #131622; border: 1px solid #282d42; border-radius: 6px; padding: 8px 14px;">
+                        <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 16px; font-weight: 700; color: #60a5fa; letter-spacing: 1.5px;">
+                          ${password}
+                        </span>
+                      </div>
+                    </div>
+
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Action Button -->
+              <tr>
+                <td style="padding: 0 32px 28px 32px;">
+                  <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="100%">
+                    <tr>
+                      <td align="center" style="border-radius: 8px; background: #ff3b30;">
+                        <a href="${portalUrl}" target="_blank" style="display: block; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; text-align: center; letter-spacing: 0.2px; text-transform: uppercase; font-family: ui-monospace, monospace;">
+                          Log In to Admin Console &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Security Advice Box -->
+              <tr>
+                <td style="padding: 0 32px 28px 32px;">
+                  <div style="background: #151824; border-left: 3px solid #ff3b30; border-radius: 0 8px 8px 0; padding: 14px 18px;">
+                    <div style="font-size: 12px; font-weight: 600; color: #f3f4f6; margin-bottom: 4px;">
+                      Security Recommendation
+                    </div>
+                    <div style="font-size: 12px; line-height: 1.5; color: #9ca3af;">
+                      We recommend changing your password after your first login via the "Forgot Password" or profile settings option. Never share these credentials with anyone.
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="background: #0d0e15; padding: 20px 32px; border-top: 1px solid #1c202d;">
+                  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td align="left" style="font-size: 12px; color: #6b7280;">
+                        Bharat DigiGuru &bull; Next-Gen Digital Studio
+                      </td>
+                      <td align="right" style="font-size: 12px;">
+                        <a href="https://bharatdigiguru.com" style="color: #6b7280; text-decoration: none;">bharatdigiguru.com</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  if (!transporter) {
+    return {
+      sent: true,
+      message: "Admin credentials logged to server console (SMTP not configured in .env).",
+    };
+  }
+
+  try {
+    await transporter.sendMail({
+      from: fromAddress,
+      to: toEmail,
+      subject: `Your Bharat DigiGuru Admin Portal Credentials - ${normalizedRole}`,
+      text: `Hello ${recipientName},\n\nYour admin account has been created with role: ${normalizedRole}.\n\nLogin Email: ${toEmail}\nPassword: ${password}\n\nLogin URL: ${portalUrl}\n\nPlease keep these credentials secure.`,
+      html: htmlContent,
+      attachments,
+    });
+
+    console.log(`✅ [EMAIL SENT] Admin credentials delivered to ${toEmail}`);
+    return { sent: true, message: `Credentials successfully sent to ${toEmail}` };
+  } catch (error: any) {
+    console.error("❌ [EMAIL SEND ERROR]:", error.message);
+    return {
+      sent: false,
+      message: `Failed to deliver email: ${error.message}. Use console credentials to log in.`,
+    };
+  }
+}
+

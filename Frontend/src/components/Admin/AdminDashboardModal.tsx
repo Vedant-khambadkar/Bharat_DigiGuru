@@ -59,6 +59,19 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [isSocketOnline, setIsSocketOnline] = useState<boolean>(socket.connected);
 
+  const currentUserRole = (() => {
+    try {
+      const stored = localStorage.getItem("adminRole") || sessionStorage.getItem("adminRole");
+      if (stored) {
+        const lower = stored.toLowerCase();
+        if (lower === "managedadmin" || lower === "managed_admin") return "managedAdmin";
+        if (lower === "superadmin" || lower === "super_admin") return "superAdmin";
+        return "admin";
+      }
+    } catch (_) {}
+    return "managedAdmin";
+  })();
+
   // Overview Counts from cache
   const [stats, setStats] = useState(() => {
     return (
@@ -240,9 +253,17 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 
   const loadAllData = () => {
     fetchPortfolio(1, undefined, true);
-    fetchThreeD(1, undefined, true);
+    if (currentUserRole === "managedAdmin") {
+      fetchThreeD(1, undefined, true);
+    }
     fetchInquiries(1, true);
   };
+
+  useEffect(() => {
+    if (currentUserRole !== "managedAdmin" && activeTab === "threed") {
+      setActiveTab("overview");
+    }
+  }, [currentUserRole, activeTab]);
 
   useEffect(() => {
     if (isOpen) {
@@ -481,20 +502,22 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
               <span>PORTFOLIO ({stats.totalPortfolio})</span>
             </button>
 
-            <button
-              onClick={() => {
-                setActiveTab("threed");
-                fetchThreeD(1);
-              }}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-mono tracking-wider transition-all cursor-pointer whitespace-nowrap ${
-                activeTab === "threed"
-                  ? "bg-[#ff3b30] text-white font-bold shadow-[0_0_15px_rgba(255,59,48,0.3)]"
-                  : "text-neutral-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Film size={14} />
-              <span>3D SHOWCASE ({stats.totalThreeD})</span>
-            </button>
+            {currentUserRole === "managedAdmin" && (
+              <button
+                onClick={() => {
+                  setActiveTab("threed");
+                  fetchThreeD(1);
+                }}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-mono tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  activeTab === "threed"
+                    ? "bg-[#ff3b30] text-white font-bold shadow-[0_0_15px_rgba(255,59,48,0.3)]"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Film size={14} />
+                <span>3D SHOWCASE ({stats.totalThreeD})</span>
+              </button>
+            )}
 
             <button
               onClick={() => {
@@ -524,7 +547,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
             {/* OVERVIEW TAB */}
             {activeTab === "overview" && (
               <div className="flex flex-col gap-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className={`grid grid-cols-1 ${currentUserRole === "managedAdmin" ? "sm:grid-cols-3" : "sm:grid-cols-2"} gap-4`}>
                   <div
                     onClick={() => {
                       setActiveTab("portfolio");
@@ -542,22 +565,24 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                     <span className="text-[11px] text-blue-400 font-mono">Published Projects</span>
                   </div>
 
-                  <div
-                    onClick={() => {
-                      setActiveTab("threed");
-                      fetchThreeD(1);
-                    }}
-                    className="p-5 rounded-2xl bg-[#12141c] border border-white/10 hover:border-purple-500/40 flex flex-col gap-2 cursor-pointer transition-all"
-                  >
-                    <div className="flex items-center justify-between text-neutral-400 font-mono text-xs">
-                      <span>2. 3D STUDIO</span>
-                      <Film className="w-4 h-4 text-purple-400" />
+                  {currentUserRole === "managedAdmin" && (
+                    <div
+                      onClick={() => {
+                        setActiveTab("threed");
+                        fetchThreeD(1);
+                      }}
+                      className="p-5 rounded-2xl bg-[#12141c] border border-white/10 hover:border-purple-500/40 flex flex-col gap-2 cursor-pointer transition-all"
+                    >
+                      <div className="flex items-center justify-between text-neutral-400 font-mono text-xs">
+                        <span>2. 3D STUDIO</span>
+                        <Film className="w-4 h-4 text-purple-400" />
+                      </div>
+                      <div className="font-['Syne',sans-serif] font-bold text-3xl text-white">
+                        {stats.totalThreeD}
+                      </div>
+                      <span className="text-[11px] text-purple-400 font-mono">CGI & UE5 Reels</span>
                     </div>
-                    <div className="font-['Syne',sans-serif] font-bold text-3xl text-white">
-                      {stats.totalThreeD}
-                    </div>
-                    <span className="text-[11px] text-purple-400 font-mono">CGI & UE5 Reels</span>
-                  </div>
+                  )}
 
                   <div
                     onClick={() => {
@@ -567,7 +592,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                     className="p-5 rounded-2xl bg-[#12141c] border border-white/10 hover:border-amber-500/40 flex flex-col gap-2 cursor-pointer transition-all"
                   >
                     <div className="flex items-center justify-between text-neutral-400 font-mono text-xs">
-                      <span>3. INQUIRIES</span>
+                      <span>{currentUserRole === "managedAdmin" ? "3. INQUIRIES" : "2. INQUIRIES"}</span>
                       <Mail className="w-4 h-4 text-amber-400" />
                     </div>
                     <div className="font-['Syne',sans-serif] font-bold text-3xl text-white">

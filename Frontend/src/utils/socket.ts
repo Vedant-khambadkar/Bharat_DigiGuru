@@ -3,10 +3,10 @@ import { Socket_Url } from "./constants";
 
 export const socket: Socket = io(Socket_Url, {
   withCredentials: true,
-  autoConnect: false,
+  autoConnect: true,
   path: "/socket.io",
-  transports: ["polling", "websocket"],
-  reconnectionAttempts: 10,
+  transports: ["websocket", "polling"],
+  reconnectionAttempts: 15,
   reconnectionDelay: 1000,
 });
 

@@ -73,6 +73,20 @@ class AdminApi {
   uploadMedia(formData: FormData) {
     return api._postFormData("/admin/upload", formData);
   }
+
+  // Admin User Management
+  getAdminUsers() {
+    return api._get("/admin/users");
+  }
+
+  createAdminUser(data: { name: string; email: string; role?: string; password?: string }) {
+    return api._post("/admin/users", data);
+  }
+
+  deleteAdminUser(id: string) {
+    return api._delete(`/admin/users/${id}`);
+  }
 }
+
 
 export const adminApi = new AdminApi();

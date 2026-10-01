@@ -56,10 +56,16 @@ class DatabaseStore {
         const fileContent = fs.readFileSync(DB_FILE, "utf-8");
         const parsed = JSON.parse(fileContent);
         if (parsed && typeof parsed === "object") {
-          return {
-            ...getInitialSeedData(),
+          const initialSeed = getInitialSeedData();
+          const merged: IDatabaseSchema = {
+            ...initialSeed,
             ...parsed,
           };
+          // Ensure adminUsers exists
+          if (!Array.isArray(merged.adminUsers) || merged.adminUsers.length === 0) {
+            merged.adminUsers = [merged.adminUser || initialSeed.adminUser];
+          }
+          return merged;
         }
       }
     } catch (err) {
@@ -583,14 +589,38 @@ class DatabaseStore {
   }
 
   // ==========================================
-  // ADMIN AUTH
+  // ADMIN AUTH & MULTI-USER MANAGEMENT
   // ==========================================
   public async getAdminUser() {
     if (this.isMongoConnected) {
       const user = await AdminUserModel.findOne().lean();
       if (user) return user;
     }
-    return this.localData.adminUser;
+    return this.localData.adminUsers?.[0] || this.localData.adminUser;
+  }
+
+  public async getAdminUsers() {
+    if (this.isMongoConnected) {
+      const users = await AdminUserModel.find()
+        .sort({ createdAt: -1 })
+        .select("-passwordHash -resetPasswordOtp -resetPasswordExpires")
+        .lean();
+      return users;
+    }
+
+    const list = this.localData.adminUsers || [this.localData.adminUser];
+    return list.map((u) => {
+      const { passwordHash, resetPasswordOtp, resetPasswordExpires, ...safe } = u as any;
+      return safe;
+    });
+  }
+
+  public async getAdminUserById(id: string) {
+    if (this.isMongoConnected) {
+      return await AdminUserModel.findOne(this.buildIdQuery(id)).lean();
+    }
+    const list = this.localData.adminUsers || [this.localData.adminUser];
+    return list.find((u) => String(u.id) === String(id) || (u as any)._id === String(id));
   }
 
   public async getAdminUserByEmail(email: string) {
@@ -601,16 +631,73 @@ class DatabaseStore {
       return null;
     }
 
-    if (this.localData.adminUser.email.toLowerCase() === normalizedEmail) {
+    const list = this.localData.adminUsers || [this.localData.adminUser];
+    const found = list.find((u) => u.email.toLowerCase() === normalizedEmail);
+    if (found) return found;
+
+    if (this.localData.adminUser?.email.toLowerCase() === normalizedEmail) {
       return this.localData.adminUser;
     }
     return null;
   }
 
+  public async createAdminUser(userData: {
+    id?: string;
+    email: string;
+    passwordHash: string;
+    name: string;
+    role: any;
+    createdBy?: string;
+  }) {
+    const newAdmin = {
+      ...userData,
+      id: userData.id || `admin-${Date.now()}`,
+      email: userData.email.toLowerCase().trim(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (this.isMongoConnected) {
+      const doc = await AdminUserModel.create(newAdmin);
+      const res = doc.toJSON();
+      return res;
+    }
+
+    if (!this.localData.adminUsers) {
+      this.localData.adminUsers = [this.localData.adminUser];
+    }
+
+    this.localData.adminUsers.unshift(newAdmin);
+    this.persistLocal(this.localData);
+    const { passwordHash, ...safe } = newAdmin;
+    return safe;
+  }
+
+  public async deleteAdminUser(id: string) {
+    if (this.isMongoConnected) {
+      const res = await AdminUserModel.deleteOne(this.buildIdQuery(id));
+      return res.deletedCount > 0;
+    }
+
+    if (!this.localData.adminUsers) {
+      this.localData.adminUsers = [this.localData.adminUser];
+    }
+
+    const initialLen = this.localData.adminUsers.length;
+    this.localData.adminUsers = this.localData.adminUsers.filter(
+      (u) => String(u.id) !== String(id) && (u as any)._id !== String(id)
+    );
+
+    if (this.localData.adminUsers.length !== initialLen) {
+      this.persistLocal(this.localData);
+      return true;
+    }
+    return false;
+  }
+
   public async setAdminResetOtp(email: string, otp: string, expiresAt: Date) {
     const normalizedEmail = email.trim().toLowerCase();
     if (this.isMongoConnected) {
-      // Find admin or fallback to first admin doc
       let doc = await AdminUserModel.findOne({ email: normalizedEmail });
       if (!doc) {
         doc = await AdminUserModel.findOne();
@@ -621,6 +708,16 @@ class DatabaseStore {
         await doc.save();
       }
       return;
+    }
+
+    if (this.localData.adminUsers) {
+      const admin = this.localData.adminUsers.find((u) => u.email.toLowerCase() === normalizedEmail);
+      if (admin) {
+        admin.resetPasswordOtp = otp;
+        admin.resetPasswordExpires = expiresAt.toISOString();
+        this.persistLocal(this.localData);
+        return;
+      }
     }
 
     this.localData.adminUser.resetPasswordOtp = otp;
@@ -637,6 +734,12 @@ class DatabaseStore {
       }
       return doc;
     }
+
+    if (this.localData.adminUsers) {
+      const admin = this.localData.adminUsers.find((u) => u.email.toLowerCase() === normalizedEmail);
+      if (admin) return admin;
+    }
+
     return this.localData.adminUser;
   }
 
@@ -657,6 +760,17 @@ class DatabaseStore {
       return null;
     }
 
+    if (this.localData.adminUsers) {
+      const admin = this.localData.adminUsers.find((u) => u.email.toLowerCase() === normalizedEmail);
+      if (admin) {
+        admin.passwordHash = newPasswordHash;
+        delete admin.resetPasswordOtp;
+        delete admin.resetPasswordExpires;
+        this.persistLocal(this.localData);
+        return admin;
+      }
+    }
+
     this.localData.adminUser.passwordHash = newPasswordHash;
     delete this.localData.adminUser.resetPasswordOtp;
     delete this.localData.adminUser.resetPasswordExpires;
@@ -666,3 +780,4 @@ class DatabaseStore {
 }
 
 export const db = new DatabaseStore();
+

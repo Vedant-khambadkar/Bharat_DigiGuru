@@ -24,6 +24,15 @@ import {
   FileVideo,
   Loader2,
   Play,
+  Users,
+  ShieldCheck,
+  UserPlus,
+  KeyRound,
+  Copy,
+  CheckCheck,
+  Crown,
+  ShieldAlert,
+  UserCheck,
 } from "lucide-react";
 import { adminService } from "../services/service/adminService";
 import { socket, onSocketEvent } from "../utils/socket";
@@ -31,7 +40,7 @@ import { ConfirmDeleteModal } from "../components/Admin/ConfirmDeleteModal";
 import CachedImage from "../components/CachedImage";
 import { getApiCache, setApiCache } from "../utils/apiCache";
 
-type TabType = "overview" | "portfolio" | "threed" | "inquiries";
+type TabType = "overview" | "portfolio" | "threed" | "inquiries" | "admins";
 
 const extractPaginatedData = (res: any) => {
   if (!res) return { items: [], total: 0, totalPages: 1, page: 1 };
@@ -60,6 +69,28 @@ const extractPaginatedData = (res: any) => {
 export const AdminDashboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [isSocketOnline, setIsSocketOnline] = useState<boolean>(socket?.connected ?? false);
+
+  // Authenticated Admin User & Role State
+  const [currentUser, setCurrentUser] = useState<{
+    id?: string;
+    email?: string;
+    name?: string;
+    role: "managedAdmin" | "superAdmin" | "admin";
+  }>(() => {
+    try {
+      const raw = localStorage.getItem("adminUser") || sessionStorage.getItem("adminUser");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const r = (parsed.role || "").toLowerCase();
+        const role = r.includes("managed") ? "managedAdmin" : r.includes("super") ? "superAdmin" : "admin";
+        return { ...parsed, role };
+      }
+    } catch {}
+    const r = (localStorage.getItem("adminRole") || "").toLowerCase();
+    const role = r.includes("managed") ? "managedAdmin" : r.includes("super") ? "superAdmin" : "admin";
+    return { role, name: "Administrator" };
+  });
+
 
   // Upload State
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -146,10 +177,37 @@ export const AdminDashboardPage: React.FC = () => {
 
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+  // ==========================================
+  // ADMIN USER MANAGEMENT STATE (SUPER ADMIN / MANAGED ADMIN)
+  // ==========================================
+  const [adminUsersList, setAdminUsersList] = useState<any[]>([]);
+  const [adminUsersLoading, setAdminUsersLoading] = useState<boolean>(false);
+  const [isCreateAdminModalOpen, setIsCreateAdminModalOpen] = useState<boolean>(false);
+  const [newAdminForm, setNewAdminForm] = useState<{
+    name: string;
+    email: string;
+    role: "managedAdmin" | "superAdmin" | "admin";
+    password: string;
+  }>({
+    name: "",
+    email: "",
+    role: "admin",
+    password: "",
+  });
+  const [isRegisteringAdmin, setIsRegisteringAdmin] = useState<boolean>(false);
+  const [createdCredentialModal, setCreatedCredentialModal] = useState<{
+    isOpen: boolean;
+    email: string;
+    password: string;
+    name: string;
+    role: string;
+  } | null>(null);
+  const [hasCopiedPassword, setHasCopiedPassword] = useState<boolean>(false);
+
   // Custom Delete Confirmation Modal State
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
-    type: "portfolio" | "threed" | "inquiries";
+    type: "portfolio" | "threed" | "inquiries" | "adminUser";
     id: string | number;
     title?: string;
     isDeleting: boolean;
@@ -161,13 +219,39 @@ export const AdminDashboardPage: React.FC = () => {
     isDeleting: false,
   });
 
-  // Check auth
+  // Check auth & fetch current admin profile
   useEffect(() => {
     const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
     if (!token) {
       window.location.href = "/admin/login";
+      return;
     }
+
+    adminService
+      .getMe()
+      .then((res: any) => {
+        if (res?.user) {
+          const r = (res.user.role || "").toLowerCase();
+          const role = r.includes("managed")
+            ? "managedAdmin"
+            : r.includes("super")
+            ? "superAdmin"
+            : "admin";
+          const updated = { ...res.user, role };
+          setCurrentUser(updated);
+          localStorage.setItem("adminUser", JSON.stringify(updated));
+          localStorage.setItem("adminRole", role);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  // Ensure non-managedAdmin cannot stay on 3D tab
+  useEffect(() => {
+    if (currentUser.role !== "managedAdmin" && activeTab === "threed") {
+      setActiveTab("overview");
+    }
+  }, [currentUser.role, activeTab]);
 
   const showNotification = (message: string, type: "success" | "error" = "success") => {
     setNotification({ message, type });
@@ -226,6 +310,9 @@ export const AdminDashboardPage: React.FC = () => {
       category = threeDCategory,
       forceRefresh = false
     ) => {
+      // ONLY Managed Admin can fetch or view 3D showcase
+      if (currentUser.role !== "managedAdmin") return;
+
       if (threeDItems.length === 0) {
         setThreeDLoading(true);
       }
@@ -255,7 +342,7 @@ export const AdminDashboardPage: React.FC = () => {
         setThreeDLoading(false);
       }
     },
-    [threeDPage, threeDLimit, threeDSearch, threeDCategory, threeDItems.length]
+    [threeDPage, threeDLimit, threeDSearch, threeDCategory, threeDItems.length, currentUser.role]
   );
 
   const fetchInquiries = useCallback(
@@ -304,17 +391,45 @@ export const AdminDashboardPage: React.FC = () => {
     [inquiriesPage, inquiriesLimit, inquiriesSearch, inquiriesStatusFilter, inquiriesList.length]
   );
 
+  const fetchAdminUsers = useCallback(
+    async (forceRefresh = false) => {
+      if (currentUser.role !== "managedAdmin" && currentUser.role !== "superAdmin") return;
+      setAdminUsersLoading(true);
+      try {
+        const res: any = await adminService.getAdminUsers(forceRefresh);
+        const items = res?.data || (Array.isArray(res) ? res : []);
+        setAdminUsersList(items);
+      } catch (err) {
+        console.error("Failed to load admin users:", err);
+      } finally {
+        setAdminUsersLoading(false);
+      }
+    },
+    [currentUser.role]
+  );
+
   const reloadAll = () => {
     fetchPortfolio(portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory, true);
-    fetchThreeD(threeDPage, threeDLimit, threeDSearch, threeDCategory, true);
+    if (currentUser.role === "managedAdmin") {
+      fetchThreeD(threeDPage, threeDLimit, threeDSearch, threeDCategory, true);
+    }
     fetchInquiries(inquiriesPage, inquiriesLimit, inquiriesSearch, inquiriesStatusFilter, true);
+    if (currentUser.role === "managedAdmin" || currentUser.role === "superAdmin") {
+      fetchAdminUsers(true);
+    }
   };
 
   useEffect(() => {
     fetchPortfolio(1);
-    fetchThreeD(1);
+    if (currentUser.role === "managedAdmin") {
+      fetchThreeD(1);
+    }
     fetchInquiries(1);
-  }, []);
+    if (currentUser.role === "managedAdmin" || currentUser.role === "superAdmin") {
+      fetchAdminUsers();
+    }
+  }, [currentUser.role]);
+
 
   // Socket Connection & Real-time Listeners
   useEffect(() => {
@@ -460,12 +575,24 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  const handleDeleteItem = (type: "portfolio" | "threed" | "inquiries", id: string | number, title?: string) => {
+  const handleDeleteItem = (
+    type: "portfolio" | "threed" | "inquiries" | "adminUser",
+    id: string | number,
+    title?: string
+  ) => {
     setDeleteModal({
       isOpen: true,
       type,
       id,
-      title: title || (type === "portfolio" ? "Portfolio Project" : type === "threed" ? "3D Showcase" : "Inquiry Record"),
+      title:
+        title ||
+        (type === "portfolio"
+          ? "Portfolio Project"
+          : type === "threed"
+          ? "3D Showcase"
+          : type === "adminUser"
+          ? "Administrator Account"
+          : "Inquiry Record"),
       isDeleting: false,
     });
   };
@@ -487,12 +614,53 @@ export const AdminDashboardPage: React.FC = () => {
         await adminService.deleteInquiry(String(id));
         showNotification("Inquiry deleted.");
         fetchInquiries(inquiriesPage, inquiriesLimit, inquiriesSearch, inquiriesStatusFilter, true);
+      } else if (type === "adminUser") {
+        await adminService.deleteAdminUser(String(id));
+        showNotification("Administrator account removed.");
+        fetchAdminUsers(true);
       }
       setDeleteModal((prev) => ({ ...prev, isOpen: false, isDeleting: false }));
     } catch (err: any) {
       showNotification(`Delete failed: ${err.message || "Error"}`, "error");
       setDeleteModal((prev) => ({ ...prev, isDeleting: false }));
     }
+  };
+
+  const handleCreateAdminSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminForm.name || !newAdminForm.email) {
+      showNotification("Please provide admin name and email address.", "error");
+      return;
+    }
+
+    setIsRegisteringAdmin(true);
+    try {
+      const res: any = await adminService.createAdminUser(newAdminForm);
+      showNotification(res?.message || "Admin registered successfully!");
+      setIsCreateAdminModalOpen(false);
+      setCreatedCredentialModal({
+        isOpen: true,
+        name: newAdminForm.name,
+        email: newAdminForm.email,
+        password: res?.temporaryPassword || newAdminForm.password,
+        role: res?.user?.role || newAdminForm.role,
+      });
+      setNewAdminForm({ name: "", email: "", role: "admin", password: "" });
+      fetchAdminUsers(true);
+    } catch (err: any) {
+      showNotification(err?.response?.data?.message || err?.message || "Failed to register admin.", "error");
+    } finally {
+      setIsRegisteringAdmin(false);
+    }
+  };
+
+  const handleGenerateRandomPassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+    let pwd = "BDG#";
+    for (let i = 0; i < 6; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewAdminForm((prev) => ({ ...prev, password: pwd }));
   };
 
   const handleUpdateInquiryStatus = async (id: string, newStatus: "NEW" | "CONTACTED" | "ARCHIVED") => {
@@ -520,7 +688,7 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* Header Bar - Mobile Optimized with Official Logo */}
+      {/* Header Bar - Mobile Optimized with Official Logo and Role Badge */}
       <header className="px-3.5 sm:px-8 py-2.5 sm:py-3.5 border-b border-white/10 flex items-center justify-between bg-[#0e1017]/95 backdrop-blur-xl sticky top-0 z-40">
         <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
           <a href="/" className="flex items-center gap-2.5 shrink-0 group">
@@ -530,16 +698,29 @@ export const AdminDashboardPage: React.FC = () => {
               className="h-6 sm:h-7.5 w-auto object-contain drop-shadow-[0_2px_12px_rgba(255,59,48,0.35)] transition-transform group-hover:scale-105"
             />
           </a>
-          <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-neutral-300 font-mono font-bold tracking-wider border border-white/10 shrink-0">
-            ADMIN
-          </span>
-          
+
+          {/* Dynamic Role Badge */}
+          {currentUser.role === "managedAdmin" && (
+            <span className="text-[9px] sm:text-[10px] px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono font-bold tracking-wider border border-purple-500/40 shrink-0 flex items-center gap-1 shadow-[0_0_12px_rgba(168,85,247,0.3)]">
+              <Crown size={11} className="text-purple-400" />
+              <span>MANAGED ADMIN</span>
+            </span>
+          )}
+          {currentUser.role === "superAdmin" && (
+            <span className="text-[9px] sm:text-[10px] px-2.5 py-0.5 rounded-full bg-[#ff3b30]/20 text-red-300 font-mono font-bold tracking-wider border border-[#ff3b30]/40 shrink-0 flex items-center gap-1 shadow-[0_0_12px_rgba(255,59,48,0.3)]">
+              <ShieldAlert size={11} className="text-[#ff3b30]" />
+              <span>SUPER ADMIN</span>
+            </span>
+          )}
+          {currentUser.role === "admin" && (
+            <span className="text-[9px] sm:text-[10px] px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono font-bold tracking-wider border border-blue-500/40 shrink-0 flex items-center gap-1 shadow-[0_0_12px_rgba(59,130,246,0.3)]">
+              <ShieldCheck size={11} className="text-blue-400" />
+              <span>ADMIN</span>
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-      
-          
-
           {/* View Main Site */}
           <a
             href="/"
@@ -592,8 +773,9 @@ export const AdminDashboardPage: React.FC = () => {
 
       {/* Main Layout - Smooth scrolling on mobile & desktop */}
       <div className="flex-1 flex flex-col md:flex-row min-h-0 pb-20 md:pb-0">
-        {/* Desktop Sidebar (hidden on mobile, uses bottom dock instead) */}
+        {/* Desktop Sidebar */}
         <aside className="hidden md:flex w-60 border-r border-white/10 bg-[#0b0c12]/95 p-4 flex-col gap-2 shrink-0">
+          {/* Overview */}
           <button
             onClick={() => setActiveTab("overview")}
             className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all cursor-pointer ${
@@ -606,6 +788,7 @@ export const AdminDashboardPage: React.FC = () => {
             <span>OVERVIEW</span>
           </button>
 
+          {/* Portfolio */}
           <button
             onClick={() => {
               setActiveTab("portfolio");
@@ -626,26 +809,30 @@ export const AdminDashboardPage: React.FC = () => {
             </span>
           </button>
 
-          <button
-            onClick={() => {
-              setActiveTab("threed");
-              fetchThreeD(1);
-            }}
-            className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all cursor-pointer ${
-              activeTab === "threed"
-                ? "bg-[#ff3b30] text-white font-bold shadow-[0_0_15px_rgba(255,59,48,0.35)]"
-                : "text-neutral-400 hover:text-white hover:bg-white/5 bg-white/[0.02] border border-white/5"
-            }`}
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Film size={15} className="shrink-0" />
-              <span>3D SHOWCASE</span>
-            </div>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold font-mono ${activeTab === "threed" ? "bg-white/20 text-white" : "bg-white/10 text-neutral-300"}`}>
-              {stats.totalThreeD}
-            </span>
-          </button>
+          {/* 3D SHOWCASE - ONLY VISIBLE TO MANAGED ADMIN */}
+          {currentUser.role === "managedAdmin" && (
+            <button
+              onClick={() => {
+                setActiveTab("threed");
+                fetchThreeD(1);
+              }}
+              className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all cursor-pointer ${
+                activeTab === "threed"
+                  ? "bg-purple-600 text-white font-bold shadow-[0_0_15px_rgba(147,51,234,0.35)]"
+                  : "text-neutral-400 hover:text-white hover:bg-white/5 bg-white/[0.02] border border-white/5"
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Film size={15} className="shrink-0 text-purple-400" />
+                <span>3D SHOWCASE</span>
+              </div>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold font-mono ${activeTab === "threed" ? "bg-white/20 text-white" : "bg-white/10 text-neutral-300"}`}>
+                {stats.totalThreeD}
+              </span>
+            </button>
+          )}
 
+          {/* Inquiries */}
           <button
             onClick={() => {
               setActiveTab("inquiries");
@@ -670,23 +857,46 @@ export const AdminDashboardPage: React.FC = () => {
               )}
             </div>
           </button>
+
+          {/* ADMIN MANAGEMENT - VISIBLE TO MANAGED ADMIN & SUPER ADMIN */}
+          {(currentUser.role === "managedAdmin" || currentUser.role === "superAdmin") && (
+            <button
+              onClick={() => {
+                setActiveTab("admins");
+                fetchAdminUsers(true);
+              }}
+              className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all cursor-pointer ${
+                activeTab === "admins"
+                  ? "bg-emerald-600 text-white font-bold shadow-[0_0_15px_rgba(16,185,129,0.35)]"
+                  : "text-neutral-400 hover:text-white hover:bg-white/5 bg-white/[0.02] border border-white/5"
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Users size={15} className="shrink-0 text-emerald-400" />
+                <span>ADMINS</span>
+              </div>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold font-mono ${activeTab === "admins" ? "bg-white/20 text-white" : "bg-white/10 text-neutral-300"}`}>
+                {adminUsersList.length || 1}
+              </span>
+            </button>
+          )}
         </aside>
 
-        {/* Mobile Bottom Navigation Dock (iOS App Feel) */}
+        {/* Mobile Bottom Navigation Dock */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0c0d14]/95 backdrop-blur-2xl border-t border-white/15 px-2 py-1.5 flex items-center justify-around shadow-[0_-10px_35px_rgba(0,0,0,0.85)]">
           {/* 1. Overview */}
           <button
             onClick={() => setActiveTab("overview")}
-            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition-all cursor-pointer relative ${
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer relative ${
               activeTab === "overview"
                 ? "text-white font-bold"
                 : "text-neutral-400 hover:text-white"
             }`}
           >
             <div className={`p-1.5 rounded-xl transition-all ${activeTab === "overview" ? "bg-[#ff3b30] text-white shadow-[0_0_15px_rgba(255,59,48,0.5)]" : "bg-transparent"}`}>
-              <BarChart3 size={17} />
+              <BarChart3 size={16} />
             </div>
-            <span className="text-[10px] font-mono tracking-tight">Overview</span>
+            <span className="text-[9px] font-mono tracking-tight">Overview</span>
           </button>
 
           {/* 2. Portfolio */}
@@ -695,41 +905,43 @@ export const AdminDashboardPage: React.FC = () => {
               setActiveTab("portfolio");
               fetchPortfolio(1);
             }}
-            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition-all cursor-pointer relative ${
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer relative ${
               activeTab === "portfolio"
                 ? "text-white font-bold"
                 : "text-neutral-400 hover:text-white"
             }`}
           >
             <div className={`p-1.5 rounded-xl relative transition-all ${activeTab === "portfolio" ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]" : "bg-transparent"}`}>
-              <Briefcase size={17} />
-              <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-blue-500 text-[9px] font-mono text-white font-bold leading-none">
+              <Briefcase size={16} />
+              <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-blue-500 text-[8px] font-mono text-white font-bold leading-none">
                 {stats.totalPortfolio}
               </span>
             </div>
-            <span className="text-[10px] font-mono tracking-tight">Portfolio</span>
+            <span className="text-[9px] font-mono tracking-tight">Portfolio</span>
           </button>
 
-          {/* 3. 3D Studio */}
-          <button
-            onClick={() => {
-              setActiveTab("threed");
-              fetchThreeD(1);
-            }}
-            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition-all cursor-pointer relative ${
-              activeTab === "threed"
-                ? "text-white font-bold"
-                : "text-neutral-400 hover:text-white"
-            }`}
-          >
-            <div className={`p-1.5 rounded-xl relative transition-all ${activeTab === "threed" ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]" : "bg-transparent"}`}>
-              <Film size={17} />
-              <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-purple-500 text-[9px] font-mono text-white font-bold leading-none">
-                {stats.totalThreeD}
-              </span>
-            </div>
-            <span className="text-[10px] font-mono tracking-tight">3D Studio</span>
-          </button>
+          {/* 3. 3D Studio - ONLY VISIBLE TO MANAGED ADMIN */}
+          {currentUser.role === "managedAdmin" && (
+            <button
+              onClick={() => {
+                setActiveTab("threed");
+                fetchThreeD(1);
+              }}
+              className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer relative ${
+                activeTab === "threed"
+                  ? "text-white font-bold"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              <div className={`p-1.5 rounded-xl relative transition-all ${activeTab === "threed" ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.5)]" : "bg-transparent"}`}>
+                <Film size={16} />
+                <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-purple-500 text-[8px] font-mono text-white font-bold leading-none">
+                  {stats.totalThreeD}
+                </span>
+              </div>
+              <span className="text-[9px] font-mono tracking-tight">3D Studio</span>
+            </button>
+          )}
 
           {/* 4. Inquiries */}
           <button
@@ -737,20 +949,40 @@ export const AdminDashboardPage: React.FC = () => {
               setActiveTab("inquiries");
               fetchInquiries(1);
             }}
-            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition-all cursor-pointer relative ${
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer relative ${
               activeTab === "inquiries"
                 ? "text-white font-bold"
                 : "text-neutral-400 hover:text-white"
             }`}
           >
             <div className={`p-1.5 rounded-xl relative transition-all ${activeTab === "inquiries" ? "bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.5)]" : "bg-transparent"}`}>
-              <Mail size={17} />
-              <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-amber-400 text-black text-[9px] font-mono font-bold leading-none">
+              <Mail size={16} />
+              <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-amber-400 text-black text-[8px] font-mono font-bold leading-none">
                 {stats.totalInquiries}
               </span>
             </div>
-            <span className="text-[10px] font-mono tracking-tight">Inquiries</span>
+            <span className="text-[9px] font-mono tracking-tight">Inquiries</span>
           </button>
+
+          {/* 5. Admins (Super Admin / Managed Admin) */}
+          {(currentUser.role === "managedAdmin" || currentUser.role === "superAdmin") && (
+            <button
+              onClick={() => {
+                setActiveTab("admins");
+                fetchAdminUsers(true);
+              }}
+              className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2.5 rounded-2xl transition-all cursor-pointer relative ${
+                activeTab === "admins"
+                  ? "text-white font-bold"
+                  : "text-neutral-400 hover:text-white"
+              }`}
+            >
+              <div className={`p-1.5 rounded-xl relative transition-all ${activeTab === "admins" ? "bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.5)]" : "bg-transparent"}`}>
+                <Users size={16} />
+              </div>
+              <span className="text-[9px] font-mono tracking-tight">Admins</span>
+            </button>
+          )}
         </nav>
 
         {/* Main Content Area */}
@@ -761,7 +993,7 @@ export const AdminDashboardPage: React.FC = () => {
           {activeTab === "overview" && (
             <div className="flex flex-col gap-4 sm:gap-6">
               {/* Stat KPI Cards - Sleek modern glassmorphic cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
+              <div className={`grid grid-cols-1 ${currentUser.role === "managedAdmin" ? "sm:grid-cols-2 lg:grid-cols-4" : currentUser.role === "superAdmin" ? "sm:grid-cols-3" : "sm:grid-cols-2"} gap-3 sm:gap-5`}>
                 {/* 1. Portfolio Card */}
                 <div
                   onClick={() => {
@@ -786,29 +1018,31 @@ export const AdminDashboardPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 2. 3D Studio Card */}
-                <div
-                  onClick={() => {
-                    setActiveTab("threed");
-                    fetchThreeD(1);
-                  }}
-                  className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#12141c] to-[#0c0d14] border border-purple-500/25 hover:border-purple-500/60 flex items-center justify-between transition-all cursor-pointer group active:scale-[0.98] shadow-lg"
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className="text-purple-400 font-mono text-xs font-bold uppercase tracking-wider">
-                      3D Showcases
-                    </span>
-                    <div className="font-['Syne',sans-serif] font-bold text-3xl sm:text-4xl text-white">
-                      {stats.totalThreeD}
+                {/* 2. 3D Studio Card - ONLY FOR MANAGED ADMIN */}
+                {currentUser.role === "managedAdmin" && (
+                  <div
+                    onClick={() => {
+                      setActiveTab("threed");
+                      fetchThreeD(1);
+                    }}
+                    className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#12141c] to-[#0c0d14] border border-purple-500/25 hover:border-purple-500/60 flex items-center justify-between transition-all cursor-pointer group active:scale-[0.98] shadow-lg"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <span className="text-purple-400 font-mono text-xs font-bold uppercase tracking-wider">
+                        3D Showcases
+                      </span>
+                      <div className="font-['Syne',sans-serif] font-bold text-3xl sm:text-4xl text-white">
+                        {stats.totalThreeD}
+                      </div>
+                      <span className="text-neutral-400 text-[11px] font-mono">
+                        UE5 & CGI Reels →
+                      </span>
                     </div>
-                    <span className="text-neutral-400 text-[11px] font-mono">
-                      UE5 & CGI Reels →
-                    </span>
+                    <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 group-hover:bg-purple-500/20 transition-all">
+                      <Film size={22} />
+                    </div>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 group-hover:bg-purple-500/20 transition-all">
-                    <Film size={22} />
-                  </div>
-                </div>
+                )}
 
                 {/* 3. Inquiries Card */}
                 <div
@@ -840,6 +1074,32 @@ export const AdminDashboardPage: React.FC = () => {
                     <Mail size={22} />
                   </div>
                 </div>
+
+                {/* 4. Administrators Card (For Super Admin / Managed Admin) */}
+                {(currentUser.role === "managedAdmin" || currentUser.role === "superAdmin") && (
+                  <div
+                    onClick={() => {
+                      setActiveTab("admins");
+                      fetchAdminUsers(true);
+                    }}
+                    className="p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#12141c] to-[#0c0d14] border border-emerald-500/25 hover:border-emerald-500/60 flex items-center justify-between transition-all cursor-pointer group active:scale-[0.98] shadow-lg"
+                  >
+                    <div className="flex flex-col gap-1">
+                      <span className="text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider">
+                        Admin Team
+                      </span>
+                      <div className="font-['Syne',sans-serif] font-bold text-3xl sm:text-4xl text-white">
+                        {adminUsersList.length || 1}
+                      </div>
+                      <span className="text-neutral-400 text-[11px] font-mono">
+                        Portal access & roles →
+                      </span>
+                    </div>
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 group-hover:bg-emerald-500/20 transition-all">
+                      <Users size={22} />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Recent Inquiries Quick Feed */}
@@ -1587,6 +1847,153 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* =========================================================================
+              5. ADMINISTRATORS MANAGEMENT TAB
+             ========================================================================= */}
+          {activeTab === "admins" && (
+            <div className="flex flex-col gap-4 sm:gap-6 animate-in fade-in duration-200">
+              {/* Header section with Actions */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[#11131b]/80 backdrop-blur-md p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-xl">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <ShieldCheck size={12} /> Access Control & RBAC
+                    </span>
+                  </div>
+                  <h2 className="font-['Syne',sans-serif] font-bold text-xl sm:text-2xl text-white">
+                    Administrator Accounts
+                  </h2>
+                  <p className="font-mono text-xs text-neutral-400 mt-0.5">
+                    Register, manage, and provision credentials for portal administrators with role-based permissions.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    onClick={() => fetchAdminUsers(true)}
+                    disabled={adminUsersLoading}
+                    className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                    title="Refresh administrator list"
+                  >
+                    <RefreshCw size={15} className={adminUsersLoading ? "animate-spin text-emerald-400" : ""} />
+                  </button>
+
+                  {(currentUser.role === "managedAdmin" || currentUser.role === "superAdmin") && (
+                    <button
+                      onClick={() => setIsCreateAdminModalOpen(true)}
+                      className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all cursor-pointer active:scale-95"
+                    >
+                      <UserPlus size={15} />
+                      <span>Register Admin</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Administrators Table / List Card */}
+              <div className="bg-[#11131b]/90 border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col gap-4">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Users size={16} className="text-emerald-400" />
+                    <span className="font-['Syne',sans-serif] font-bold text-sm sm:text-base text-white">
+                      Registered Accounts ({adminUsersList.length})
+                    </span>
+                  </div>
+                </div>
+
+                {adminUsersLoading && adminUsersList.length === 0 ? (
+                  <div className="py-16 flex flex-col items-center justify-center gap-3 text-neutral-400 font-mono text-xs">
+                    <Loader2 size={24} className="animate-spin text-emerald-400" />
+                    <span>Loading administrator accounts...</span>
+                  </div>
+                ) : adminUsersList.length === 0 ? (
+                  <div className="py-12 text-center text-neutral-400 font-mono text-xs">
+                    No administrators registered yet.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {adminUsersList.map((user) => {
+                      const isMasterUser = user.role === "managedAdmin" && (!user.createdBy || user.createdBy === "system_seed");
+                      const isSelf = Boolean(currentUser.email && user.email && user.email.toLowerCase() === currentUser.email.toLowerCase());
+                      
+                      return (
+                        <div
+                          key={user._id || user.id || user.email}
+                          className="p-4 rounded-2xl bg-gradient-to-br from-[#161822] to-[#0f1118] border border-white/10 hover:border-emerald-500/30 transition-all flex flex-col justify-between gap-3 shadow-md"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-mono font-bold text-sm shrink-0 ${
+                                user.role === "managedAdmin"
+                                  ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
+                                  : user.role === "superAdmin"
+                                  ? "bg-red-600/20 text-red-300 border border-red-500/30"
+                                  : "bg-blue-600/20 text-blue-300 border border-blue-500/30"
+                              }`}>
+                                {user.name ? user.name.charAt(0).toUpperCase() : "A"}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-white text-sm truncate">
+                                    {user.name}
+                                  </span>
+                                  {isSelf && (
+                                    <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-mono font-bold">
+                                      YOU
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="font-mono text-xs text-neutral-400 truncate">
+                                  {user.email}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Role Badge */}
+                            <div>
+                              {user.role === "managedAdmin" ? (
+                                <span className="px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px] font-mono font-bold flex items-center gap-1">
+                                  <Crown size={11} /> Managed Admin
+                                </span>
+                              ) : user.role === "superAdmin" ? (
+                                <span className="px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-red-300 text-[10px] font-mono font-bold flex items-center gap-1">
+                                  <ShieldAlert size={11} /> Super Admin
+                                </span>
+                              ) : (
+                                <span className="px-2.5 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-[10px] font-mono font-bold flex items-center gap-1">
+                                  <ShieldCheck size={11} /> Admin
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Footer Details */}
+                          <div className="flex items-center justify-between pt-2.5 border-t border-white/5 text-[11px] font-mono text-neutral-500">
+                            <span>
+                              Created: {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Master Seed"}
+                            </span>
+
+                            {/* Delete Action Button */}
+                            {!isMasterUser && !isSelf && (
+                              <button
+                                onClick={() => handleDeleteItem("adminUser", user._id || user.id || "", `Admin: ${user.name}`)}
+                                className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 text-[10px] font-mono cursor-pointer"
+                                title="Revoke and delete admin account"
+                              >
+                                <Trash2 size={12} />
+                                <span>Revoke</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
@@ -2161,6 +2568,241 @@ export const AdminDashboardPage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          REGISTER NEW ADMINISTRATOR MODAL
+         ========================================================================= */}
+      {isCreateAdminModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-[#11131b] border border-white/15 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col gap-4 max-h-[92vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                  <UserPlus size={18} />
+                </div>
+                <div>
+                  <h3 className="font-['Syne',sans-serif] font-bold text-base sm:text-lg text-white">
+                    Register New Administrator
+                  </h3>
+                  <p className="font-mono text-[10px] text-neutral-400">
+                    Assign role permissions & email secure credentials
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateAdminModalOpen(false)}
+                className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleCreateAdminSubmit} className="flex flex-col gap-3.5">
+              {/* Full Name */}
+              <div>
+                <label className="font-mono text-[10px] text-neutral-400 uppercase tracking-wider mb-1 block">
+                  Full Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newAdminForm.name}
+                  onChange={(e) => setNewAdminForm({ ...newAdminForm, name: e.target.value })}
+                  placeholder="e.g. Alex Morgan"
+                  className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+
+              {/* Email Address */}
+              <div>
+                <label className="font-mono text-[10px] text-neutral-400 uppercase tracking-wider mb-1 block">
+                  Registered Email Address <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={newAdminForm.email}
+                  onChange={(e) => setNewAdminForm({ ...newAdminForm, email: e.target.value })}
+                  placeholder="admin@example.com"
+                  className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+
+              {/* Role Selection */}
+              <div>
+                <label className="font-mono text-[10px] text-neutral-400 uppercase tracking-wider mb-1 block">
+                  Assign Administrative Role <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={newAdminForm.role}
+                  onChange={(e) => setNewAdminForm({ ...newAdminForm, role: e.target.value as any })}
+                  className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-white focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+                >
+                  <option value="admin">Admin — Portfolio & Inquiries Manager</option>
+                  <option value="superAdmin">Super Admin — Core Admin + Administrator Management</option>
+                  {currentUser.role === "managedAdmin" && (
+                    <option value="managedAdmin">Managed Admin — Full Master Authority & 3D Showcase Access</option>
+                  )}
+                </select>
+                <p className="font-mono text-[10px] text-neutral-500 mt-1">
+                  {newAdminForm.role === "admin" && "• Can view/edit Portfolio and Inquiries. Cannot see 3D Studio or manage admins."}
+                  {newAdminForm.role === "superAdmin" && "• Can manage Portfolio, Inquiries, and register/manage Admins. Cannot see 3D Studio."}
+                  {newAdminForm.role === "managedAdmin" && "• Full master privileges including 3D Studio Showcase and RBAC management."}
+                </p>
+              </div>
+
+              {/* Password & Generator */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-mono text-[10px] text-neutral-400 uppercase tracking-wider">
+                    Initial Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateRandomPassword}
+                    className="text-[10px] font-mono text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <KeyRound size={11} /> Auto Generate Strong
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={newAdminForm.password}
+                    onChange={(e) => setNewAdminForm({ ...newAdminForm, password: e.target.value })}
+                    placeholder="Leave blank to auto-generate, or enter custom"
+                    className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-emerald-300 placeholder-neutral-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Email dispatch notice */}
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-2.5 text-[11px] font-mono text-emerald-200">
+                <Mail size={15} className="text-emerald-400 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Email Delivery:</strong> Credentials, role level, and portal sign-in link will be automatically dispatched to <strong>{newAdminForm.email || "the registered email"}</strong> formatted professionally.
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-2 mt-2 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateAdminModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white text-xs font-mono transition-colors cursor-pointer"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  disabled={isRegisteringAdmin}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center gap-2 cursor-pointer active:scale-95"
+                >
+                  {isRegisteringAdmin ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>CREATING & SENDING...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      <span>CREATE & DISPATCH EMAIL</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          CREDENTIALS GENERATED & DISPATCHED SUCCESS MODAL
+         ========================================================================= */}
+      {createdCredentialModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md bg-[#11131b] border border-emerald-500/40 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-[0_0_50px_rgba(16,185,129,0.2)] flex flex-col gap-4">
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                <UserCheck size={24} />
+              </div>
+              <div>
+                <h3 className="font-['Syne',sans-serif] font-bold text-lg text-white">
+                  Admin Registered!
+                </h3>
+                <p className="font-mono text-xs text-emerald-400">
+                  Credentials successfully dispatched via Email
+                </p>
+              </div>
+            </div>
+
+            {/* Credentials details card */}
+            <div className="bg-[#181a24] border border-white/10 rounded-2xl p-4 flex flex-col gap-3 font-mono text-xs">
+              <div className="flex flex-col">
+                <span className="text-[10px] text-neutral-400 uppercase">Administrator Name</span>
+                <span className="text-white font-semibold">{createdCredentialModal.name}</span>
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-[10px] text-neutral-400 uppercase">Registered Email</span>
+                <span className="text-white font-semibold">{createdCredentialModal.email}</span>
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-[10px] text-neutral-400 uppercase">Assigned Role</span>
+                <span className="text-emerald-400 font-bold capitalize">{createdCredentialModal.role}</span>
+              </div>
+
+              <div className="flex flex-col pt-1 border-t border-white/10">
+                <span className="text-[10px] text-neutral-400 uppercase">Temporary Password</span>
+                <div className="flex items-center justify-between bg-black/40 border border-emerald-500/30 rounded-xl px-3 py-2 mt-1">
+                  <span className="text-emerald-300 font-bold tracking-wider">{createdCredentialModal.password}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCredentialModal.password);
+                      setHasCopiedPassword(true);
+                      setTimeout(() => setHasCopiedPassword(false), 2000);
+                    }}
+                    className="text-neutral-400 hover:text-white p-1 rounded transition-colors cursor-pointer"
+                    title="Copy Password"
+                  >
+                    {hasCopiedPassword ? <CheckCheck size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const payload = `Bharat DigiGuru Admin Credentials:\nPortal: ${window.location.origin}/admin-portal\nEmail: ${createdCredentialModal.email}\nPassword: ${createdCredentialModal.password}\nRole: ${createdCredentialModal.role}`;
+                  navigator.clipboard.writeText(payload);
+                  setHasCopiedPassword(true);
+                  setTimeout(() => setHasCopiedPassword(false), 2000);
+                }}
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Copy size={13} />
+                <span>{hasCopiedPassword ? "COPIED ALL!" : "COPY ALL"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCreatedCredentialModal(null)}
+                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold uppercase tracking-wider shadow-lg transition-all cursor-pointer active:scale-95"
+              >
+                DONE
+              </button>
+            </div>
           </div>
         </div>
       )}

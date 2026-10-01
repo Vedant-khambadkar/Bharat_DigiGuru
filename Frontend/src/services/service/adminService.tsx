@@ -194,6 +194,32 @@ class AdminService {
     formData.append("file", file);
     return adminApi.uploadMedia(formData);
   }
+
+  // Admin User Management
+  async getAdminUsers(forceRefresh = false) {
+    const key = "admin_users_list";
+    if (!forceRefresh) {
+      const cached = getApiCache<any>(key);
+      if (cached) return cached;
+    }
+    const res = await adminApi.getAdminUsers();
+    if (res) {
+      setApiCache(key, res);
+    }
+    return res;
+  }
+
+  async createAdminUser(data: { name: string; email: string; role?: string; password?: string }) {
+    const res = await adminApi.createAdminUser(data);
+    invalidateApiCache(["admin_users_list"]);
+    return res;
+  }
+
+  async deleteAdminUser(id: string) {
+    const res = await adminApi.deleteAdminUser(id);
+    invalidateApiCache(["admin_users_list"]);
+    return res;
+  }
 }
 
 export const adminService = new AdminService();

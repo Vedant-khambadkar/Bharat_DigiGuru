@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { db } from "../data/db.js";
-import { AuthenticatedRequest } from "../middleware/auth.js";
-import { sendPasswordResetOtpEmail } from "../services/emailService.js";
+import { AuthenticatedRequest, normalizeRole } from "../middleware/auth.js";
+import { sendPasswordResetOtpEmail, sendAdminCredentialsEmail } from "../services/emailService.js";
 
 export const adminLogin = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -19,7 +20,7 @@ export const adminLogin = async (req: Request, res: Response): Promise<void> => 
 
     const normalizedEmail = String(email).trim().toLowerCase();
     // Query admin strictly from database
-    const admin = await db.getAdminUserByEmail(normalizedEmail) || (await db.getAdminUser());
+    const admin = (await db.getAdminUserByEmail(normalizedEmail)) || (await db.getAdminUser());
 
     if (!admin) {
       res.status(401).json({
@@ -50,12 +51,14 @@ export const adminLogin = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    const effectiveRole = normalizeRole(admin.role);
     const jwtSecret = process.env.JWT_SECRET || "bharat_digiguru_super_secure_jwt_token_key_2026";
     const token = jwt.sign(
       {
         id: admin.id,
         email: admin.email,
-        role: admin.role,
+        role: effectiveRole,
+        name: admin.name,
       },
       jwtSecret,
       { expiresIn: "7d" }
@@ -69,7 +72,7 @@ export const adminLogin = async (req: Request, res: Response): Promise<void> => 
         id: admin.id,
         email: admin.email,
         name: admin.name,
-        role: admin.role,
+        role: effectiveRole,
       },
     });
   } catch (err: any) {
@@ -238,17 +241,213 @@ export const verifyOtpAndResetPassword = async (req: Request, res: Response): Pr
 
 export const getAdminProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const admin = await db.getAdminUser();
+    const userEmail = req.user?.email;
+    const admin = userEmail ? await db.getAdminUserByEmail(userEmail) : await db.getAdminUser();
+
+    if (!admin) {
+      res.status(404).json({ success: false, message: "Admin profile not found." });
+      return;
+    }
+
+    const effectiveRole = normalizeRole(admin.role || req.user?.role);
     res.status(200).json({
       success: true,
       user: {
         id: admin.id,
         email: admin.email,
         name: admin.name,
-        role: admin.role,
+        role: effectiveRole,
       },
     });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// ==========================================
+// ADMIN USER MANAGEMENT (SUPER ADMIN / MANAGED ADMIN)
+// ==========================================
+
+export const listAdminUsers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const users = await db.getAdminUsers();
+    const formatted = users.map((u: any) => ({
+      ...u,
+      role: normalizeRole(u.role),
+    }));
+    res.status(200).json({
+      success: true,
+      data: formatted,
+      total: formatted.length,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const registerAdminUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const requesterRole = normalizeRole(req.user?.role);
+    const requesterName = req.user?.name || req.user?.email || "Administrator";
+    const { name, email, role = "admin", password } = req.body;
+
+    if (!email || !name) {
+      res.status(400).json({
+        success: false,
+        message: "Full name and email address are required.",
+      });
+      return;
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const targetRole = normalizeRole(role);
+
+    // Permission check:
+    // - superAdmin can only create "admin"
+    // - managedAdmin can create "superAdmin" or "admin"
+    if (requesterRole === "superAdmin" && targetRole !== "admin") {
+      res.status(403).json({
+        success: false,
+        message: "Super Admin is only permitted to create regular Admin accounts.",
+      });
+      return;
+    }
+
+    if (requesterRole !== "managedAdmin" && requesterRole !== "superAdmin") {
+      res.status(403).json({
+        success: false,
+        message: "You do not have permission to create administrative accounts.",
+      });
+      return;
+    }
+
+    // Check if email already exists
+    const existing = await db.getAdminUserByEmail(normalizedEmail);
+    if (existing) {
+      res.status(409).json({
+        success: false,
+        message: `An admin account with email "${normalizedEmail}" already exists.`,
+      });
+      return;
+    }
+
+    // Generate or use provided password
+    let plainPassword = String(password || "").trim();
+    if (!plainPassword) {
+      // Auto-generate high-entropy readable password
+      const randomSuffix = crypto.randomBytes(3).toString("hex").toUpperCase();
+      plainPassword = `BDG#${randomSuffix}!`;
+    } else if (plainPassword.length < 6) {
+      res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters long.",
+      });
+      return;
+    }
+
+    const salt = bcrypt.genSaltSync(10);
+    const passwordHash = bcrypt.hashSync(plainPassword, salt);
+
+    const createdAdmin = await db.createAdminUser({
+      id: `admin-${Date.now()}`,
+      email: normalizedEmail,
+      name: String(name).trim(),
+      role: targetRole,
+      passwordHash,
+      createdBy: req.user?.email,
+    });
+
+    // Send credentials to the registered email in proper format
+    const emailResult = await sendAdminCredentialsEmail({
+      toEmail: normalizedEmail,
+      recipientName: name,
+      password: plainPassword,
+      role: targetRole,
+      creatorName: requesterName,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: emailResult.sent
+        ? `Admin account created! Credentials sent to ${normalizedEmail}.`
+        : `Admin account created! Note: Email delivery notice: ${emailResult.message}`,
+      user: {
+        id: (createdAdmin as any).id,
+        email: (createdAdmin as any).email,
+        name: (createdAdmin as any).name,
+        role: targetRole,
+        createdAt: (createdAdmin as any).createdAt,
+      },
+      temporaryPassword: plainPassword,
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message || "Failed to register admin account.",
+    });
+  }
+};
+
+export const deleteAdminUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const requesterRole = normalizeRole(req.user?.role);
+    const requesterEmail = req.user?.email?.toLowerCase();
+    const requesterId = req.user?.id;
+    const targetId = String(req.params.id || "");
+
+    if (!targetId) {
+      res.status(400).json({ success: false, message: "Admin ID is required." });
+      return;
+    }
+
+    const targetUser = await db.getAdminUserById(targetId);
+    if (!targetUser) {
+      res.status(404).json({ success: false, message: "Admin account not found." });
+      return;
+    }
+
+    // Cannot delete oneself
+    if (targetUser.id === requesterId || targetUser.email.toLowerCase() === requesterEmail) {
+      res.status(400).json({
+        success: false,
+        message: "You cannot delete your own active administrator account.",
+      });
+      return;
+    }
+
+    const targetRole = normalizeRole(targetUser.role);
+
+    // Permission check:
+    // - superAdmin can only delete regular "admin"
+    // - managedAdmin can delete "superAdmin" or "admin"
+    if (requesterRole === "superAdmin" && targetRole !== "admin") {
+      res.status(403).json({
+        success: false,
+        message: "Super Admin can only remove regular Admin accounts.",
+      });
+      return;
+    }
+
+    if (requesterRole !== "managedAdmin" && requesterRole !== "superAdmin") {
+      res.status(403).json({
+        success: false,
+        message: "You do not have permission to delete admin accounts.",
+      });
+      return;
+    }
+
+    const deleted = await db.deleteAdminUser(targetId);
+    if (!deleted) {
+      res.status(500).json({ success: false, message: "Failed to delete admin account." });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Admin account (${targetUser.email}) removed successfully.`,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message || "Failed to delete admin." });
+  }
+};
+

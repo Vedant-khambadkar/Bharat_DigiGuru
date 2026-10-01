@@ -3,13 +3,18 @@ import { Server as HttpServer } from "http";
 
 let io: SocketIOServer | null = null;
 
-export const initializeSocket = (httpServer: HttpServer, corsOrigin: string | string[]) => {
+export const initializeSocket = (httpServer: HttpServer, _corsOrigin?: any) => {
   io = new SocketIOServer(httpServer, {
     cors: {
-      origin: corsOrigin === "*" ? "*" : corsOrigin,
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      origin: (origin, callback) => {
+        // Dynamically reflect incoming origin to support credentials across localhost and all domains
+        callback(null, origin || true);
+      },
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization", "Accept", "X-Requested-With"],
     },
+    transports: ["websocket", "polling"],
     pingTimeout: 30000,
     pingInterval: 25000,
   });

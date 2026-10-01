@@ -1,13 +1,22 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { AdminRole } from "../types/index.js";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
-    role: string;
+    role: "managedAdmin" | "superAdmin" | "admin";
+    name?: string;
   };
 }
+
+export const normalizeRole = (role?: string): "managedAdmin" | "superAdmin" | "admin" => {
+  const r = (role || "").toLowerCase().trim();
+  if (r === "managedadmin" || r === "managed_admin") return "managedAdmin";
+  if (r === "superadmin" || r === "super_admin") return "superAdmin";
+  return "admin";
+};
 
 export const authenticateAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
@@ -26,7 +35,8 @@ export const authenticateAdmin = (req: AuthenticatedRequest, res: Response, next
     req.user = {
       id: "admin-master-001",
       email: "admin@bharatdigiguru.com",
-      role: "superadmin",
+      role: "managedAdmin",
+      name: "Bharat DigiGuru Administrator",
     };
     next();
     return;
@@ -39,7 +49,8 @@ export const authenticateAdmin = (req: AuthenticatedRequest, res: Response, next
     req.user = {
       id: decoded.id,
       email: decoded.email,
-      role: decoded.role,
+      role: normalizeRole(decoded.role),
+      name: decoded.name,
     };
     next();
   } catch (err: any) {
@@ -49,3 +60,35 @@ export const authenticateAdmin = (req: AuthenticatedRequest, res: Response, next
     });
   }
 };
+
+/**
+ * Middleware: Only Managed Admin (managedAdmin) can access this resource.
+ * Super Admin and regular Admin are denied access.
+ */
+export const requireManagedAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  const userRole = normalizeRole(req.user?.role);
+  if (userRole !== "managedAdmin") {
+    res.status(403).json({
+      success: false,
+      message: "Access restricted: Only Managed Admin has permission to view or manage the 3D Showcase.",
+    });
+    return;
+  }
+  next();
+};
+
+/**
+ * Middleware: Super Admin or Managed Admin can access this resource (e.g. creating/registering admins).
+ */
+export const requireSuperOrManagedAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  const userRole = normalizeRole(req.user?.role);
+  if (userRole !== "managedAdmin" && userRole !== "superAdmin") {
+    res.status(403).json({
+      success: false,
+      message: "Access restricted: Only Super Admin and Managed Admin can perform this administrative action.",
+    });
+    return;
+  }
+  next();
+};
+

@@ -5,7 +5,8 @@ export interface IAdminUserDoc extends Document {
   email: string;
   passwordHash: string;
   name: string;
-  role: "superadmin" | "admin";
+  role: "managedAdmin" | "superAdmin" | "admin" | "superadmin" | "managedadmin";
+  createdBy?: string;
   resetPasswordOtp?: string;
   resetPasswordExpires?: Date;
   createdAt: Date;
@@ -18,7 +19,8 @@ const AdminUserSchema = new Schema<IAdminUserDoc>(
     email: { type: String, required: true, unique: true, lowercase: true },
     passwordHash: { type: String, required: true },
     name: { type: String, default: "Bharat DigiGuru Administrator" },
-    role: { type: String, default: "superadmin" },
+    role: { type: String, default: "managedAdmin" },
+    createdBy: { type: String },
     resetPasswordOtp: { type: String },
     resetPasswordExpires: { type: Date },
   },

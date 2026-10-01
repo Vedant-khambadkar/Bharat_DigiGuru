@@ -5,6 +5,9 @@ import {
   verifyOtp,
   verifyOtpAndResetPassword,
   getAdminProfile,
+  listAdminUsers,
+  registerAdminUser,
+  deleteAdminUser,
 } from "../controllers/authController.js";
 import {
   getPortfolio,
@@ -28,7 +31,11 @@ import {
   getPresignedUrlHandler,
   getPresignedUploadUrlHandler,
 } from "../controllers/uploadController.js";
-import { authenticateAdmin } from "../middleware/auth.js";
+import {
+  authenticateAdmin,
+  requireManagedAdmin,
+  requireSuperOrManagedAdmin,
+} from "../middleware/auth.js";
 import { upload } from "../middleware/upload.js";
 
 const router = Router();
@@ -45,17 +52,22 @@ router.use(authenticateAdmin);
 // Admin Profile
 router.get("/me", getAdminProfile);
 
-// 1. Portfolio CRUD
+// Admin User Management (Super Admin and Managed Admin only)
+router.get("/users", requireSuperOrManagedAdmin, listAdminUsers);
+router.post("/users", requireSuperOrManagedAdmin, registerAdminUser);
+router.delete("/users/:id", requireSuperOrManagedAdmin, deleteAdminUser);
+
+// 1. Portfolio CRUD (Managed Admin, Super Admin, Admin)
 router.get("/portfolio", getPortfolio);
 router.post("/portfolio", createPortfolio);
 router.put("/portfolio/:id", updatePortfolio);
 router.delete("/portfolio/:id", deletePortfolio);
 
-// 2. 3D Studio CRUD
-router.get("/threed", getThreeD);
-router.post("/threed", createThreeD);
-router.put("/threed/:id", updateThreeD);
-router.delete("/threed/:id", deleteThreeD);
+// 2. 3D Studio CRUD (ONLY Managed Admin - superAdmin and regular admin are restricted)
+router.get("/threed", requireManagedAdmin, getThreeD);
+router.post("/threed", requireManagedAdmin, createThreeD);
+router.put("/threed/:id", requireManagedAdmin, updateThreeD);
+router.delete("/threed/:id", requireManagedAdmin, deleteThreeD);
 
 // 3. Inquiries Management
 router.get("/inquiries", getInquiries);
@@ -68,3 +80,4 @@ router.get("/media/presigned-url", getPresignedUrlHandler);
 router.post("/media/presigned-upload", getPresignedUploadUrlHandler);
 
 export default router;
+
