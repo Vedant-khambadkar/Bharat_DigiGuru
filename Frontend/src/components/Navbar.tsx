@@ -33,9 +33,9 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: "home", label: "Home", href: "#home-section", icon: Home },
   { id: "services", label: "Services", href: "#services-section", icon: Layers },
+  { id: "portfolio", label: "Portfolio", href: "#portfolio-section", icon: Briefcase },
   { id: "mission", label: "Mission", href: "#mission-vision-section", icon: Target },
   { id: "about", label: "About", href: "#about-section", icon: User },
-  { id: "portfolio", label: "Portfolio", href: "#portfolio-section", icon: Briefcase },
   { id: "whyus", label: "Why Us", href: "#work-with-us-section", icon: Sparkles },
   { id: "proposals", label: "Proposals", href: "#proposals-section", icon: FileText },
   { id: "blogs", label: "Blogs", href: "#blogs-section", icon: BookOpen },

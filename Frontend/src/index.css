@@ -125,6 +125,27 @@ html.lenis body {
   overflow: hidden;
 }
 
-.lenis.lenis-scrolling iframe {
+.lenis.lenis-scrolling iframe,
+.lenis.lenis-scrolling [data-lenis-prevent-events] {
   pointer-events: none;
+}
+
+/* Image Performance & Rendering Optimization */
+img {
+  content-visibility: auto;
+  contain-intrinsic-size: 300px 200px;
+}
+
+/* GPU Hardware Acceleration for Smooth 60-120fps Transitions */
+.gpu-smooth {
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Smooth content transitions */
+.smooth-render {
+  contain: paint layout;
 }

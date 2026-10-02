@@ -445,6 +445,7 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
                 <img
                   src={activeModalWork.url}
                   alt={activeModalWork.title}
+                  decoding="async"
                   className="max-w-full max-h-[55vh] sm:max-h-[60vh] w-auto h-auto object-contain rounded-lg shadow-2xl"
                 />
               )}
@@ -558,6 +559,7 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, index, onOpenModal }) => {
               alt={work.title}
               className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/work:scale-105 brightness-90 group-hover/work:brightness-100"
               loading="lazy"
+              decoding="async"
             />
             {/* YouTube Live Animated Play Overlay */}
             <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover/work:bg-black/10 transition-colors duration-300">
@@ -595,6 +597,7 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, index, onOpenModal }) => {
             alt={work.title}
             className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/work:scale-110"
             loading="lazy"
+            decoding="async"
           />
         )}
 

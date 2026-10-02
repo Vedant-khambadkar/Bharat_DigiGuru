@@ -12,9 +12,6 @@ import {
   Sparkles,
   Layers,
   ArrowUpRight,
-  MoveVertical,
-  ArrowUp,
-  ArrowDown,
 } from "lucide-react";
 
 import DigitalMedia1 from "../assets/DigitalMedia/DigitalMedia-1.webp";
@@ -141,13 +138,10 @@ const MILESTONES: MilestoneItem[] = [
 export const MilestoneShowcase: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [selectedMilestone, setSelectedMilestone] = useState<MilestoneItem | null>(null);
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
-  const [isScrollable, setIsScrollable] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const activeMilestone = MILESTONES[activeIndex];
 
@@ -203,77 +197,31 @@ export const MilestoneShowcase: React.FC = () => {
         { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }
       );
     }
-
-    // Reset scroll position on active milestone change
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
-      setScrollProgress(0);
-    }
   }, [activeIndex]);
-
-  // Check scrollability on image load / resize
-  const checkScrollable = () => {
-    if (scrollContainerRef.current) {
-      const { scrollHeight, clientHeight } = scrollContainerRef.current;
-      setIsScrollable(scrollHeight > clientHeight + 15);
-    }
-  };
-
-  const handleContainerScroll = () => {
-    if (!scrollContainerRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-    const maxScroll = scrollHeight - clientHeight;
-    if (maxScroll > 0) {
-      setScrollProgress(scrollTop / maxScroll);
-    }
-  };
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    setScrollProgress(val);
-    if (scrollContainerRef.current) {
-      const { scrollHeight, clientHeight } = scrollContainerRef.current;
-      const maxScroll = scrollHeight - clientHeight;
-      scrollContainerRef.current.scrollTop = val * maxScroll;
-    }
-  };
-
-  const scrollToTop = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const scrollToBottom = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  };
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full pt-12 sm:pt-16 mt-10 sm:mt-14 font-['Plus_Jakarta_Sans',sans-serif] text-white"
+      className="relative w-full pt-12 sm:pt-16 mt-10 sm:mt-14 font-['Space_Grotesk',sans-serif] text-white"
     >
       <div className="w-full flex flex-col gap-6 sm:gap-8">
         {/* =========================================================================
             SECTION HEADER
            ========================================================================= */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-neutral-800/60">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wide">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Case Studies & Proven Impact
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-2">
+              <span className="font-['Cormorant_Garamond',serif] italic text-sm text-neutral-400 tracking-wide">
+                (Case Studies & Proven Impact)
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
-              Digital Milestones & Analytics
+            <h2 className="font-neuropol text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider text-white leading-tight">
+              Digital Milestones &{" "}
+              <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+                Analytics
+              </span>
             </h2>
-            <p className="text-xs sm:text-sm text-neutral-400 max-w-xl leading-relaxed">
+            <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-400 max-w-xl leading-relaxed mt-1 font-normal">
               Real business metrics, reach performance, and verified data executed for our clients across digital channels.
             </p>
           </div>
@@ -340,7 +288,7 @@ export const MilestoneShowcase: React.FC = () => {
                     {item.step}
                   </span>
                   <span
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-bold font-['Space_Grotesk',sans-serif] ${
                       isActive
                         ? "bg-white text-black shadow-sm"
                         : "bg-neutral-800/90 text-neutral-300"
@@ -352,13 +300,13 @@ export const MilestoneShowcase: React.FC = () => {
 
                 <div>
                   <h4
-                    className={`text-xs sm:text-sm font-semibold line-clamp-1 transition-colors ${
+                    className={`font-neuropol text-xs sm:text-sm uppercase tracking-wider line-clamp-1 transition-colors ${
                       isActive ? "text-white" : "text-neutral-300"
                     }`}
                   >
                     {item.title}
                   </h4>
-                  <p className="text-[11px] text-neutral-500 line-clamp-1 mt-0.5 font-normal">
+                  <p className="font-['Space_Grotesk',sans-serif] text-[11px] text-neutral-500 line-clamp-1 mt-0.5 font-normal">
                     {item.subtitle}
                   </p>
                 </div>
@@ -368,9 +316,9 @@ export const MilestoneShowcase: React.FC = () => {
         </div>
 
         {/* =========================================================================
-            MAIN SHOWCASE BENTO CARD
+            MAIN SHOWCASE SECTION (Clean Transparent Layout)
            ========================================================================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start bg-[#0c0c0e] border border-neutral-800/80 rounded-2xl p-5 sm:p-7 md:p-8 shadow-2xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-start pt-2">
           {/* Left Column (5 Cols): Data, Metrics & Highlights */}
           <div
             ref={contentRef}
@@ -379,17 +327,17 @@ export const MilestoneShowcase: React.FC = () => {
             {/* Header info */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-neutral-800/80 text-neutral-200 border border-neutral-700/60">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-neutral-800/80 text-neutral-200 border border-neutral-700/60 font-['Space_Grotesk',sans-serif]">
                   <Layers className="w-3 h-3 text-blue-400" />
                   {activeMilestone.tag}
                 </span>
                 <span className="text-neutral-600">•</span>
-                <span className="text-xs text-neutral-400 font-medium">
+                <span className="text-xs text-neutral-400 font-medium font-['Space_Grotesk',sans-serif]">
                   {activeMilestone.subtitle}
                 </span>
               </div>
 
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight leading-snug">
+              <h3 className="font-neuropol text-xl sm:text-2xl md:text-3xl uppercase tracking-wider text-white leading-snug">
                 {activeMilestone.title}
               </h3>
             </div>
@@ -401,20 +349,20 @@ export const MilestoneShowcase: React.FC = () => {
                   <TrendingUp className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
-                  <div className="text-2xl sm:text-3xl text-white font-extrabold tracking-tight leading-none">
+                  <div className="font-neuropol text-2xl sm:text-3xl text-white tracking-wide leading-none">
                     {activeMilestone.metric}
                   </div>
-                  <div className="text-xs sm:text-sm text-neutral-300 font-semibold mt-1">
+                  <div className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm uppercase tracking-wider text-neutral-300 font-semibold mt-1">
                     {activeMilestone.metricLabel}
                   </div>
-                  <div className="text-[11px] text-neutral-500 mt-0.5">
+                  <div className="font-['Space_Grotesk',sans-serif] text-[11px] text-neutral-500 mt-0.5">
                     {activeMilestone.metricSub}
                   </div>
                 </div>
               </div>
 
               <div className="hidden sm:flex flex-col items-end shrink-0">
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 uppercase tracking-wider font-['Space_Grotesk',sans-serif]">
                   <Sparkles className="w-3 h-3" />
                   Verified
                 </span>
@@ -428,10 +376,10 @@ export const MilestoneShowcase: React.FC = () => {
                   key={kIdx}
                   className="p-3 rounded-lg bg-neutral-900/60 border border-neutral-800/80 text-center"
                 >
-                  <div className="text-xs sm:text-sm font-bold text-white">
+                  <div className="font-neuropol text-xs sm:text-sm text-white tracking-wider">
                     {kpi.value}
                   </div>
-                  <div className="text-[10px] text-neutral-400 mt-0.5 uppercase tracking-wider font-medium truncate">
+                  <div className="font-['Space_Grotesk',sans-serif] text-[10px] text-neutral-400 mt-1 uppercase tracking-wider font-medium truncate">
                     {kpi.label}
                   </div>
                 </div>
@@ -440,14 +388,14 @@ export const MilestoneShowcase: React.FC = () => {
 
             {/* Campaign Highlights */}
             <div className="flex flex-col gap-2 pt-1 border-t border-neutral-800/60">
-              <span className="text-[11px] uppercase tracking-wider font-bold text-neutral-400">
+              <span className="font-['Space_Grotesk',sans-serif] text-[11px] uppercase tracking-wider font-bold text-neutral-400">
                 Key Strategic Deliverables
               </span>
               <ul className="flex flex-col gap-2">
                 {activeMilestone.highlights.map((item, hIdx) => (
                   <li
                     key={hIdx}
-                    className="flex items-start gap-2.5 text-xs text-neutral-300 leading-relaxed"
+                    className="flex items-start gap-2.5 text-xs text-neutral-300 leading-relaxed font-['Space_Grotesk',sans-serif]"
                   >
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <span>{item}</span>
@@ -461,7 +409,7 @@ export const MilestoneShowcase: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedMilestone(activeMilestone)}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all cursor-pointer shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-98"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all cursor-pointer shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-98 font-['Space_Grotesk',sans-serif]"
               >
                 <span>Inspect Verified Proof</span>
                 <Maximize2 className="w-3.5 h-3.5" />
@@ -472,7 +420,7 @@ export const MilestoneShowcase: React.FC = () => {
                 onClick={() =>
                   setActiveIndex((prev) => (prev + 1) % MILESTONES.length)
                 }
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-neutral-900 text-neutral-300 hover:text-white hover:bg-neutral-800 border border-neutral-800 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider bg-neutral-900 text-neutral-300 hover:text-white hover:bg-neutral-800 border border-neutral-800 transition-all cursor-pointer font-['Space_Grotesk',sans-serif]"
               >
                 <span>Next Case</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -499,84 +447,47 @@ export const MilestoneShowcase: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {/* Quick Scroll Up/Down if scrollable */}
-                  {isScrollable && (
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={scrollToTop}
-                        title="Scroll to top"
-                        className="w-6 h-6 rounded bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-[10px] transition-colors cursor-pointer"
-                      >
-                        <ArrowUp className="w-3 h-3" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={scrollToBottom}
-                        title="Scroll to bottom"
-                        className="w-6 h-6 rounded bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-[10px] transition-colors cursor-pointer"
-                      >
-                        <ArrowDown className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMilestone(activeMilestone)}
-                    className="flex items-center gap-1.5 text-neutral-400 hover:text-white transition-colors cursor-pointer"
-                  >
-                    <span className="text-[11px] font-mono hidden sm:inline-block">
-                      Click to Enlarge
-                    </span>
-                    <Maximize2 className="w-3.5 h-3.5" />
-                  </button>
+                <div className="flex items-center gap-2 text-neutral-400 group-hover:text-white transition-colors">
+                  <span className="text-[11px] font-mono hidden sm:inline-block">
+                    Click to Enlarge
+                  </span>
+                  <Maximize2 className="w-3.5 h-3.5" />
                 </div>
               </div>
 
-              {/* Scrollable Image Container with Lenis protection */}
+              {/* Image Container - Natural Fit with ZERO Black Space */}
               <div
-                ref={scrollContainerRef}
-                data-lenis-prevent
-                onScroll={handleContainerScroll}
-                className="relative w-full h-[440px] sm:h-[480px] overflow-y-auto bg-[#050507] select-none"
-                style={{
-                  scrollbarWidth: "thin",
-                  scrollbarColor: "#333338 #0c0c0e",
-                }}
+                onClick={() => setSelectedMilestone(activeMilestone)}
+                className="relative w-full overflow-hidden select-none cursor-pointer"
               >
                 <img
                   src={activeMilestone.image}
                   alt={activeMilestone.title}
-                  onLoad={checkScrollable}
-                  className="w-full h-auto block select-none cursor-grab active:cursor-grabbing transition-transform duration-500 ease-out"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-auto block select-none transition-transform duration-500 ease-out group-hover:scale-[1.01]"
                 />
 
-                {/* Floating scroll hint pill when image is long */}
-                {isScrollable && scrollProgress < 0.15 && (
-                  <div className="sticky bottom-3 inset-x-0 mx-auto w-fit z-10 pointer-events-none animate-bounce">
-                    <div className="px-3.5 py-1.5 rounded-full bg-black/85 border border-white/20 text-white text-[11px] font-medium flex items-center gap-1.5 shadow-xl backdrop-blur-sm">
-                      <MoveVertical className="w-3 h-3 text-blue-400" />
-                      <span>Scroll or drag slider to explore full report</span>
-                    </div>
+                {/* Hover overlay hint */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none backdrop-blur-[2px]">
+                  <div className="px-4 py-2 rounded-full bg-black/90 border border-white/20 text-white text-xs font-semibold flex items-center gap-2 shadow-2xl font-['Space_Grotesk',sans-serif] uppercase tracking-wider">
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>View High-Resolution Report</span>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Window Footer Bar with Interactive Slider Control */}
-              <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-[#0e0e11] border-t border-neutral-800/80 text-[11px] text-neutral-400 select-none">
+              {/* Window Footer Bar */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-[#0e0e11] border-t border-neutral-800/80 text-[11px] text-neutral-400 select-none">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="font-mono text-neutral-300 hidden sm:inline">
+                  <span className="font-mono text-neutral-300">
                     Live Production Metric Snapshot
                   </span>
-                  <span className="font-mono text-neutral-300 sm:hidden">
-                    Snapshot
-                  </span>
                 </div>
-
-             
+                <span className="font-mono text-neutral-500 font-semibold">
+                  {activeMilestone.metric}
+                </span>
               </div>
             </div>
           </div>
@@ -593,7 +504,7 @@ export const MilestoneShowcase: React.FC = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-5xl max-h-[92vh] bg-[#0d0d10] border border-neutral-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col font-['Plus_Jakarta_Sans',sans-serif]"
+            className="relative w-full max-w-5xl max-h-[92vh] bg-[#0d0d10] border border-neutral-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col font-['Space_Grotesk',sans-serif]"
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between px-5 py-3.5 bg-[#121216] border-b border-neutral-800">
@@ -602,7 +513,7 @@ export const MilestoneShowcase: React.FC = () => {
                   {selectedMilestone.step}
                 </span>
                 <div>
-                  <h3 className="text-sm font-bold text-white">
+                  <h3 className="font-neuropol text-sm sm:text-base uppercase tracking-wider text-white">
                     {selectedMilestone.title}
                   </h3>
                   <p className="text-[11px] text-neutral-400">
@@ -616,7 +527,7 @@ export const MilestoneShowcase: React.FC = () => {
                   href={selectedMilestone.image}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-semibold text-neutral-300 hover:text-white transition-colors"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-xs font-semibold uppercase tracking-wider text-neutral-300 hover:text-white transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>Open Full Size</span>
@@ -672,6 +583,7 @@ export const MilestoneShowcase: React.FC = () => {
               <img
                 src={selectedMilestone.image}
                 alt={selectedMilestone.title}
+                decoding="async"
                 className="max-h-[64vh] w-auto object-contain rounded-lg shadow-2xl"
               />
             </div>
