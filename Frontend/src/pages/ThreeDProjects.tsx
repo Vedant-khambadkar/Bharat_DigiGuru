@@ -8,7 +8,6 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import LensText from "../components/LensText";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 import { getApiCache, setApiCache } from "../utils/apiCache";

@@ -12,7 +12,6 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  Film,
   Target,
   FileText,
   Sparkles,
