@@ -57,7 +57,7 @@ export const preloadPortfolioAssets = async (): Promise<PlaneItem[]> => {
       // 0ms Cache Hit: Preload textures into Three.js memory cache directly without DB request
       cached.forEach((item) => {
         if (item.textureUrl) {
-          preloadSkinnedTexture(item.textureUrl).catch(() => {});
+          preloadSkinnedTexture(item.textureUrl).catch(() => { });
         }
       });
       return cached;
@@ -67,10 +67,10 @@ export const preloadPortfolioAssets = async (): Promise<PlaneItem[]> => {
     const rawItems = Array.isArray(res)
       ? res
       : Array.isArray(res?.items)
-      ? res.items
-      : Array.isArray(res?.data)
-      ? res.data
-      : [];
+        ? res.items
+        : Array.isArray(res?.data)
+          ? res.data
+          : [];
 
     const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
     if (formatted.length > 0) {
@@ -78,7 +78,7 @@ export const preloadPortfolioAssets = async (): Promise<PlaneItem[]> => {
       // Preload Three.js textures in parallel in background memory
       formatted.forEach((item) => {
         if (item.textureUrl) {
-          preloadSkinnedTexture(item.textureUrl).catch(() => {});
+          preloadSkinnedTexture(item.textureUrl).catch(() => { });
         }
       });
     }
@@ -112,7 +112,7 @@ export const Portfolio: React.FC = () => {
     if (planes.length > 0) {
       planes.forEach((p) => {
         if (p.textureUrl) {
-          preloadSkinnedTexture(p.textureUrl).catch(() => {});
+          preloadSkinnedTexture(p.textureUrl).catch(() => { });
         }
       });
     }
@@ -127,7 +127,7 @@ export const Portfolio: React.FC = () => {
         setIsLoading(false);
         cached.forEach((item) => {
           if (item.textureUrl) {
-            preloadSkinnedTexture(item.textureUrl).catch(() => {});
+            preloadSkinnedTexture(item.textureUrl).catch(() => { });
           }
         });
         return; // Zero network call on page reload!
@@ -138,10 +138,10 @@ export const Portfolio: React.FC = () => {
         const rawItems = Array.isArray(res)
           ? res
           : Array.isArray(res?.items)
-          ? res.items
-          : Array.isArray(res?.data)
-          ? res.data
-          : [];
+            ? res.items
+            : Array.isArray(res?.data)
+              ? res.data
+              : [];
 
         const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
         setPlanes(formatted);
@@ -150,7 +150,7 @@ export const Portfolio: React.FC = () => {
         // Preload any un-cached textures
         formatted.forEach((item) => {
           if (item.textureUrl) {
-            preloadSkinnedTexture(item.textureUrl).catch(() => {});
+            preloadSkinnedTexture(item.textureUrl).catch(() => { });
           }
         });
 
@@ -282,20 +282,15 @@ export const Portfolio: React.FC = () => {
         />
       </div>
 
-      {/* 1. Upper Left Section */}
-      <div className="absolute top-16 sm:top-20 md:top-[125px] left-4 sm:left-8 md:left-12 max-w-[270px] sm:max-w-[340px] md:max-w-[380px] z-10 pointer-events-none">
-        <h1 className="font-neuropol text-lg sm:text-2xl md:text-[32px] font-normal leading-[1.2] tracking-wide mb-1.5 sm:mb-3 text-white uppercase">
-          Crafting Digital
-          <br />
-          Experiences That Speak.
+      {/* 1. Upper Left Section: Giant PORTFOLIO Title */}
+      <div className="absolute top-12 sm:top-16 md:top-20 left-4 sm:left-8 md:left-12 z-10 pointer-events-none flex items-start">
+        <h1 className="font-neuropol text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal leading-none tracking-wider text-white m-0 uppercase select-none">
+          PORTFOLIO
         </h1>
-        <p className="text-[10.5px] sm:text-xs md:text-[13px] leading-relaxed text-stone-300 m-0 tracking-[0.01em]">
-          At Bharat DigiGuru, we engineer photorealistic 3D CGI, immersive visual media, and next-generation interactive architectures tailored for world-class enterprises.
-        </p>
       </div>
 
       {/* 2. Upper Right Section */}
-      <div className="hidden lg:block absolute top-[125px] right-12 max-w-[360px] text-right z-10 pointer-events-none">
+      <div className="hidden lg:block absolute top-12 sm:top-16 md:top-20 right-12 max-w-[360px] text-right z-10 pointer-events-none">
         <h2 className="font-neuropol text-xl lg:text-[22px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
           Shaping Your Vision
           <br />
@@ -303,14 +298,25 @@ export const Portfolio: React.FC = () => {
         </h2>
       </div>
 
+      {/* 3. Bottom Left Section: Descriptive Data */}
+      <div className="absolute bottom-6 sm:bottom-8 md:bottom-12 left-4 sm:left-8 md:left-12 max-w-[280px] sm:max-w-[340px] md:max-w-[400px] z-10 pointer-events-none flex flex-col gap-1.5 sm:gap-2.5">
+        <h2 className="font-neuropol text-base sm:text-xl md:text-2xl font-normal leading-[1.2] tracking-wide text-white uppercase m-0">
+          Crafting Digital
+          <br />
+          Experiences That Speak.
+        </h2>
+        <p className="text-[10.5px] sm:text-xs md:text-[13px] leading-relaxed text-stone-300 m-0 tracking-[0.01em]">
+          At Bharat DigiGuru, we engineer photorealistic 3D CGI, immersive visual media, and next-generation interactive architectures tailored for world-class enterprises.
+        </p>
+      </div>
+
       {/* 3. Center 3D Interactive SkinnedMesh Carousel */}
       <div className="absolute inset-0 z-[1]">
         {/* Futuristic 3D Model Animated Loader HUD */}
         {(!is3DReady || isLoading) && (
           <Portfolio3DLoader
-            className={`transition-opacity duration-700 ${
-              is3DReady ? "opacity-0 pointer-events-none" : "opacity-100"
-            }`}
+            className={`transition-opacity duration-700 ${is3DReady ? "opacity-0 pointer-events-none" : "opacity-100"
+              }`}
           />
         )}
 
@@ -359,12 +365,6 @@ export const Portfolio: React.FC = () => {
         )}
       </div>
 
-      {/* 4. Bottom Left Display Branding */}
-      <div className="absolute bottom-4 sm:bottom-6 md:bottom-9 left-4 sm:left-8 md:left-12 flex items-end gap-3.5 z-10 pointer-events-none">
-        <div className="font-neuropol text-6xl font-normal leading-[0.88] tracking-wider text-white m-0 uppercase select-none">
-          PORTFOLIO
-        </div>
-      </div>
     </section>
   );
 };

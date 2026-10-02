@@ -88,7 +88,7 @@ export const ToolsAndTechnology: React.FC = () => {
     <section
       ref={containerRef}
       id="tools-and-technology-section"
-      className="relative w-full min-h-screen flex flex-col justify-center items-center py-8 sm:py-12 text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none"
+      className="relative w-full py-16 sm:py-24 flex flex-col justify-center items-center text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none"
     >
       <style>{`
         @keyframes floatAnim1 {
@@ -119,20 +119,25 @@ export const ToolsAndTechnology: React.FC = () => {
 
       {/* Ambient Subtle Violet Glow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[650px] sm:w-[850px] h-[300px] sm:h-[380px]  blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] sm:w-[850px] h-[350px] sm:h-[420px] bg-[#A78BFA]/10 blur-[130px] rounded-full pointer-events-none" />
       </div>
 
       <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 flex flex-col items-center">
         
-        {/* Section Heading */}
-        <div className="tech-title-wrap text-center mb-4 sm:mb-8">
-          <h2 className="text-3xl sm:text-4xl md:text-[46px] font-bold tracking-tight text-white leading-tight">
-            Tools & {" "}
+        {/* Section Heading & Modern Eyebrow Badge */}
+        <div className="tech-title-wrap text-center mb-8 sm:mb-12 flex flex-col items-center">
+          <span className="font-['Cormorant_Garamond',serif] italic text-sm text-neutral-400 mb-1 tracking-wide">
+            (Stack & Ecosystem)
+          </span>
+          <h2 className="font-neuropol text-3xl sm:text-4xl md:text-5xl uppercase tracking-wider text-white leading-tight">
+            Tools &{" "}
             <span className="bg-gradient-to-r from-[#A78BFA] via-[#F472B6] to-[#FB923C] bg-clip-text text-transparent">
               Technology
             </span>
           </h2>
-          <h3 className="text-white">Modern tools for professional execution</h3>
+          <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-400 mt-2 max-w-lg mx-auto font-normal leading-relaxed">
+            Modern tools and industry-standard technologies powering our digital execution.
+          </p>
         </div>
 
         {/* 3D Claymorphic Single-Screen Diagram Stage */}
@@ -246,18 +251,39 @@ export const ToolsAndTechnology: React.FC = () => {
           </div>
 
           {/* ---------------- 2. CANVA (Top Left) ---------------- */}
-          <div className="tech-card-badge anim-badge-1 absolute top-[4%] left-[25%] sm:left-[27%] z-10 group cursor-pointer">
-            <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 md:w-22 md:h-22 rounded-[18px] sm:rounded-[22px] md:rounded-[26px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_12px_28px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-108 transition-transform duration-300">
-              <svg className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" viewBox="0 0 24 24" fill="none">
+          <div className="tech-card-badge anim-badge-1 absolute top-[6%] left-[25%] sm:left-[27%] z-10 group cursor-pointer">
+            <div className="flex items-center justify-center w-13 h-13 sm:w-15 sm:h-15 md:w-17 md:h-17 rounded-[16px] sm:rounded-[18px] md:rounded-[20px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-110 transition-transform duration-300 p-2 sm:p-2.5">
+              <svg className="w-full h-full" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clipPath="url(#clip0_905_1790)">
+                  <path d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="#7D2AE7" />
+                  <path d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="url(#paint0_radial_905_1790)" />
+                  <path d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="url(#paint1_radial_905_1790)" />
+                  <path d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="url(#paint2_radial_905_1790)" />
+                  <path d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="url(#paint3_radial_905_1790)" />
+                  <path d="M57.2691 48.2052C56.939 48.2052 56.6485 48.484 56.3462 49.0928C52.9323 56.0153 47.0358 60.9134 40.2125 60.9134C32.3228 60.9134 27.437 53.7913 27.437 43.9522C27.437 27.2855 36.7232 17.6491 44.8796 17.6491C48.691 17.6491 51.0186 20.0443 51.0186 23.8559C51.0186 28.3796 48.4485 30.7748 48.4485 32.3702C48.4485 33.0864 48.8939 33.5201 49.7773 33.5201C53.3264 33.5201 57.4918 29.4419 57.4918 23.6808C57.4918 18.0947 52.63 13.9888 44.4737 13.9888C30.994 13.9888 19.0142 26.4858 19.0142 43.777C19.0142 57.1614 26.6572 66.0061 38.45 66.0061C50.9668 66.0061 58.2043 53.5526 58.2043 49.5105C58.2043 48.6153 57.7466 48.2052 57.2691 48.2052Z" fill="white" />
+                </g>
                 <defs>
-                  <linearGradient id="canvaOfficialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#00C4CC" />
-                    <stop offset="50%" stopColor="#7D2AE8" />
-                    <stop offset="100%" stopColor="#00C4CC" />
-                  </linearGradient>
+                  <radialGradient id="paint0_radial_905_1790" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15.453 70.9057) rotate(-49.416) scale(61.8733)">
+                    <stop stopColor="#6420FF" />
+                    <stop offset="1" stopColor="#6420FF" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="paint1_radial_905_1790" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(21.1788 9.09457) rotate(54.703) scale(69.7735)">
+                    <stop stopColor="#00C4CC" />
+                    <stop offset="1" stopColor="#00C4CC" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="paint2_radial_905_1790" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15.4526 70.9053) rotate(-45.1954) scale(61.1242 28.1118)">
+                    <stop stopColor="#6420FF" />
+                    <stop offset="1" stopColor="#6420FF" stopOpacity="0" />
+                  </radialGradient>
+                  <radialGradient id="paint3_radial_905_1790" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(32.7158 10.7789) rotate(66.5198) scale(62.9836 105.512)">
+                    <stop stopColor="#00C4CC" stopOpacity="0.725916" />
+                    <stop offset="0.0001" stopColor="#00C4CC" />
+                    <stop offset="1" stopColor="#00C4CC" stopOpacity="0" />
+                  </radialGradient>
+                  <clipPath id="clip0_905_1790">
+                    <rect width="80" height="80" fill="white" />
+                  </clipPath>
                 </defs>
-                <circle cx="12" cy="12" r="10" fill="url(#canvaOfficialGrad)" />
-                <path d="M14.5 9.2C13.8 8.4 12.8 8 11.6 8C9.2 8 7.5 9.8 7.5 12.2C7.5 14.6 9.2 16.4 11.6 16.4C13.1 16.4 14.1 15.6 14.7 14.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" />
               </svg>
             </div>
             <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">

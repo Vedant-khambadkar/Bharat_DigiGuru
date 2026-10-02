@@ -193,7 +193,7 @@ export const Blogs: React.FC = () => {
         {/* =========================================================================
             HEADER SECTION
            ========================================================================= */}
-        <div className="flex flex-col gap-2 shrink-0 max-w-5xl">
+        <div className="flex flex-col gap-2 shrink-0 max-w-5xl mt-16">
           {/* Studio Emblem + Tagline */}
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#ff3b30] shadow-[0_0_10px_#ff3b30] animate-pulse" />

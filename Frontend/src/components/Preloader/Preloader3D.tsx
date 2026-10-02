@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { useProgress } from "@react-three/drei";
 
 interface Preloader3DProps {
   realProgress?: number;
@@ -24,71 +25,23 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
   const counterRef = useRef({ value: 0 });
   const isExitingRef = useRef(false);
 
+  // Read Three.js asset loading progress from Drei
+  const { progress: dreiProgress, active: dreiActive } = useProgress();
+
   const updateDisplay = (val: number) => {
     const formatted = val < 10 ? `00${val}` : val < 100 ? `0${val}` : `${val}`;
     if (numberElRef.current) numberElRef.current.textContent = formatted;
     if (telemetryPercentRef.current) telemetryPercentRef.current.textContent = `${val}%`;
     if (progressBarRef.current) progressBarRef.current.style.width = `${val}%`;
     if (telemetryStatusRef.current) {
-      telemetryStatusRef.current.textContent = val < 100 ? "LOADING HARDWARE ASSETS" : "HARDWARE INITIALIZED";
+      telemetryStatusRef.current.textContent = val < 100 ? "INITIALIZING 3D ENVIRONMENT" : "3D ENVIRONMENT INITIALIZED";
     }
   };
 
-  // Smoothly interpolate counter towards realProgress with high responsiveness
-  useEffect(() => {
-    const target = Math.max(counterRef.current.value, Math.min(100, realProgress));
-
-    const tween = gsap.to(counterRef.current, {
-      value: target,
-      duration: target >= 100 ? 0.15 : 0.8,
-      ease: "power2.out",
-      onUpdate: () => {
-        const val = Math.round(counterRef.current.value);
-        updateDisplay(val);
-      },
-      onComplete: () => {
-        if (counterRef.current.value >= 99.9 && isReady && !isExitingRef.current) {
-          isExitingRef.current = true;
-          setTimeout(() => {
-            triggerExit();
-          }, 20);
-        }
-      },
-    });
-
-    return () => {
-      tween.kill();
-    };
-  }, [realProgress, isReady]);
-
-  // When isReady becomes true (all frames loaded)
-  useEffect(() => {
-    if (isReady && !isExitingRef.current) {
-      const tween = gsap.to(counterRef.current, {
-        value: 100,
-        duration: 0.25,
-        ease: "power2.out",
-        onUpdate: () => {
-          const val = Math.round(counterRef.current.value);
-          updateDisplay(val);
-        },
-        onComplete: () => {
-          if (!isExitingRef.current) {
-            isExitingRef.current = true;
-            setTimeout(() => {
-              triggerExit();
-            }, 60);
-          }
-        },
-      });
-
-      return () => {
-        tween.kill();
-      };
-    }
-  }, [isReady]);
-
   const triggerExit = () => {
+    if (isExitingRef.current) return;
+    isExitingRef.current = true;
+
     const tl = gsap.timeline({
       onStart: () => {
         onStartExit?.();
@@ -98,25 +51,91 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       },
     });
 
-    // Elegant fade out of internal text elements
+    // Fade out internal telemetry text
     tl.to(contentRef.current, {
       opacity: 0,
       y: -25,
-      duration: 0.5,
+      duration: 0.4,
       ease: "power2.inOut",
     });
 
-    // 1.5 Second High-End Cinematic Curtain Slide-Up to the top
+    // Smooth curtain slide-up reveal
     tl.to(
       containerRef.current,
       {
         yPercent: -100,
-        duration: 1.5,
+        duration: 1.2,
         ease: "power3.inOut",
       },
-      "-=0.3"
+      "-=0.2"
     );
   };
+
+  // Progress interpolation driven by 3D asset loader + simulated minimum ramp
+  useEffect(() => {
+    const calculatedTarget = Math.max(
+      realProgress,
+      dreiProgress,
+      isReady || (!dreiActive && dreiProgress >= 99) ? 100 : 0
+    );
+
+    const target = Math.min(100, Math.max(counterRef.current.value, calculatedTarget));
+
+    const tween = gsap.to(counterRef.current, {
+      value: target,
+      duration: target >= 100 ? 0.4 : 0.6,
+      ease: "power2.out",
+      onUpdate: () => {
+        const val = Math.round(counterRef.current.value);
+        updateDisplay(val);
+      },
+      onComplete: () => {
+        if (counterRef.current.value >= 99.5 && !isExitingRef.current) {
+          setTimeout(() => {
+            triggerExit();
+          }, 100);
+        }
+      },
+    });
+
+    return () => {
+      tween.kill();
+    };
+  }, [realProgress, dreiProgress, dreiActive, isReady]);
+
+  // Fail-safe & initial progressive counter ramp
+  useEffect(() => {
+    // Initial ramp to make the loader feel responsive immediately
+    const rampTween = gsap.to(counterRef.current, {
+      value: 90,
+      duration: 1.8,
+      ease: "power1.out",
+      onUpdate: () => {
+        const val = Math.round(counterRef.current.value);
+        updateDisplay(val);
+      },
+    });
+
+    // Safety timeout: Ensure page always reveals within 2.5s maximum
+    const safetyTimeout = setTimeout(() => {
+      gsap.to(counterRef.current, {
+        value: 100,
+        duration: 0.3,
+        ease: "power2.out",
+        onUpdate: () => {
+          updateDisplay(100);
+        },
+        onComplete: () => {
+          triggerExit();
+        },
+      });
+    }, 2500);
+
+    return () => {
+      rampTween.kill();
+      clearTimeout(safetyTimeout);
+    };
+  }, []);
 
   // Space key to bypass
   useEffect(() => {

@@ -211,7 +211,7 @@ export const WhyWorkWithUs: React.FC = () => {
 
               <div className="flex flex-col pt-0.5">
                 <span className="text-xs font-bold text-white uppercase">Shubham Singh</span>
-                <span className="text-[11px] text-neutral-400 font-['Space_Grotesk',sans-serif]">Marketing Director, Lunos</span>
+                <span className="text-[11px] text-neutral-400 font-['Space_Grotesk',sans-serif]">CEO & Founder</span>
               </div>
             </div>
           </div>

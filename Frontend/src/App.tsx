@@ -13,6 +13,7 @@ import Portfolio, { preloadPortfolioAssets } from "./pages/Portfolio";
 import ThreeDProjects from "./pages/ThreeDProjects";
 import WorkWithUs from "./pages/WhyWorkWithUs";
 import Blogs from "./pages/Blogs";
+import ClientProposals from "./pages/ClientProposals";
 import Contact from "./pages/Contact";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
@@ -486,14 +487,15 @@ const App = () => {
       <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
         <Home onFramesProgress={handleFramesProgress} />
         <Services />
-        <About />
-        <MissionVision />
-        <ToolsAndTechnology />
         <PlatformsWeManage />
-        <Process />
         <Portfolio />
         <ThreeDProjects />
+        <ToolsAndTechnology />
+        <MissionVision />
+        <Process />
+        <About />
         <WorkWithUs />
+        <ClientProposals />
         <Blogs />
         <Contact />
         <Footer />

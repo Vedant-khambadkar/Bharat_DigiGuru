@@ -29,12 +29,12 @@ const SLIDES: SlideItem[] = [
     headlineWord1: "OUR MISSION",
     aboutLabel: "About Our Mission",
     aboutText:
-      "To empower ambitious enterprises with top-tier digital media, photorealistic 3D visual marketing, and conversion-engineered web engineering. We tailor multi-disciplinary solutions that solve tangible business challenges—driving compounding brand equity and high-intent customer acquisition.",
+      "Our mission is to empower businesses, regardless of size, by employing advanced digital marketing strategies, unmatched creativity, and data-driven insights.",
     imageUrl:
       "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85",
     imageAlt: "Digital Power & Cinematic Landscape",
     rightMeta: "Bharat DigiGuru // Strategic Purpose",
-    highlights: ["Data-Driven ROI", "Full-Funnel Growth", "Precision 3D Visuals"],
+    highlights: ["Advanced Strategies", "Unmatched Creativity", "Data-Driven Insights"],
   },
   {
     id: "vision",
@@ -45,12 +45,12 @@ const SLIDES: SlideItem[] = [
     headlineWord2: "VISION",
     aboutLabel: "About Our Vision",
     aboutText:
-      "We envision a digital frontier where visionary enterprises harness autonomous AI workflows, interactive 3D WebGL architectures, and frictionless digital media to establish sustainable, generational market leadership in an ever-evolving digital economy.",
+      "Our vision is to transform the digital marketing realm through cutting-edge solutions and to empower businesses for success in the digital age.",
     imageUrl:
       "https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?auto=format&fit=crop&w=1200&q=85",
     imageAlt: "Future Crystal Cave Vision",
     rightMeta: "02 // Future Horizon & Leadership",
-    highlights: ["AI Automation", "3D WebGL Frontiers", "Generational Scale"],
+    highlights: ["Cutting-Edge Solutions", "Digital Era Success", "Transformative Impact"],
   },
   {
     id: "values",
@@ -90,7 +90,6 @@ export const MissionVision: React.FC = () => {
       const horizontalTween = gsap.to(track, {
         x: getScrollAmount,
         ease: "none",
-        invalidateOnRefresh: true,
       });
 
       ScrollTrigger.create({

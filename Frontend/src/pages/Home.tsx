@@ -1,519 +1,97 @@
-import React, { useEffect, useState, useRef } from "react";
-import gsap from "gsap";
-import windowBg from "../assets/DigitalMedia/window-bg.webp";
-import mobileBg from "../assets/DigitalMedia/mobile-bg.webp";
-import digital1 from "../assets/DigitalMedia/DigitalMedia-1.webp";
-import digital2 from "../assets/DigitalMedia/DigitalMedia-2.webp";
-import digital3 from "../assets/DigitalMedia/DigitalMedia-3.webp";
-import digital4 from "../assets/DigitalMedia/DigitalMedia-4.webp";
+import React, { Suspense, useEffect, useRef } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { Environment, ScrollControls, useProgress, useScroll } from '@react-three/drei'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import MacContainer from '../components/Home_Animation/MacContainer.tsx'
+import InstagramAnimation from '../components/Home_Animation/InstagramAnimation.tsx'
+import YoutubeAnimation from '../components/Home_Animation/YoutubeAnimation.tsx'
+import PinterestAnimation from '../components/Home_Animation/PinterestAnimation.tsx'
+import TikTokAnimation from '../components/Home_Animation/TikTokAnimation.tsx'
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface HomeProps {
-  id?: string;
   onFramesProgress?: (progress: number, isComplete: boolean) => void;
 }
 
-const mediaThumbnails = [
-  { id: 1, src: digital1, title: "Media 01" },
-  { id: 2, src: digital2, title: "Media 02" },
-  { id: 3, src: digital3, title: "Media 03" },
-  { id: 4, src: digital4, title: "Media 04" },
-];
+function ProgressTracker({ onProgress }: { onProgress?: (progress: number, isComplete: boolean) => void }) {
+  const { progress, active } = useProgress();
 
-export const Home: React.FC<HomeProps> = ({ id = "home-section", onFramesProgress }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [activeThumb, setActiveThumb] = useState<number | null>(null);
-  const [audioTimer, setAudioTimer] = useState("00 - 00");
-  const [bgLoaded, setBgLoaded] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const timerIntervalRef = useRef<number | null>(null);
-
-  // High-Performance Verified Hero Background Preloader & GPU Decoder
   useEffect(() => {
-    let isMounted = true;
-    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    const primaryBg = isMobile ? mobileBg : windowBg;
-    const secondaryBg = isMobile ? windowBg : mobileBg;
+    onProgress?.(progress, !active || progress >= 100);
+  }, [progress, active, onProgress]);
 
-    let hasCompleted = false;
-    const markComplete = () => {
-      if (hasCompleted) return;
-      hasCompleted = true;
-      if (isMounted) {
-        setBgLoaded(true);
-        onFramesProgress?.(100, true);
-      }
-    };
+  return null;
+}
 
-    // Load and verify background image
-    const verifyAndLoadBackground = async () => {
-      onFramesProgress?.(20, false);
+function ScrollTriggerSync({ progressRef }: { progressRef: React.MutableRefObject<number> }) {
+  const scrollData = useScroll();
 
-      try {
-        // 1. Fetch image directly to force network buffer into browser cache
-        const res = await fetch(primaryBg);
-        onFramesProgress?.(60, false);
-
-        if (res.ok) {
-          await res.blob();
-          onFramesProgress?.(80, false);
-        }
-
-        // 2. Decode in browser GPU memory
-        const img = new Image();
-        img.src = primaryBg;
-
-        if (typeof img.decode === "function") {
-          await img.decode();
-        } else {
-          await new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-          });
-        }
-
-        onFramesProgress?.(100, true);
-        markComplete();
-      } catch (err) {
-        console.warn("[Hero Image Loader] Falling back to standard image decoding:", err);
-        const img = new Image();
-        img.src = primaryBg;
-        if (typeof img.decode === "function") {
-          img.decode().then(markComplete).catch(markComplete);
-        } else {
-          img.onload = markComplete;
-          img.onerror = markComplete;
-        }
-      }
-    };
-
-    verifyAndLoadBackground();
-
-    // Safety fallback: Never keep the preloader waiting indefinitely if network drops
-    const safetyTimer = setTimeout(() => {
-      markComplete();
-    }, 8000);
-
-    // Preload secondary background & media thumbnails during idle time
-    const preloadSecondaryAssets = () => {
-      const secondaryImg = new Image();
-      secondaryImg.src = secondaryBg;
-      mediaThumbnails.forEach((thumb) => {
-        const thumbImg = new Image();
-        thumbImg.src = thumb.src;
-      });
-    };
-
-    if ("requestIdleCallback" in window) {
-      (window as any).requestIdleCallback(preloadSecondaryAssets, { timeout: 1500 });
-    } else {
-      setTimeout(preloadSecondaryAssets, 600);
+  useFrame(() => {
+    if (scrollData) {
+      scrollData.offset = progressRef.current;
     }
+  });
 
-    return () => {
-      isMounted = false;
-      clearTimeout(safetyTimer);
-    };
-  }, [onFramesProgress]);
+  return null;
+}
 
-  // Synchronized Entrance Animation (Triggered ONLY when preloader finishes & Home is revealed)
+function Home({ onFramesProgress }: HomeProps) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const progressRef = useRef<number>(0);
+
+  // GSAP ScrollTrigger Pinning for smooth 5-stage laptop animation
   useEffect(() => {
-    let hasRun = false;
+    const section = sectionRef.current;
+    if (!section) return;
 
-    const playHomeEntranceAnimation = () => {
-      if (hasRun) return;
-      hasRun = true;
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: section,
+        start: "top top",
+        end: "+=3200", // Distance user scrolls through the 5 pages of 3D animation
+        pin: true,
+        pinSpacing: true,
+        scrub: 0.6,
+        anticipatePin: 1,
+        fastScrollEnd: true,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          progressRef.current = self.progress;
+        },
+      });
+    }, section);
 
-      const letters = containerRef.current?.querySelectorAll(".hero-char");
-      const subItems = containerRef.current?.querySelectorAll(".home-sub-item");
-      const bottomItems = containerRef.current?.querySelectorAll(".home-bottom-item");
-
-      const tl = gsap.timeline({ delay: 0.1 });
-
-      // 1. Snappy letter-by-letter reveal for DIGITAL & STUDIO
-      if (letters && letters.length > 0) {
-        gsap.killTweensOf(letters);
-        tl.fromTo(
-          letters,
-          {
-            opacity: 0,
-            scale: 0.82,
-          },
-          {
-            opacity: 1,
-            scale: 1,
-            duration: 1.95,
-            ease: "power3.out",
-            stagger: {
-              each: 0.055,
-              from: "random", // Random order across all letters
-            },
-          }
-        );
-      }
-
-      // 2. Sub-header service lists fade & slide in with overlap
-      if (subItems && subItems.length > 0) {
-        tl.fromTo(
-          subItems,
-          { opacity: 0, y: 14 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.45,
-            stagger: 0.04,
-            ease: "power2.out",
-          },
-          "-=0.35"
-        );
-      }
-
-      // 3. Audio visualizer and footer meta row slide in
-      if (bottomItems && bottomItems.length > 0) {
-        tl.fromTo(
-          bottomItems,
-          { opacity: 0, y: 16 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.45,
-            ease: "power3.out",
-          },
-          "-=0.3"
-        );
-      }
-    };
-
-    // 1. Listen for preloader reveal event when preloader counter reaches 100 & slides up
-    window.addEventListener("start-hero-letters", playHomeEntranceAnimation);
-
-    // 2. Fallback safety timer (only in case preloader is disabled or already unmounted)
-    const fallbackTimer = setTimeout(() => {
-      playHomeEntranceAnimation();
-    }, 1200);
-
-    return () => {
-      window.removeEventListener("start-hero-letters", playHomeEntranceAnimation);
-      clearTimeout(fallbackTimer);
-    };
+    return () => ctx.revert();
   }, []);
 
-  // Audio equalizer timer simulation on play
-  useEffect(() => {
-    if (isPlaying) {
-      let seconds = 0;
-      timerIntervalRef.current = setInterval(() => {
-        seconds += 1;
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        setAudioTimer(
-          `${mins.toString().padStart(2, "0")} - ${secs.toString().padStart(2, "0")}`
-        );
-      }, 1000);
-    } else {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      setAudioTimer("00 - 00");
-    }
-    return () => {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    };
-  }, [isPlaying]);
-
-  // Helper to split text into individual animated letter spans
-  const renderRandomChars = (text: string) => {
-    return text.split("").map((char, i) => (
-      <span
-        key={i}
-        className="hero-char inline-block will-change-[transform,opacity,filter]"
-        style={{ opacity: 0 }}
-      >
-        {char === " " ? "\u00A0" : char}
-      </span>
-    ));
-  };
-
   return (
-    <section
-      id={id}
-      ref={containerRef}
-      className="relative z-10 w-full min-h-screen bg-[#050505] text-white select-none overflow-hidden flex flex-col justify-between"
-      style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}
+    <main
+      id="home-section"
+      ref={sectionRef}
+      className="relative bg-[#050505] w-full h-screen text-white overflow-hidden select-none"
     >
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-[#050505]">
-        <picture className="absolute inset-0 w-full h-full block">
-          {/* Mobile Viewport Source */}
-          <source media="(max-width: 767px)" srcSet={mobileBg} type="image/webp" />
-          {/* Desktop / Window Viewport Source */}
-          <source media="(min-width: 768px)" srcSet={windowBg} type="image/webp" />
-          <img
-            src={windowBg}
-            alt="Bharat DigiGuru Studio Background"
-            loading="eager"
-            // @ts-expect-error fetchpriority is standard in modern browsers
-            fetchpriority="high"
-            decoding="async"
-            onLoad={() => setBgLoaded(true)}
-            className={`w-full h-full object-cover object-center filter contrast-[1.04] brightness-[0.96] transition-opacity duration-300 ease-out ${
-              bgLoaded ? "opacity-100" : "opacity-0"
-            }`}
-          />
-        </picture>
-        {/* Ambient subtle vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/30 pointer-events-none" />
-      </div>
+      <Canvas
+        dpr={[1, 2]}
+        gl={{ antialias: true, powerPreference: "high-performance" }}
+        camera={{ position: [0, 4.3, 38], fov: 40 }}
+      >
+        <ProgressTracker onProgress={onFramesProgress} />
+        <Suspense fallback={null}>
+          <Environment preset="city" />
+          <ScrollControls pages={5} damping={0.15}>
+            <ScrollTriggerSync progressRef={progressRef} />
+            <MacContainer />
+            <InstagramAnimation />
+            <YoutubeAnimation />
+            <PinterestAnimation />
+            <TikTokAnimation />
+          </ScrollControls>
+        </Suspense>
+      </Canvas>
+    </main>
+  )
+}
 
-      <div className="absolute inset-0 z-[1] pointer-events-none " />
-
-      <div className="relative z-10 bg-black/60 hidden md:flex flex-col justify-between w-full h-screen px-8 lg:px-20 py-6 lg:py-8">
-        {/* Top Row: Giant STUDIO - [LOGO] - DIGITAL Header */}
-        <div className="w-full">
-          <div className="flex items-center justify-between w-full pt-1 mt-16 lg:mt-20">
-            {/* Left Giant Title */}
-            <div className="flex-shrink-0">
-              <h1
-                className="font-lato font-semibold text-[4.5rem] lg:text-[6.5rem] xl:text-[7.8rem] 2xl:text-[9rem] whitespace-nowrap leading-none text-white uppercase text-left tracking-tight"
-              >
-                {renderRandomChars("DIGITAL")}
-              </h1>
-            </div>
-
-            {/* Center Spacer */}
-            <div className="flex-1" />
-
-            {/* Right Giant Title */}
-            <div className="flex-shrink-0 flex justify-end">
-              <h1
-                className="font-lato font-semibold text-[4.5rem] lg:text-[6.5rem] xl:text-[7.8rem] 2xl:text-[9rem] whitespace-nowrap leading-none text-white uppercase text-right tracking-tight"
-              >
-                {renderRandomChars("STUDIO")}
-              </h1>
-            </div>
-          </div>
-
-          {/* Sub-Header Side Columns (Chinese on Left, English Services on Right) */}
-          <div className="home-sub-item flex justify-between items-start w-full -mt-2 lg:mt-6 text-[13px] lg:text-[14px]">
-            {/* Left Chinese services list */}
-            <div className="flex flex-col space-y-1.5 text-neutral-300 font-lato tracking-wide">
-              <p className="hover:text-white transition-colors">用心创造美好</p>
-              <p className="hover:text-white transition-colors">品牌策略</p>
-              <p className="hover:text-white transition-colors">内容创新</p>
-              <p className="hover:text-white transition-colors">技术驱动体验</p>
-            </div>
-
-            {/* Right English services list */}
-            <div className="flex flex-col space-y-1.5 text-neutral-300  text-right tracking-wide font-lato ">
-              <a href="#services" className="hover:text-white transition-colors cursor-pointer ">
-                Creative Strategy
-              </a>
-              <a href="#services" className="hover:text-white transition-colors cursor-pointer">
-                Brand Identity
-              </a>
-              <a href="#services" className="hover:text-white transition-colors cursor-pointer">
-                Creative Content
-              </a>
-              <a href="#services" className="hover:text-white transition-colors cursor-pointer">
-                Web Design
-              </a>
-            </div>
-          </div>
-        </div>
-
-
-        {/* Bottom Audio Visualizer Bar & Footer Meta Row */}
-        <div className="home-bottom-item w-full space-y-4">
-          {/* Audio Waveform & Equalizer Strip */}
-          <div className="flex flex-col items-center justify-center w-full">
-            {/* Equalizer Bars & Center Timecode */}
-            <div className="flex items-center justify-center space-x-1 w-full max-w-2xl py-1">
-              {/* Left waveform bars */}
-              <div className="flex items-end space-x-1 flex-1 justify-end h-8 overflow-hidden pr-3">
-                {[14, 20, 28, 16, 24, 32, 18, 12, 26, 30, 22, 15, 28, 10, 18, 25, 14, 20].map(
-                  (h, i) => (
-                    <span
-                      key={`l-${i}`}
-                      className={`w-[2px] bg-white/80 rounded-full transition-all duration-300 ${isPlaying ? "animate-pulse" : "opacity-60"
-                        }`}
-                      style={{
-                        height: isPlaying ? `${Math.max(6, (h * ((i % 3) + 1)) % 32)}px` : `${h}px`,
-                        animationDelay: `${i * 60}ms`,
-                      }}
-                    />
-                  )
-                )}
-              </div>
-
-              {/* Center Timecode & Tag */}
-              <div className="flex flex-col items-center px-4">
-                <span className="text-xs tracking-[0.2em] text-neutral-300 font-mono">
-                  [ {audioTimer} ]
-                </span>
-                <span className="text-[10px] text-neutral-400 tracking-wider font-sans mt-0.5 whitespace-nowrap">
-                  Digital Solutions, Real Impact.
-                </span>
-              </div>
-
-              {/* Right waveform bars */}
-              <div className="flex items-end space-x-1 flex-1 justify-start h-8 overflow-hidden pl-3">
-                {[20, 14, 25, 18, 10, 28, 15, 22, 30, 26, 12, 18, 32, 24, 16, 28, 20, 14].map(
-                  (h, i) => (
-                    <span
-                      key={`r-${i}`}
-                      className={`w-[2px] bg-white/80 rounded-full transition-all duration-300 ${isPlaying ? "animate-pulse" : "opacity-60"
-                        }`}
-                      style={{
-                        height: isPlaying ? `${Math.max(6, (h * ((i % 3) + 1)) % 32)}px` : `${h}px`,
-                        animationDelay: `${i * 60}ms`,
-                      }}
-                    />
-                  )
-                )}
-              </div>
-            </div>
-
-            {/* Thumbnail Strip with Play Button */}
-            <div className="flex items-center space-x-1.5 p-1 bg-black/60 backdrop-blur-md rounded border border-white/10 mt-1">
-              {/* Play Toggle Button */}
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="w-16 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 transition-all text-white rounded-sm group cursor-pointer"
-                title={isPlaying ? "Pause Visualizer" : "Play Visualizer"}
-              >
-                {isPlaying ? (
-                  <div className="flex space-x-1">
-                    <span className="w-1 h-3.5 bg-white rounded-full" />
-                    <span className="w-1 h-3.5 bg-white rounded-full" />
-                  </div>
-                ) : (
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-4 h-4 ml-0.5 text-white/90 group-hover:scale-110 transition-transform"
-                  >
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                )}
-              </button>
-
-              {/* Thumbnails */}
-              {mediaThumbnails.map((thumb) => (
-                <div
-                  key={thumb.id}
-                  onClick={() => setActiveThumb(activeThumb === thumb.id ? null : thumb.id)}
-                  className={`relative w-16 h-12 overflow-hidden rounded-sm cursor-pointer border transition-all duration-200 ${activeThumb === thumb.id
-                    ? "border-white scale-105 shadow-lg"
-                    : "border-white/10 hover:border-white/40 opacity-85 hover:opacity-100"
-                    }`}
-                >
-                  <img
-                    src={thumb.src}
-                    alt={thumb.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Bottom Footer Info Strip */}
-          <div className="flex items-end justify-between w-full text-[12px] lg:text-[13px] text-neutral-400 font-lato pt-2">
-            {/* Left Copy */}
-            <div className="leading-snug">
-              <p className="text-neutral-300">Bringing Design and</p>
-              <p className="text-neutral-300">Development Together for a</p>
-              <p className="text-white font-medium">More Creative Future.</p>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* LAYER 3 (MOBILE VIEW): EXACT RESPONSIVE MOBILE LAYOUT (3RD DESIGN)       */}
-      {/* ========================================================================= */}
-      <div className="relative z-10 flex md:hidden flex-col justify-between w-full min-h-screen px-5 py-6 space-y-6">
-     
-        {/* Mobile Giant Stacked Typography */}
-        <div className="w-full pt-2 mt-15">
-          <h1
-            className="font-archivo text-[3.6rem] sm:text-[4.8rem] whitespace-nowrap leading-[0.9] tracking-tight text-white uppercase text-left font-normal"
-            style={{ fontFamily: "'Archivo Black', sans-serif" }}
-          >
-            {renderRandomChars("STUDIO")}
-            <br />
-            {renderRandomChars("DIGITAL")}
-          </h1>
-
-          {/* 2-Column Info (Chinese on Left, English Services on Right) */}
-          <div className="home-sub-item flex justify-between mt-10 items-start w-full pt-4 text-xs font-sans">
-            {/* Left Chinese text */}
-            <div className="flex flex-col space-y-1 text-neutral-300 tracking-wide">
-              <p>用心创造美好</p>
-              <p>品牌策略</p>
-              <p>内容创新</p>
-              <p>技术驱动体验</p>
-            </div>
-
-            {/* Right English services */}
-            <div className="flex flex-col space-y-1 text-neutral-300 text-right tracking-wide">
-              <p>Creative Strategy</p>
-              <p>Brand Identity</p>
-              <p>Creative Content</p>
-              <p>Web Design</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Laptop Visual Spacer (Center Laptop from mobileBg is in background) */}
-        <div className="w-full h-44 sm:h-56 pointer-events-none" />
-
-      
-
-
-        {/* Mobile Equalizer Waveform & Reel */}
-        <div className="home-bottom-item w-full space-y-2.5">
-          {/* Equalizer Waveform */}
-          <div className="flex items-center justify-center space-x-1 w-full py-1">
-            <div className="flex items-end space-x-0.5 flex-1 justify-end h-6 overflow-hidden pr-2">
-              {[12, 18, 14, 22, 10, 16, 20, 8, 14, 18].map((h, i) => (
-                <span
-                  key={`m-l-${i}`}
-                  className="w-[2px] bg-white/80 rounded-full"
-                  style={{ height: `${h}px` }}
-                />
-              ))}
-            </div>
-            <span className="text-[11px] tracking-wider text-neutral-300 font-mono px-2">
-              [ {audioTimer} ]
-            </span>
-            <div className="flex items-end space-x-0.5 flex-1 justify-start h-6 overflow-hidden pl-2">
-              {[18, 14, 8, 20, 16, 10, 22, 14, 18, 12].map((h, i) => (
-                <span
-                  key={`m-r-${i}`}
-                  className="w-[2px] bg-white/80 rounded-full"
-                  style={{ height: `${h}px` }}
-                />
-              ))}
-            </div>
-          </div>
-
-         
-        </div>
-
-        {/* Mobile Footer Info */}
-        <div className="w-full space-y-4 pt-1">
-          <div className="flex justify-between items-start text-[11px] text-neutral-300 font-sans">
-            <div className="max-w-[48%] leading-snug">
-              <p>Bringing Design and</p>
-              <p>Development Together for a</p>
-              <p className="text-white font-medium">More Creative Future.</p>
-            </div>
-          
-          </div>
-
-        </div>
-      </div>
-    </section>
-  );
-};
-
-export default Home;
-
+export default Home

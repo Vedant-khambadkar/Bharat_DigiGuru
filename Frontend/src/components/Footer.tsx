@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowUpRight, ArrowUp, Mail, MapPin, Globe } from "lucide-react";
+import { ArrowUpRight, ArrowUp, Mail, MapPin, Globe, Phone } from "lucide-react";
 
 export const Footer: React.FC = () => {
   const scrollToSection = (id: string) => {
@@ -133,6 +133,15 @@ export const Footer: React.FC = () => {
               <li>
                 <button
                   type="button"
+                  onClick={() => scrollToSection("proposals-section")}
+                  className="hover:text-white transition-colors cursor-pointer text-left hover:translate-x-1 duration-200 inline-block"
+                >
+                  Client Proposals & Strategy
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
                   onClick={() => scrollToSection("blogs-section")}
                   className="hover:text-white transition-colors cursor-pointer text-left hover:translate-x-1 duration-200 inline-block"
                 >
@@ -250,10 +259,20 @@ export const Footer: React.FC = () => {
                   <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </a>
               </li>
+              <li>
+                <a
+                  href="tel:+919876543210"
+                  className="hover:text-white transition-colors inline-flex items-center gap-1.5 text-neutral-300 group font-mono"
+                >
+                  <Phone className="w-3.5 h-3.5 text-[#ff3b30] shrink-0" />
+                  <span className="truncate">+91 98765 43210</span>
+                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              </li>
               <li className="pt-2 text-neutral-500 text-[11px] leading-relaxed">
                 <div className="flex items-center gap-1.5 text-neutral-400 mb-1">
                   <MapPin className="w-3.5 h-3.5 text-[#ff3b30] shrink-0" />
-                  <span>Varanasi, UP, India</span>
+                  <span>India</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-neutral-400">
                   <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" />

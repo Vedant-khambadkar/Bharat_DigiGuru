@@ -426,8 +426,8 @@ export default function SkinnedPlane({
   const responsiveScale = isMobile
     ? Math.min(Math.max(size.width / 700, 0.46), 0.58)
     : isTablet
-    ? 0.78
-    : 1.0;
+      ? 0.78
+      : 1.0;
   const responsiveYShift = isMobile ? -0.22 : 0;
 
   // Frame loop: smooth intro rise, scroll-driven 360 degree rotation, drag damping, and bone flexing physics

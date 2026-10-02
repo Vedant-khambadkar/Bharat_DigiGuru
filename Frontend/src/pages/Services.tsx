@@ -237,7 +237,7 @@ const SERVICES_DATA: ServiceData[] = [
         id: "content-generation",
         number: "(04)",
         title: "Content Generation",
-        subtitle: "BLOGS, ARTICLES, COPY & NARRATIVES",
+        subtitle: "EDITORIAL, CONTENT, STRATEGIC , DEVELOPMENT & NARRATIVES",
         tag: "& STRATEGIC COPYWRITING",
         image: pic10,
         works: [
@@ -296,7 +296,7 @@ const SERVICES_DATA: ServiceData[] = [
     {
         id: "ai-art-generation",
         number: "(05)",
-        title: "AI Art Generation",
+        title: "Art Generation",
         subtitle: "DIGITAL MASTERPIECES & VISUAL ASSETS",
         tag: "& NEXT-GEN CREATIVE TECH",
         image: pic13,
@@ -334,7 +334,7 @@ const SERVICES_DATA: ServiceData[] = [
         ],
         details: {
             description:
-                "Harnessing cutting-edge AI technology, our team specializes in offering innovative AI Art. From stunning digital masterpieces to unique creations, we craft visually captivating artwork that pushes the boundaries of creativity. Entrust us to unleash the power of AI to produce mesmerizing artworks that inspire and delight. Unlock the potential of artificial intelligence to create stunning visual artwork that captivates and inspires. At Bharat DigiGuru, our AI Art Generation services harness the latest advancements in AI technology to produce unique and captivating artwork that reflects your brand's identity and vision. Whether you're looking for digital illustrations, graphics, or custom artwork, our AI-powered tools can bring your ideas to life with unparalleled precision and creativity. With our AI Art Generation services, you can unleash your imagination and explore new possibilities in visual storytelling and brand expression.",
+                "Harnessing cutting-edge AI technology, our team specializes in offering innovative AI Art. From stunning digital masterpieces to unique creations, we craft visually captivating artwork that pushes the boundaries of creativity. Entrust us to unleash the power of AI to produce mesmerizing artworks that inspire and delight. Unlock the potential of artificial intelligence to create stunning visual artwork that captivates and inspires. At Bharat DigiGuru, our Art Generation services harness the latest advancements in AI technology to produce unique and captivating artwork that reflects your brand's identity and vision. Whether you're looking for digital illustrations, graphics, or custom artwork, our AI-powered tools can bring your ideas to life with unparalleled precision and creativity. With our Art Generation services, you can unleash your imagination and explore new possibilities in visual storytelling and brand expression.",
             deliverables: [
                 "Bespoke Generative Brand Art & Key Visuals",
                 "Custom Digital Illustrations & Graphics",

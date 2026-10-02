@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import {
   Mail,
   MapPin,
-  Send,
+  Clock,
+  ArrowRight,
   CheckCircle2,
   AlertCircle,
   Copy,
   Check,
-  Clock,
-  Sparkles,
 } from "lucide-react";
 import LensText from "../components/LensText";
 import { userService } from "../services/service/userService";
@@ -87,7 +86,7 @@ export const Contact: React.FC = () => {
       setIsSubmitted(true);
     } catch (err: any) {
       console.error("Inquiry submission error:", err);
-      // Fallback so user receives immediate UI confirmation
+      // Ensure smooth user experience with instant UI confirmation
       setIsSubmitting(false);
       setIsSubmitted(true);
     }
@@ -102,53 +101,46 @@ export const Contact: React.FC = () => {
   return (
     <section
       id="contact-section"
-      className="relative z-10 bg-transparent text-[#121110] w-full px-6 sm:px-10 md:px-12 lg:px-16 pt-12 sm:pt-16 pb-12 sm:pb-16 overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]"
+      className="relative font-['monospace'] z-10 bg-transparent text-white w-full px-6 sm:px-10 md:px-12 lg:px-16 py-16 sm:py-20 lg:py-24 overflow-hidden"
     >
-      <div className="relative z-10 w-full max-w-8xl mx-auto flex flex-col gap-12 sm:gap-16">
+      <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col gap-12 sm:gap-16">
         {/* =========================================================================
-            HEADER SECTION: Clean Editorial Headline & Core Narrative
+            HEADER SECTION: Simple, Crisp Editorial
            ========================================================================= */}
-        <div className="flex flex-col gap-4 w-full border-b border-[#ded5cb] pb-8">
-          {/* Top Pill Emblem */}
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#ff3b30] shadow-[0_0_8px_#ff3b30] animate-pulse" />
-            <span className="text-xs uppercase tracking-widest text-[#57534e] font-bold flex items-center gap-1.5">
-              Initiate Collaboration // Let's Connect
+        <div className="flex flex-col gap-4 max-w-3xl">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-white/70" />
+            <span className="text-[11px] font-mono tracking-[0.2em] uppercase text-neutral-400">
+              Get in Touch
             </span>
           </div>
 
-          {/* Main Title with LensText */}
-          <h2 className="font-neuropol font-normal text-3xl sm:text-4xl lg:text-5xl uppercase tracking-wider text-white leading-none select-none">
+          <h2 className="font-neuropol text-3xl sm:text-4xl lg:text-5xl uppercase tracking-wider text-white leading-none select-none">
             <LensText text="CONTACT US" strokeWidth="2px" strokeColor="#ffffff" />
           </h2>
 
-          {/* Lead Statement */}
-          <p className="text-lg sm:text-xl md:text-2xl text-[#292524] font-semibold leading-snug">
-            Our strategic production & marketing team helps you bring vision to reality. Let's discuss your next breakthrough project.
-          </p>
-
-          <p className="text-sm sm:text-base text-[#57534e] leading-relaxed max-w-3xl">
-            When you partner with Bharat DigiGuru, you gain dedicated brand architects, cinematic creators, and growth specialists committed to elevating your market authority.
+          <p className="text-sm sm:text-base text-neutral-400 leading-relaxed max-w-2xl font-['Space_Grotesk',sans-serif]">
+            Have an ambitious project or looking to scale your brand presence?
+            Tell us about your goals and our team will get back to you with a tailored roadmap.
           </p>
         </div>
 
         {/* =========================================================================
-            MAIN INTERACTIVE GRID: Form on Left + Agency Channels on Right
+            MAIN SECTION: Minimalist 2-Column Split
            ========================================================================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-          {/* LEFT: Clean Inquiry Form (lg:col-span-7) */}
-          <div className="lg:col-span-7 bg-[#0c0c0c] border border-neutral-800 rounded-3xl p-6 sm:p-9 shadow-[0_20px_50px_rgba(0,0,0,0.4)] relative overflow-hidden text-white">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          {/* LEFT: Clean Simple Form (lg:col-span-7) */}
+          <div className="lg:col-span-7 bg-[#0b0b0b] border border-neutral-800/80 rounded-2xl p-6 sm:p-8 md:p-10 shadow-xl">
             {isSubmitted ? (
-              <div className="py-12 px-2 flex flex-col items-center justify-center text-center gap-4 animate-in fade-in zoom-in-95 duration-400">
-                <div className="w-14 h-14 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-[#ff3b30] shadow-md mb-1">
-                  <CheckCircle2 className="w-7 h-7" />
+              <div className="py-12 flex flex-col items-center justify-center text-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white mb-2">
+                  <CheckCircle2 className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="font-black text-2xl sm:text-3xl text-white uppercase tracking-tight">
-                  Inquiry Transmitted!
+                <h3 className="font-bold text-2xl text-white uppercase tracking-tight font-['Space_Grotesk',sans-serif]">
+                  Message Received
                 </h3>
-                <p className="text-xs sm:text-sm text-neutral-300 max-w-md leading-relaxed">
-                  Thank you for reaching out to Bharat DigiGuru. Your inquiry has been forwarded to{" "}
-                  <span className="font-mono text-white font-semibold">{clientEmail}</span>. Our specialists will review your brief and connect with you within 2 hours.
+                <p className="text-sm text-neutral-400 max-w-md leading-relaxed">
+                  Thank you for reaching out. We have received your project details and our team will review your brief within 2 hours.
                 </p>
                 <button
                   type="button"
@@ -156,27 +148,17 @@ export const Contact: React.FC = () => {
                     setIsSubmitted(false);
                     setFormData({ name: "", email: "", phone: "", company: "", message: "" });
                   }}
-                  className="mt-3 px-6 py-2.5 rounded-full border border-neutral-700 bg-neutral-900 text-xs uppercase tracking-wider text-neutral-200 hover:text-white hover:border-neutral-500 transition-colors cursor-pointer font-bold"
+                  className="mt-4 px-6 py-2.5 rounded-lg border border-neutral-700 bg-neutral-900 text-xs uppercase tracking-wider text-neutral-200 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer font-medium"
                 >
-                  Submit Another Inquiry
+                  Send Another Message
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-6 relative z-10">
-                <div className="flex flex-col gap-1 border-b border-neutral-800/80 pb-3">
-                  <span className="font-bold text-base sm:text-lg uppercase tracking-tight text-white flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#ff3b30]" />
-                    Project Brief & Details
-                  </span>
-                  <span className="text-xs text-neutral-400">
-                    Select your required capabilities and provide brief project parameters.
-                  </span>
-                </div>
-
-                {/* 1. Service Selection Chips */}
+              <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                {/* 1. Services Selector */}
                 <div className="flex flex-col gap-2.5">
-                  <label className="text-xs uppercase tracking-wider text-neutral-300 font-bold">
-                    Select Required Services
+                  <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                    What services do you need?
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {SERVICES_OPTIONS.map((srv) => {
@@ -186,10 +168,11 @@ export const Contact: React.FC = () => {
                           key={srv}
                           type="button"
                           onClick={() => toggleService(srv)}
-                          className={`px-3 py-1.5 rounded-full text-[11px] sm:text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer border ${active
-                            ? "bg-white text-black font-bold border-white shadow-sm"
-                            : "bg-neutral-900/80 text-neutral-300 border-neutral-800 hover:border-neutral-600 hover:text-white"
-                            }`}
+                          className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer border ${
+                            active
+                              ? "bg-white text-black border-white shadow-sm"
+                              : "bg-neutral-900/60 text-neutral-400 border-neutral-800 hover:text-white hover:border-neutral-600"
+                          }`}
                         >
                           {srv}
                         </button>
@@ -198,11 +181,11 @@ export const Contact: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 2. Input Fields: Name, Email, Phone, Company */}
+                {/* 2. Form Inputs */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs uppercase tracking-wider text-neutral-300 font-medium">
-                      Your Name *
+                    <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                      Your Name <span className="text-neutral-500">*</span>
                     </label>
                     <input
                       required
@@ -210,27 +193,27 @@ export const Contact: React.FC = () => {
                       placeholder="e.g. Rahul Sharma"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-neutral-500 transition-all font-sans"
+                      className="w-full px-4 py-3 rounded-lg bg-neutral-900/80 border border-neutral-800 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-400 transition-colors"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs uppercase tracking-wider text-neutral-300 font-medium">
-                      Work Email *
+                    <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                      Work Email <span className="text-neutral-500">*</span>
                     </label>
                     <input
                       required
                       type="email"
-                      placeholder="rahul@company.com"
+                      placeholder="name@company.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-neutral-500 transition-all font-sans"
+                      className="w-full px-4 py-3 rounded-lg bg-neutral-900/80 border border-neutral-800 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-400 transition-colors"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs uppercase tracking-wider text-neutral-300 font-medium">
-                      Phone / WhatsApp *
+                    <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                      Phone / WhatsApp <span className="text-neutral-500">*</span>
                     </label>
                     <input
                       required
@@ -238,41 +221,41 @@ export const Contact: React.FC = () => {
                       placeholder="+91 98765 43210"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-neutral-500 transition-all font-sans"
+                      className="w-full px-4 py-3 rounded-lg bg-neutral-900/80 border border-neutral-800 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-400 transition-colors"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs uppercase tracking-wider text-neutral-300 font-medium">
-                      Brand / Business Name
+                    <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                      Brand / Company
                     </label>
                     <input
                       type="text"
-                      placeholder="Brand or Enterprise Ltd."
+                      placeholder="Company Name"
                       value={formData.company}
                       onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-neutral-500 transition-all font-sans"
+                      className="w-full px-4 py-3 rounded-lg bg-neutral-900/80 border border-neutral-800 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-400 transition-colors"
                     />
                   </div>
                 </div>
 
-                {/* 3. Message Textarea */}
+                {/* 3. Message */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs uppercase tracking-wider text-neutral-300 font-medium">
-                    Project Vision & Goals *
+                  <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                    Project Overview <span className="text-neutral-500">*</span>
                   </label>
                   <textarea
                     required
                     rows={4}
-                    placeholder="Tell us about your brand objectives, deliverables, timeline, or current challenges..."
+                    placeholder="Tell us about your vision, key requirements, timeline, or current goals..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-neutral-500 transition-all resize-none leading-relaxed font-sans"
+                    className="w-full px-4 py-3 rounded-lg bg-neutral-900/80 border border-neutral-800 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-400 transition-colors resize-none leading-relaxed"
                   />
                 </div>
 
                 {errorMessage && (
-                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-400 flex items-center gap-2">
+                  <div className="p-3 rounded-lg bg-neutral-900 border border-red-500/40 text-xs text-red-400 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{errorMessage}</span>
                   </div>
@@ -282,14 +265,14 @@ export const Contact: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="mt-1 w-full py-3.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-bold text-xs sm:text-sm uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50 active:scale-[0.99]"
+                  className="mt-2 w-full py-3.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? (
-                    <span>Transmitting to {clientEmail}...</span>
+                    <span>Sending...</span>
                   ) : (
                     <>
-                      <span>Transmit Project Inquiry</span>
-                      <Send className="w-3.5 h-3.5 text-[#ff3b30]" />
+                      <span>Submit Inquiry</span>
+                      <ArrowRight className="w-4 h-4" />
                     </>
                   )}
                 </button>
@@ -297,142 +280,110 @@ export const Contact: React.FC = () => {
             )}
           </div>
 
-          {/* RIGHT: Cohesive Agency Contact Bento Cards (lg:col-span-5) */}
-          <div className="lg:col-span-5 flex flex-col gap-4">
-            {/* 1. Official Agency Business Portal Card */}
-            {/* <div className="bg-[#0c0c0c] border border-neutral-800 rounded-3xl p-6 sm:p-7 flex flex-col gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.4)] text-white">
-            
+          {/* RIGHT: Direct Channels & Information (lg:col-span-5) */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            {/* Direct Email Card */}
+            <div className="bg-[#0b0b0b] border border-neutral-800/80 rounded-2xl p-6 sm:p-7 flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#ff3b30] animate-pulse" />
-                  <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-neutral-300 font-bold">
-                    VERIFIED CREDENTIALS
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-neutral-400 bg-neutral-900 border border-neutral-800 px-2.5 py-1 rounded-full">
-                  <ShieldCheck className="w-3 h-3 text-[#ff3b30]" />
-                  <span>OFFICIAL PORTAL</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <h4 className="font-bold text-base sm:text-lg uppercase tracking-tight text-white">
-                  Marketing Agency Portal
-                </h4>
-                <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
-                  Visit our dedicated business portfolio and client profile for verified credentials, live case studies, and enterprise updates.
-                </p>
-              </div>
-
-              <a
-                href="https://todosolution-marketingagency.business.site/"
-                target="_blank"
-                rel="noreferrer"
-                className="group mt-1 flex items-center justify-between p-3.5 rounded-2xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-600 transition-all duration-200"
-              >
-                <div className="flex items-center gap-3 min-w-0 pr-2">
-                  <div className="w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center text-white shrink-0">
-                    <Mail className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[9px] font-mono text-neutral-500 uppercase tracking-widest font-semibold">
-                      GOOGLE BUSINESS PROFILE
-                    </span>
-                    <span className="font-mono text-xs font-semibold text-neutral-200 group-hover:text-white transition-colors truncate">
-                      todosolution-marketingagency.business.site
-                    </span>
-                  </div>
-                </div>
-
-                <div className="w-7 h-7 rounded-full bg-white/10 group-hover:bg-white group-hover:text-black text-neutral-300 flex items-center justify-center transition-all shrink-0">
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </div>
-              </a>
-            </div> */}
-
-            {/* 2. Direct Channels & Agency Presence */}
-            <div className="bg-[#0c0c0c] border border-neutral-800 rounded-3xl p-6 sm:p-7 flex flex-col gap-5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] text-white">
-              {/* Segment A: Direct Inquiries */}
-              <div className="flex items-start justify-between gap-3 group">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
-                    <Mail className="w-4 h-4 text-[#ff3b30]" />
-                  </div>
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-semibold">
-                      DIRECT DESK
-                    </span>
-                    <a
-                      href={`mailto:${clientEmail}`}
-                      className="font-bold text-xs sm:text-sm text-white hover:underline truncate"
-                    >
-                      {clientEmail}
-                    </a>
-                  </div>
-                </div>
-
+                <span className="text-xs font-mono uppercase tracking-widest text-neutral-400 font-medium">
+                  Direct Contact
+                </span>
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="px-2.5 py-1 rounded-full bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-white text-[10px] font-mono flex items-center gap-1 transition-all cursor-pointer shrink-0 mt-0.5"
+                  className="px-3 py-1 rounded-md bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-white text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
                   title="Copy email address"
                 >
                   {copiedEmail ? (
                     <>
-                      <Check className="w-3 h-3 text-[#ff3b30]" />
-                      <span className="text-[#ff3b30]">Copied</span>
+                      <Check className="w-3.5 h-3.5 text-white" />
+                      <span>Copied</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3 h-3 text-neutral-400" />
-                      <span>Copy</span>
+                      <Copy className="w-3.5 h-3.5 text-neutral-400" />
+                      <span>Copy Email</span>
                     </>
                   )}
                 </button>
               </div>
 
-              {/* Segment B: Agency Reach */}
-              <div className="flex items-start gap-3 pt-4 border-t border-neutral-800/80">
-                <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
-                  <MapPin className="w-4 h-4 text-[#ff3b30]" />
+              <div className="flex items-start gap-3.5 pt-1">
+                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
+                  <Mail className="w-4 h-4 text-neutral-300" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs text-neutral-500">Email us directly at</span>
+                  <a
+                    href={`mailto:${clientEmail}`}
+                    className="font-medium text-sm sm:text-base text-white hover:underline truncate"
+                  >
+                    {clientEmail}
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Reach & Hours Card */}
+            <div className="bg-[#0b0b0b] border border-neutral-800/80 rounded-2xl p-6 sm:p-7 flex flex-col gap-5">
+              {/* Location */}
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
+                  <MapPin className="w-4 h-4 text-neutral-300" />
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-semibold">
-                    AGENCY REACH & DEPLOYMENT
+                  <span className="text-xs font-mono uppercase tracking-wider text-neutral-400">
+                    Location & Reach
                   </span>
-                  <p className="text-xs text-neutral-200 leading-snug">
-                    Pan-India Operations & Global Remote Collaboration
+                  <p className="text-sm text-neutral-200">
+                    Pan-India Operations & Global Remote Delivery
                   </p>
-                  <div className="flex flex-wrap gap-1.5 pt-0.5">
-                    {["Mumbai", "Delhi NCR", "Bengaluru", "Global Remote"].map((loc) => (
-                      <span
-                        key={loc}
-                        className="font-mono text-[9px] uppercase tracking-wider text-neutral-400 bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded-md"
-                      >
-                        {loc}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="text-xs text-neutral-500">
+                    Mumbai • Delhi NCR • Bengaluru • International
+                  </p>
                 </div>
               </div>
 
-              {/* Segment C: Response Guarantee */}
-              <div className="flex items-start gap-3 pt-4 border-t border-neutral-800/80">
-                <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
-                  <Clock className="w-4 h-4 text-[#ff3b30]" />
+              <div className="h-[1px] w-full bg-neutral-800/80" />
+
+              {/* SLA / Response */}
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
+                  <Clock className="w-4 h-4 text-neutral-300" />
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-semibold">
-                      RESPONSE GUARANTEE
+                    <span className="text-xs font-mono uppercase tracking-wider text-neutral-400">
+                      Response Time
                     </span>
-                    <span className="font-mono text-[9px] uppercase tracking-wider text-neutral-200 bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded-full font-bold">
-                      &lt; 2H SLA
+                    <span className="text-[10px] font-mono uppercase text-neutral-300 bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded">
+                      &lt; 2 Hours
                     </span>
                   </div>
-                  <p className="text-xs text-neutral-300 leading-snug">
-                    Rapid turnaround — our specialists review all incoming briefs within 2 hours.
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    We review all incoming project requests promptly and schedule an initial discovery discussion.
                   </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Simple Next Steps Card */}
+            <div className="bg-[#0b0b0b] border border-neutral-800/80 rounded-2xl p-6 sm:p-7 flex flex-col gap-3">
+              <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-medium">
+                How We Collaborate
+              </span>
+              <div className="flex flex-col gap-3 pt-1 text-xs text-neutral-400">
+                <div className="flex items-start gap-3">
+                  <span className="font-mono text-neutral-500">01</span>
+                  <span><strong className="text-neutral-200 font-normal">Initial Brief:</strong> We understand your brand goals and requirements.</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="font-mono text-neutral-500">02</span>
+                  <span><strong className="text-neutral-200 font-normal">Strategy Blueprint:</strong> We propose a clear production timeline & scope.</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="font-mono text-neutral-500">03</span>
+                  <span><strong className="text-neutral-200 font-normal">Launch & Growth:</strong> Seamless execution with continuous performance optimization.</span>
                 </div>
               </div>
             </div>
@@ -444,3 +395,4 @@ export const Contact: React.FC = () => {
 };
 
 export default Contact;
+

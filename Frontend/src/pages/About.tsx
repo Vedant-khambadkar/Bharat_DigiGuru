@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import LensText from "../components/LensText";
 import ColorLensImage from "../components/ColorLensImage";
 import WordReveal from "../components/WordReveal";
-import { ChevronDown, ChevronUp, Sparkles, Target, Zap } from "lucide-react";
+import { Sparkles, Target, Zap } from "lucide-react";
 import Img1 from "../assets/Picture/Picture12.webp"
 import Img2 from "../assets/Picture/Picture2.webp"
 import Img3 from "../assets/Picture/Picture3.webp"
@@ -19,66 +19,7 @@ interface AboutProps {
 }
 
 export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [hoveredPillar, setHoveredPillar] = useState<number | null>(null);
-  const expandedRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isExpanded && expandedRef.current) {
-      // Smooth animated entry for full-width description
-      gsap.fromTo(
-        expandedRef.current,
-        { height: 0, opacity: 0, y: -20 },
-        {
-          height: "auto",
-          opacity: 1,
-          y: 0,
-          duration: 0.55,
-          ease: "power3.out",
-          onComplete: () => {
-            (window as any).lenis?.resize();
-            ScrollTrigger.refresh();
-          },
-        }
-      );
-
-      // Staggered fade in for paragraphs
-      const paragraphs = expandedRef.current.querySelectorAll(".about-expand-anim");
-      if (paragraphs.length > 0) {
-        gsap.fromTo(
-          paragraphs,
-          { opacity: 0, y: 15 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.45,
-            stagger: 0.1,
-            delay: 0.15,
-            ease: "power2.out",
-          }
-        );
-      }
-    }
-  }, [isExpanded]);
-
-  const handleToggle = () => {
-    if (isExpanded && expandedRef.current) {
-      gsap.to(expandedRef.current, {
-        height: 0,
-        opacity: 0,
-        y: -15,
-        duration: 0.35,
-        ease: "power3.in",
-        onComplete: () => {
-          setIsExpanded(false);
-          (window as any).lenis?.resize();
-          ScrollTrigger.refresh();
-        },
-      });
-    } else {
-      setIsExpanded(true);
-    }
-  };
 
   return (
     <section
@@ -103,7 +44,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
           <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
 
             <h2 className="font-neuropol font-normal text-6xl uppercase tracking-wider text-white leading-none select-none">
-              <LensText text="ABOUT US" strokeWidth="2px" strokeColor="#ffffff" />
+              <LensText text="ABOUT" strokeWidth="2px" strokeColor="#ffffff" />
             </h2>
           </div>
 
@@ -113,21 +54,6 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
             className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-300 leading-relaxed sm:leading-loose tracking-wider uppercase max-w-md block"
             delay={100}
           />
-
-          {/* Interactive Toggle Button */}
-          <button
-            onClick={handleToggle}
-            className="mt-5 inline-flex items-center gap-2 text-xs font-['Space_Grotesk',sans-serif] uppercase tracking-widest text-neutral-400 hover:text-white transition-colors cursor-pointer w-fit group"
-          >
-            <span className="border-b border-neutral-700 group-hover:border-white pb-0.5 transition-colors">
-              {isExpanded ? "Hide Full Story" : "Read Full Story"}
-            </span>
-            {isExpanded ? (
-              <ChevronUp className="w-4 h-4 text-red-500 transition-transform duration-300" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-red-500 transition-transform duration-300" />
-            )}
-          </button>
         </div>
 
         {/* =========================================================================
@@ -160,94 +86,6 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
           />
         </div>
 
-        {/* =========================================================================
-            FULL-WIDTH ANIMATED STORY BREAKDOWN (Spans all 5 columns!)
-           ========================================================================= */}
-        {isExpanded && (
-          <div
-            ref={expandedRef}
-            className="col-span-1 md:col-span-2 lg:col-span-5 w-full my-4 overflow-hidden rounded-2xl bg-neutral-900/90 border border-neutral-800 shadow-2xl backdrop-blur-xl p-6 sm:p-8 md:p-10"
-          >
-            <div className="flex flex-col gap-6">
-              {/* Header with badge and close button */}
-              <div className="flex items-center justify-between border-b border-neutral-800/80 pb-4">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#ff2d55] animate-pulse shadow-[0_0_8px_#ff2d55]" />
-                  <span className="font-['Space_Grotesk',sans-serif] text-xs uppercase tracking-widest text-neutral-200 font-semibold">
-                    The Bharat DigiGuru Narrative & Full Story
-                  </span>
-                </div>
-                <button
-                  onClick={handleToggle}
-                  className="inline-flex items-center gap-1.5 text-xs font-['Space_Grotesk',sans-serif] uppercase tracking-wider text-neutral-400 hover:text-white transition-colors cursor-pointer"
-                >
-                  <span>Close</span>
-                  <ChevronUp className="w-4 h-4 text-red-400" />
-                </button>
-              </div>
-
-              {/* 2-Column Responsive Full-Width Narrative */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                {/* Column 1 */}
-                <div className="flex flex-col gap-6">
-                  <div className="about-expand-anim">
-                    <span className="text-[11px] font-['Space_Grotesk',sans-serif] uppercase tracking-widest text-red-400 font-semibold block mb-1.5">
-                      [ Tailored Solutions & Brand Architecture ]
-                    </span>
-                    <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-300 leading-relaxed sm:leading-loose uppercase">
-                      At Bharat DigiGuru, we understand that each brand is unique, with its own set of challenges
-                      and aspirations. That's why we pride ourselves on our ability to tailor our services to meet
-                      the distinct needs and objectives of each client we work with.
-                    </p>
-                  </div>
-
-                  <div className="about-expand-anim">
-                    <span className="text-[11px] font-['Space_Grotesk',sans-serif] uppercase tracking-widest text-red-400 font-semibold block mb-1.5">
-                      [ Expert Minds & Tangible Results ]
-                    </span>
-                    <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-300 leading-relaxed sm:leading-loose uppercase">
-                      Our team of experts and creative minds are passionate about leveraging the latest digital
-                      trends and technologies to deliver tangible results. From social media management to
-                      search engine optimization, our comprehensive suite of services is designed to elevate your
-                      brand's online presence and drive meaningful engagement with your target audience.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Column 2 */}
-                <div className="flex flex-col gap-6">
-                  <div className="about-expand-anim">
-                    <span className="text-[11px] font-['Space_Grotesk',sans-serif] uppercase tracking-widest text-neutral-400 font-semibold block mb-1.5">
-                      [ Relentless Innovation & Measurable ROI ]
-                    </span>
-                    <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-300 leading-relaxed sm:leading-loose uppercase">
-                      What sets us apart is our unwavering commitment to excellence and our relentless pursuit of
-                      innovation. We believe in pushing boundaries, challenging conventions, and thinking outside
-                      the box to create truly impactful digital marketing strategies that deliver measurable ROI.
-                    </p>
-                  </div>
-
-                  <div className="about-expand-anim">
-                    <span className="text-[11px] font-['Space_Grotesk',sans-serif] uppercase tracking-widest text-neutral-400 font-semibold block mb-1.5">
-                      [ Your Trusted Digital Ally ]
-                    </span>
-                    <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-300 leading-relaxed sm:leading-loose uppercase">
-                      Whether you aim to broaden your online reach, invigorate your social media presence, or
-                      optimize your website for optimal impact, Bharat DigiGuru stands ready as your trusted ally
-                      in navigating the ever-evolving digital landscape. Join us on this exciting journey towards digital success.
-                      Together, let's unlock the full potential of your brand and achieve new heights in the digital realm with
-                      Bharat DigiGuru by your side.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* =========================================================================
-            BOTTOM ROW: WIDE DESK TABLET PHOTO (Spans 3 cols) + 2 VERTICAL IMAGES
-           ========================================================================= */}
         {/* Image 4: Wide Graphic Tablet with Stylus & Laptop Screen */}
         <div className="lg:col-span-3 aspect-[16/9] md:aspect-[16/8] lg:aspect-[16/8.2] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
@@ -258,7 +96,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         </div>
 
         {/* Image 5: Studio/Classroom with Desks & Green Board */}
-        <div className="aspect-[3/4] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
+        <div className="aspect-[3/4.85] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
             src={Img5}
             alt="Studio workshop and classroom desks"
@@ -267,7 +105,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         </div>
 
         {/* Image 6: Controller / Architectural Light Beams & Shadows */}
-        <div className="aspect-[3/4] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
+        <div className="aspect-[3/4.85] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
             src={Img6}
             alt="White gaming controller"

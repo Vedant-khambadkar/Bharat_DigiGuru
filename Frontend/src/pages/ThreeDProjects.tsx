@@ -307,28 +307,7 @@ export const ThreeDProjects: React.FC = () => {
       className="relative z-10 w-full px-6 sm:px-10 md:px-12 lg:px-16 pt-6 sm:pt-10 pb-16 sm:pb-24 bg-transparent text-[#121110] font-['Plus_Jakarta_Sans',sans-serif]"
     >
       <div className="w-full max-w-8xl mx-auto flex flex-col gap-10 sm:gap-14">
-        {/* Section Header */}
-        <div className="flex flex-col gap-4 border-b border-[#ded5cb] pb-6">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#ff3b30] shadow-[0_0_8px_#ff3b30] animate-pulse" />
-            <span className="text-xs uppercase tracking-widest text-[#57534e] font-bold">
-              3D Production & CGI Showroom // Bharat DigiGuru
-            </span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="font-neuropol font-normal text-3xl sm:text-4xl lg:text-5xl uppercase tracking-wider text-white leading-none select-none">
-              <LensText text="3D SHOWCASE" strokeWidth="2px" strokeColor="#ffffff" />
-            </h2>
-
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="px-3.5 py-1.5 rounded-full border border-[#ded5cb] bg-[#f5efe8] text-xs font-bold text-[#121110] flex items-center gap-2 shadow-sm transition-transform hover:scale-105">
-                <span className="w-2 h-2 rounded-full bg-[#ff3b30] animate-pulse" />
-                <span>{projects.length.toString().padStart(2, "0")} 4K Cinematic Showcases</span>
-              </div>
-            </div>
-          </div>
-        </div>
+       
 
         {/* 3D Pure Videos Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
