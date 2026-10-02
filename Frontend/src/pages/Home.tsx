@@ -150,14 +150,14 @@ function Home({}: HomeProps) {
         </div>
 
         {/* Top Hero Typography (Behind 3D Model) */}
-        <div className="relative z-10 flex flex-col items-start w-full max-w-7xl mx-auto">
+        <div className="relative z-10 flex flex-col items-start w-full max-w-8xl  mx-auto">
           <h1
-            className="hero-text-item font-['Space_Grotesk',sans-serif] font-bold uppercase text-white tracking-[0.06em] sm:tracking-[0.12em] md:tracking-[0.16em] leading-none select-none text-left w-full"
+            className="hero-text-item font-serif font-bold uppercase text-white tracking-[0.06em] sm:tracking-[0.12em] md:tracking-[0.16em] leading-none select-none text-left w-full"
             style={{
               fontSize: "clamp(2.5rem, 8.2vw, 7.8rem)",
             }}
           >
-            BHARAT DIGIGURU
+            BHARAT <br/> DIGIGURU
           </h1>
 
           {/* Subtitle directly under title on left */}
@@ -205,7 +205,7 @@ function Home({}: HomeProps) {
         ref={fgUiRef}
         className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-end p-6 sm:p-10 lg:p-14 pb-24 sm:pb-28 lg:pb-24"
       >
-        <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 sm:gap-6">
+        <div className="w-full max-w-8xl mx-auto flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 sm:gap-6">
           
           {/* Bottom Left: Luxury Statement */}
           <div className="flex flex-col gap-1 text-center sm:text-left max-w-xs sm:max-w-sm">

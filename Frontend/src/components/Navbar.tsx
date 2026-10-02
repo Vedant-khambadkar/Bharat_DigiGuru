@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Home,
   User,
+  Users,
   Compass,
   Layers,
   Briefcase,
@@ -35,9 +36,10 @@ const navItems: NavItem[] = [
   { id: "portfolio", label: "Portfolio", href: "#portfolio-section", icon: Briefcase },
   { id: "mission", label: "Mission", href: "#mission-vision-section", icon: Target },
   { id: "about", label: "About", href: "#about-section", icon: User },
+  { id: "team", label: "Team", href: "#our-team-section", icon: Users },
   { id: "whyus", label: "Why Us", href: "#work-with-us-section", icon: Sparkles },
   { id: "proposals", label: "Proposals", href: "#proposals-section", icon: FileText },
-  { id: "blogs", label: "Blogs", href: "#blogs-section", icon: BookOpen },
+  { id: "stories", label: "Stories", href: "#stories-section", icon: BookOpen },
   { id: "contact", label: "Contact", href: "#contact-section", icon: Mail, badge: true },
 ];
 

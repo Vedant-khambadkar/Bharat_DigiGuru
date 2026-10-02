@@ -118,16 +118,16 @@ export const Footer: React.FC = () => {
                   onClick={() => scrollToSection("portfolio-section")}
                   className="hover:text-white transition-colors cursor-pointer text-left hover:translate-x-1 duration-200 inline-block"
                 >
-                  3D Portfolio
+                  Portfolio
                 </button>
               </li>
               <li>
                 <button
                   type="button"
-                  onClick={() => scrollToSection("threed-section")}
+                  onClick={() => scrollToSection("our-team-section")}
                   className="hover:text-white transition-colors cursor-pointer text-left hover:translate-x-1 duration-200 inline-block"
                 >
-                  CGI Studio
+                  Our Team
                 </button>
               </li>
               <li>
@@ -142,10 +142,10 @@ export const Footer: React.FC = () => {
               <li>
                 <button
                   type="button"
-                  onClick={() => scrollToSection("blogs-section")}
+                  onClick={() => scrollToSection("stories-section")}
                   className="hover:text-white transition-colors cursor-pointer text-left hover:translate-x-1 duration-200 inline-block"
                 >
-                  Blogs & Insights
+                  Stories & Insights
                 </button>
               </li>
               <li>

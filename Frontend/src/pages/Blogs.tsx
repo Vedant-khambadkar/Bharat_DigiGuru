@@ -171,10 +171,12 @@ export const Blogs: React.FC = () => {
 
   return (
     <section
-      id="blogs-section"
+      id="stories-section"
       ref={sectionRef}
       className="relative z-10 bg-transparent text-white w-full overflow-hidden py-10 sm:py-16 lg:py-0"
     >
+      {/* Anchor for backwards compatibility */}
+      <div id="blogs-section" className="absolute -top-10 left-0 pointer-events-none" />
       {/* Ambient background glows */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-red-600/[0.03] blur-[150px] rounded-full" />

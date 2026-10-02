@@ -91,7 +91,7 @@ export const PlatformsWeManage: React.FC = () => {
          ========================================================================= */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         {/* Saffron / Orange Ambient Bloom (Top-Left) */}
-        <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-[#FF671F]/[0.07] blur-[150px] rounded-full" />
+        <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px]  rounded-full" />
 
         {/* Emerald Green Ambient Bloom (Bottom-Right) */}
         <div className="absolute bottom-1/4 right-1/4 translate-x-1/4 translate-y-1/4 w-[550px] h-[550px] bg-[#046A38]/[0.08] blur-[160px] rounded-full" />
