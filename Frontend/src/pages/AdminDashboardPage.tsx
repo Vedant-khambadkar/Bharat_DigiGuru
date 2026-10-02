@@ -34,7 +34,6 @@ import {
   Crown,
   ShieldAlert,
   UserCheck,
-  Sparkles,
 } from "lucide-react";
 import { adminService } from "../services/service/adminService";
 import { socket, onSocketEvent } from "../utils/socket";

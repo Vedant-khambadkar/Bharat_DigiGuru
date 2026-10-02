@@ -191,9 +191,15 @@ class AdminService {
     return res;
   }
 
+  async deleteService(id: string) {
+    const res = await adminApi.deleteService(id);
+    invalidateApiCache(["services", "admin_services", "services_items", "admin_stats"]);
+    return res;
+  }
+
   // Team Members
   async getTeamMembers(
-    params?: { page?: number; limit?: number; search?: string },
+    params?: { page?: number; limit?: number; search?: string; column?: number | string; isActive?: boolean },
     forceRefresh = false
   ) {
     const key = this.getCacheKey("team", params);
