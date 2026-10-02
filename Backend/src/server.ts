@@ -103,6 +103,7 @@ app.get("/", (_req, res) => {
       health: "/api/health",
       portfolio: "/api/portfolio",
       threed: "/api/threed",
+      services: "/api/services",
       inquiries: "/api/inquiries/submit",
       admin: "/api/admin",
     },

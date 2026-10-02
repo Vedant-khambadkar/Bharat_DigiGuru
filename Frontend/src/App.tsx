@@ -12,6 +12,7 @@ import Process from "./pages/Process";
 import Portfolio, { preloadPortfolioAssets } from "./pages/Portfolio";
 import ThreeDProjects from "./pages/ThreeDProjects";
 import WorkWithUs from "./pages/WhyWorkWithUs";
+import OurTeam from "./pages/OurTeam";
 import Blogs from "./pages/Blogs";
 import ClientProposals from "./pages/ClientProposals";
 import Contact from "./pages/Contact";
@@ -494,6 +495,7 @@ const App = () => {
         <MissionVision />
         <Process />
         <About />
+        <OurTeam />
         <WorkWithUs />
         <ClientProposals />
         <Blogs />

@@ -26,7 +26,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
   const isExitingRef = useRef(false);
 
   // Read Three.js asset loading progress from Drei
-  const { progress: dreiProgress, active: dreiActive } = useProgress();
+  const { progress: dreiProgress, active: dreiActive, loaded, total } = useProgress();
 
   const updateDisplay = (val: number) => {
     const formatted = val < 10 ? `00${val}` : val < 100 ? `0${val}` : `${val}`;
@@ -64,7 +64,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       containerRef.current,
       {
         yPercent: -100,
-        duration: 1.2,
+        duration: 1.0,
         ease: "power3.inOut",
       },
       "-=0.2"
@@ -73,17 +73,14 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
 
   // Progress interpolation driven by 3D asset loader + simulated minimum ramp
   useEffect(() => {
-    const calculatedTarget = Math.max(
-      realProgress,
-      dreiProgress,
-      isReady || (!dreiActive && dreiProgress >= 99) ? 100 : 0
-    );
+    const is3DFinished = (!dreiActive && (dreiProgress >= 99 || (total > 0 && loaded >= total))) || isReady;
+    const calculatedTarget = is3DFinished ? 100 : Math.max(realProgress, dreiProgress);
 
     const target = Math.min(100, Math.max(counterRef.current.value, calculatedTarget));
 
     const tween = gsap.to(counterRef.current, {
       value: target,
-      duration: target >= 100 ? 0.4 : 0.6,
+      duration: target >= 100 ? 0.35 : 0.6,
       ease: "power2.out",
       onUpdate: () => {
         const val = Math.round(counterRef.current.value);
@@ -91,9 +88,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       },
       onComplete: () => {
         if (counterRef.current.value >= 99.5 && !isExitingRef.current) {
-          setTimeout(() => {
-            triggerExit();
-          }, 100);
+          triggerExit();
         }
       },
     });
@@ -101,7 +96,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     return () => {
       tween.kill();
     };
-  }, [realProgress, dreiProgress, dreiActive, isReady]);
+  }, [realProgress, dreiProgress, dreiActive, isReady, loaded, total]);
 
   // Fail-safe & initial progressive counter ramp
   useEffect(() => {

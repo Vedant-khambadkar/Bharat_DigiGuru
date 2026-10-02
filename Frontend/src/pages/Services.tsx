@@ -2,10 +2,13 @@ import React, { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ScrollExploreBadge from "../components/ScrollExploreBadge";
-import ServiceItem from "../components/ServiceItem";
+import ServiceItem, { extractYouTubeId } from "../components/ServiceItem";
 import type { ServiceData } from "../components/ServiceItem";
 import LensText from "../components/LensText";
 import MilestoneShowcase from "../components/MilestoneShowcase";
+import { userService } from "../services/service/userService";
+import { onSocketEvent } from "../utils/socket";
+import { getApiCache, setApiCache } from "../utils/apiCache";
 
 // Local WebP & Video Assets for offline readiness and zero external latency
 import pic1 from "../assets/Picture/Picture1.webp";
@@ -413,13 +416,88 @@ const SERVICES_DATA: ServiceData[] = [
     },
 ];
 
+const getHoverImage = (service: ServiceData | null): string => {
+    if (!service) return "";
+    if (service.works && service.works.length > 0) {
+        const firstWork = service.works[0];
+        if (firstWork.thumbnail) return firstWork.thumbnail;
+        if (firstWork.type === "youtube" && (firstWork.youtubeId || firstWork.url)) {
+            const ytId = firstWork.youtubeId || extractYouTubeId(firstWork.url);
+            if (ytId) return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        }
+        if (firstWork.url) return firstWork.url;
+    }
+    return service.image || "";
+};
+
 const Services: React.FC = () => {
-    const services = SERVICES_DATA;
+    const [services, setServices] = useState<ServiceData[]>(() => {
+        const cached = getApiCache<ServiceData[]>("services_items");
+        return cached && cached.length > 0 ? cached : SERVICES_DATA;
+    });
     const [hoveredService, setHoveredService] = useState<ServiceData | null>(null);
     const [openServiceId, setOpenServiceId] = useState<string | null>(null);
     const previewRef = useRef<HTMLDivElement>(null);
 
     const hoveredRef = useRef<boolean>(false);
+
+    // Fetch dynamic services from API (cached for single network hit)
+    const fetchServices = async (forceRefresh = false) => {
+        if (!forceRefresh) {
+            const cached = getApiCache<ServiceData[]>("services_items");
+            if (cached && cached.length > 0) {
+                setServices(cached);
+                return; // Zero network call on repeat visits
+            }
+        }
+
+        try {
+            const data = await userService.getServices(forceRefresh);
+            const items = Array.isArray(data) ? data : (data as any)?.items || [];
+            if (items.length > 0) {
+                setServices(items);
+                setApiCache("services_items", items);
+            }
+        } catch (err) {
+            console.warn("Using fallback local services data:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchServices();
+
+        const unsubCreated = onSocketEvent("service:created", (newService: any) => {
+            setServices((prev) => {
+                const updated = [newService, ...prev.filter((s) => s.id !== newService.id && (s as any)._id !== newService._id)];
+                setApiCache("services_items", updated);
+                return updated;
+            });
+        });
+
+        const unsubUpdated = onSocketEvent("service:updated", (updatedService: any) => {
+            setServices((prev) => {
+                const updated = prev.map((s) =>
+                    s.id === updatedService.id || (s as any)._id === updatedService._id ? updatedService : s
+                );
+                setApiCache("services_items", updated);
+                return updated;
+            });
+        });
+
+        const unsubDeleted = onSocketEvent("service:deleted", (deletedId: string) => {
+            setServices((prev) => {
+                const updated = prev.filter((s) => s.id !== deletedId && (s as any)._id !== deletedId);
+                setApiCache("services_items", updated);
+                return updated;
+            });
+        });
+
+        return () => {
+            unsubCreated();
+            unsubUpdated();
+            unsubDeleted();
+        };
+    }, []);
 
     // Refresh ScrollTrigger & Lenis when service accordion is expanded/collapsed
     useEffect(() => {
@@ -537,20 +615,20 @@ const Services: React.FC = () => {
                 style={{ display: "none", opacity: 0 }}
                 className="fixed top-0 left-0 pointer-events-none z-40 w-72 sm:w-96 h-48 sm:h-60 rounded-2xl overflow-hidden border border-neutral-700/70 shadow-2xl shadow-black/95 bg-neutral-900 will-change-transform"
             >
-                {hoveredService?.image && (
+                {hoveredService && (
                     <div className="relative w-full h-full overflow-hidden">
                         <img
-                            src={hoveredService.image}
+                            src={getHoverImage(hoveredService)}
                             alt={hoveredService.title}
                             className="w-full h-full object-cover"
                             decoding="async"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
                         <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-white">
-                            <span className="font-['Space_Grotesk',sans-serif] text-xs uppercase tracking-wider text-neutral-200 font-medium">
+                            <span className="font-['Space_Grotesk',sans-serif] text-xs uppercase tracking-wider text-neutral-200 font-medium truncate pr-2">
                                 {hoveredService.number} {hoveredService.title}
                             </span>
-                            <span className="font-['Space_Grotesk',sans-serif] text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-neutral-200">
+                            <span className="shrink-0 font-['Space_Grotesk',sans-serif] text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-neutral-200">
                                 Preview
                             </span>
                         </div>

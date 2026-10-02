@@ -100,7 +100,7 @@ const BLOGS_DATA: BlogItem[] = [
       "Transforming cold traffic into warm relationships through automated workflows and direct messaging.",
     readTime: "6 MIN READ",
     date: "JUN 2026",
-    image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?q=80&w=1000&auto=format&fit=crop&fm=webp",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop&fm=webp",
     content: [
       "Speed to lead is the single most critical factor in modern sales conversion. Leads contacted within 5 minutes are 21 times more likely to enter the sales pipeline.",
       "With Bharat DigiGuru's advanced Lead Automation and WhatsApp Community management, new inquiries are instantly qualified, routed, and engaged with personalized value.",

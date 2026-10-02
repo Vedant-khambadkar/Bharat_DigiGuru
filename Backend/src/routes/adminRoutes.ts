@@ -22,6 +22,18 @@ import {
   deleteThreeD,
 } from "../controllers/threedController.js";
 import {
+  getServices,
+  createService,
+  updateService,
+  deleteService,
+} from "../controllers/servicesController.js";
+import {
+  getTeamMembersAdmin,
+  createTeamMember,
+  updateTeamMember,
+  deleteTeamMember,
+} from "../controllers/teamController.js";
+import {
   getInquiries,
   updateInquiryStatus,
   deleteInquiry,
@@ -69,12 +81,24 @@ router.post("/threed", requireManagedAdmin, createThreeD);
 router.put("/threed/:id", requireManagedAdmin, updateThreeD);
 router.delete("/threed/:id", requireManagedAdmin, deleteThreeD);
 
-// 3. Inquiries Management
+// 3. Services CRUD (Managed Admin, Super Admin, Admin)
+router.get("/services", getServices);
+router.post("/services", createService);
+router.put("/services/:id", updateService);
+router.delete("/services/:id", deleteService);
+
+// 4. Team Members CRUD (Managed Admin, Super Admin, Admin)
+router.get("/team", getTeamMembersAdmin);
+router.post("/team", createTeamMember);
+router.put("/team/:id", updateTeamMember);
+router.delete("/team/:id", deleteTeamMember);
+
+// 5. Inquiries Management
 router.get("/inquiries", getInquiries);
 router.patch("/inquiries/:id/status", updateInquiryStatus);
 router.delete("/inquiries/:id", deleteInquiry);
 
-// 4. File / Media Upload & Presigned URLs
+// 5. File / Media Upload & Presigned URLs
 router.post("/upload", upload.single("file"), uploadMedia);
 router.get("/media/presigned-url", getPresignedUrlHandler);
 router.post("/media/presigned-upload", getPresignedUploadUrlHandler);

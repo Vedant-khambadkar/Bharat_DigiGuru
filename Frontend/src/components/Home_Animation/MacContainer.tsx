@@ -184,7 +184,7 @@ const MacContainer = () => {
   );
 };
 
-useGLTF.preload("/mac.glb");
+useGLTF.preload(macModel);
 
 export default MacContainer;
 

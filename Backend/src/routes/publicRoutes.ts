@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { getPortfolio, getPortfolioById } from "../controllers/portfolioController.js";
 import { getThreeD, getThreeDById } from "../controllers/threedController.js";
+import { getServices, getServiceById } from "../controllers/servicesController.js";
+import { getTeamMembers, getTeamMemberById } from "../controllers/teamController.js";
 import { submitInquiry } from "../controllers/inquiriesController.js";
 import { getPresignedUrlHandler, streamMediaHandler } from "../controllers/uploadController.js";
 
@@ -14,7 +16,15 @@ router.get("/portfolio/:id", getPortfolioById);
 router.get("/threed", getThreeD);
 router.get("/threed/:id", getThreeDById);
 
-// 3. Client Inquiries / Contact Form Submission
+// 3. Services Endpoints
+router.get("/services", getServices);
+router.get("/services/:id", getServiceById);
+
+// 4. Team Members Endpoints
+router.get("/team", getTeamMembers);
+router.get("/team/:id", getTeamMemberById);
+
+// 5. Client Inquiries / Contact Form Submission
 router.post("/inquiries/submit", submitInquiry);
 
 // 4. Secure Media Access / Presigned URLs & Instant Streaming for Private S3 Objects

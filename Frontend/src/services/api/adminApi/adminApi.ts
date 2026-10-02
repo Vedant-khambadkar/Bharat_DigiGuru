@@ -56,6 +56,40 @@ class AdminApi {
     return api._delete(`/admin/threed/${id}`);
   }
 
+  // Services
+  getServices(params?: any) {
+    return api._get("/admin/services", { params } as any);
+  }
+
+  createService(data: any) {
+    return api._post("/admin/services", data);
+  }
+
+  updateService(id: string, data: any) {
+    return api._put(`/admin/services/${id}`, data);
+  }
+
+  deleteService(id: string) {
+    return api._delete(`/admin/services/${id}`);
+  }
+
+  // Team Members
+  getTeam(params?: any) {
+    return api._get("/admin/team", { params } as any);
+  }
+
+  createTeamMember(data: any) {
+    return api._post("/admin/team", data);
+  }
+
+  updateTeamMember(id: string, data: any) {
+    return api._put(`/admin/team/${id}`, data);
+  }
+
+  deleteTeamMember(id: string) {
+    return api._delete(`/admin/team/${id}`);
+  }
+
   // Inquiries
   getInquiries(params?: any) {
     return api._get("/admin/inquiries", { params } as any);

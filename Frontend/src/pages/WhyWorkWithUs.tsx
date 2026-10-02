@@ -167,7 +167,7 @@ export const WhyWorkWithUs: React.FC = () => {
     <section
       ref={sectionRef}
       id="work-with-us-section"
-      className="relative w-full min-h-screen bg-transparent text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none border-t border-b border-neutral-900/60 flex flex-col justify-center py-10 sm:py-16 lg:py-0"
+      className="relative w-full min-h-screen bg-transparent text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none  flex flex-col justify-center py-10 sm:py-16 lg:py-0"
     >
       {/* Subtle Dedicated Ambient Lighting */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">

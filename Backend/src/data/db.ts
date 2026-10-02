@@ -2,11 +2,13 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { IDatabaseSchema, IPortfolioItem, IThreeDProject, IInquiry } from "../types/index.js";
+import { IDatabaseSchema, IPortfolioItem, IThreeDProject, IServiceItem, ITeamMember, IInquiry } from "../types/index.js";
 import { getInitialSeedData } from "./seedData.js";
 import {
   PortfolioModel,
   ThreeDModel,
+  ServiceModel,
+  TeamMemberModel,
   InquiryModel,
   AdminUserModel,
 } from "../models/index.js";
@@ -64,6 +66,10 @@ class DatabaseStore {
           // Ensure adminUsers exists
           if (!Array.isArray(merged.adminUsers) || merged.adminUsers.length === 0) {
             merged.adminUsers = [merged.adminUser || initialSeed.adminUser];
+          }
+          // Ensure services exists
+          if (!Array.isArray(merged.services) || merged.services.length === 0) {
+            merged.services = initialSeed.services || [];
           }
           return merged;
         }
@@ -143,7 +149,14 @@ class DatabaseStore {
         console.log(`🌱 [MONGODB SEED] Seeded ${seed.threed.length} 3D Projects.`);
       }
 
-      // 4. Inquiries
+      // 4. Services
+      const servicesCount = await ServiceModel.countDocuments();
+      if (servicesCount === 0 && seed.services && seed.services.length > 0) {
+        await ServiceModel.insertMany(seed.services);
+        console.log(`🌱 [MONGODB SEED] Seeded ${seed.services.length} Services.`);
+      }
+
+      // 5. Inquiries
       const inqCount = await InquiryModel.countDocuments();
       if (inqCount === 0 && seed.inquiries.length > 0) {
         await InquiryModel.insertMany(seed.inquiries);
@@ -454,7 +467,154 @@ class DatabaseStore {
   }
 
   // ==========================================
-  // 3. INQUIRIES (WITH SERVER-SIDE PAGINATION)
+  // 3. SERVICES (WITH SERVER-SIDE PAGINATION)
+  // ==========================================
+  public async getServices(params?: PaginationParams): Promise<PaginatedResult<IServiceItem> | IServiceItem[]> {
+    const page = Math.max(1, Number(params?.page) || 1);
+    const limit = Math.max(1, Number(params?.limit) || 10);
+    const search = params?.search?.trim().toLowerCase();
+
+    if (this.isMongoConnected) {
+      const query: any = {};
+      if (search) {
+        query.$or = [
+          { title: { $regex: new RegExp(search, "i") } },
+          { subtitle: { $regex: new RegExp(search, "i") } },
+          { "details.description": { $regex: new RegExp(search, "i") } },
+          { "details.chips": { $in: [new RegExp(search, "i")] } },
+          { "details.deliverables": { $in: [new RegExp(search, "i")] } },
+        ];
+      }
+
+      const total = await ServiceModel.countDocuments(query);
+      const totalPages = Math.ceil(total / limit) || 1;
+      const skip = (page - 1) * limit;
+
+      const items = (await ServiceModel.find(query)
+        .sort({ number: 1, createdAt: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()) as unknown as IServiceItem[];
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      };
+    }
+
+    // Local JSON fallback
+    let list = [...(this.localData.services || [])];
+    if (search) {
+      list = list.filter(
+        (s) =>
+          s.title?.toLowerCase().includes(search) ||
+          s.subtitle?.toLowerCase().includes(search) ||
+          s.details?.description?.toLowerCase().includes(search) ||
+          s.details?.chips?.some((c) => c.toLowerCase().includes(search)) ||
+          s.details?.deliverables?.some((d) => d.toLowerCase().includes(search))
+      );
+    }
+
+    const total = list.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const skip = (page - 1) * limit;
+    const items = list.slice(skip, skip + limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    };
+  }
+
+  // Get all services without pagination for public site
+  public async getAllServices(): Promise<IServiceItem[]> {
+    if (this.isMongoConnected) {
+      return (await ServiceModel.find().sort({ number: 1, createdAt: 1 }).lean()) as unknown as IServiceItem[];
+    }
+    return this.localData.services || [];
+  }
+
+  public async getServiceById(id: string) {
+    if (this.isMongoConnected) {
+      return await ServiceModel.findOne(this.buildIdQuery(id)).lean();
+    }
+    return (this.localData.services || []).find((s) => String(s.id) === String(id) || (s as any)._id === String(id));
+  }
+
+  public async createService(item: any) {
+    const newItem = {
+      ...item,
+      id: item.id || `service-${Date.now()}`,
+    };
+
+    if (this.isMongoConnected) {
+      const doc = await ServiceModel.create(newItem);
+      return doc.toJSON();
+    }
+
+    if (!this.localData.services) {
+      this.localData.services = [];
+    }
+    this.localData.services.push(newItem);
+    this.persistLocal(this.localData);
+    return newItem;
+  }
+
+  public async updateService(id: string, updates: any) {
+    if (this.isMongoConnected) {
+      const updated = await ServiceModel.findOneAndUpdate(
+        this.buildIdQuery(id),
+        { $set: updates },
+        { new: true }
+      ).lean();
+      return updated;
+    }
+
+    if (!this.localData.services) {
+      this.localData.services = [];
+    }
+    const idx = this.localData.services.findIndex((s) => String(s.id) === String(id) || (s as any)._id === String(id));
+    if (idx === -1) return null;
+    this.localData.services[idx] = {
+      ...this.localData.services[idx],
+      ...updates,
+      id: this.localData.services[idx].id,
+      updatedAt: new Date().toISOString(),
+    };
+    this.persistLocal(this.localData);
+    return this.localData.services[idx];
+  }
+
+  public async deleteService(id: string) {
+    if (this.isMongoConnected) {
+      const res = await ServiceModel.deleteOne(this.buildIdQuery(id));
+      return res.deletedCount > 0;
+    }
+
+    if (!this.localData.services) {
+      this.localData.services = [];
+    }
+    const initialLen = this.localData.services.length;
+    this.localData.services = this.localData.services.filter((s) => String(s.id) !== String(id) && (s as any)._id !== String(id));
+    if (this.localData.services.length !== initialLen) {
+      this.persistLocal(this.localData);
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // 4. INQUIRIES (WITH SERVER-SIDE PAGINATION)
   // ==========================================
   public async getInquiries(params?: PaginationParams): Promise<PaginatedResult<IInquiry> | IInquiry[]> {
     const page = Math.max(1, Number(params?.page) || 1);
@@ -776,6 +936,171 @@ class DatabaseStore {
     delete this.localData.adminUser.resetPasswordExpires;
     this.persistLocal(this.localData);
     return this.localData.adminUser;
+  }
+
+  // =========================================================================
+  // TEAM MEMBERS
+  // =========================================================================
+  public async getAllTeamMembers(): Promise<ITeamMember[]> {
+    if (this.isMongoConnected) {
+      const docs = await TeamMemberModel.find({ isActive: true }).sort({ column: 1, order: 1, createdAt: 1 });
+      return docs.map((d) => d.toJSON() as unknown as ITeamMember);
+    }
+    if (!this.localData.team) {
+      this.localData.team = [];
+    }
+    return this.localData.team.filter((t) => t.isActive !== false);
+  }
+
+  public async getTeamMembersAdmin(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    column?: string | number;
+  }): Promise<PaginatedResult<ITeamMember> | ITeamMember[]> {
+    const page = Math.max(1, Number(params?.page) || 1);
+    const limit = Math.max(1, Number(params?.limit) || 10);
+    const search = params?.search?.trim().toLowerCase();
+    const column = params?.column && params.column !== "ALL" ? Number(params.column) : undefined;
+
+    if (this.isMongoConnected) {
+      const query: any = {};
+      if (column) {
+        query.column = column;
+      }
+      if (search) {
+        query.$or = [
+          { name: { $regex: new RegExp(search, "i") } },
+          { role: { $regex: new RegExp(search, "i") } },
+          { bio: { $regex: new RegExp(search, "i") } },
+        ];
+      }
+
+      const total = await TeamMemberModel.countDocuments(query);
+      const totalPages = Math.ceil(total / limit) || 1;
+      const skip = (page - 1) * limit;
+
+      const items = (await TeamMemberModel.find(query)
+        .sort({ column: 1, order: 1, createdAt: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()) as unknown as ITeamMember[];
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      };
+    }
+
+    let list = [...(this.localData.team || [])];
+    if (column) {
+      list = list.filter((t) => Number(t.column) === column);
+    }
+    if (search) {
+      list = list.filter(
+        (t) =>
+          t.name?.toLowerCase().includes(search) ||
+          t.role?.toLowerCase().includes(search) ||
+          t.bio?.toLowerCase().includes(search)
+      );
+    }
+
+    const total = list.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const skip = (page - 1) * limit;
+    const items = list.slice(skip, skip + limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    };
+  }
+
+  public async getTeamMemberById(id: string): Promise<ITeamMember | null> {
+    if (this.isMongoConnected) {
+      const doc = await TeamMemberModel.findOne({ id });
+      return doc ? (doc.toJSON() as unknown as ITeamMember) : null;
+    }
+    const item = (this.localData.team || []).find((t) => t.id === id);
+    return item || null;
+  }
+
+  public async createTeamMember(data: Partial<ITeamMember>): Promise<ITeamMember> {
+    const id = data.id || `team-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+    const newMember: ITeamMember = {
+      id,
+      name: data.name || "Unnamed Member",
+      role: data.role || "Team Member",
+      column: data.column && data.column >= 1 && data.column <= 5 ? Number(data.column) : 1,
+      order: data.order !== undefined ? Number(data.order) : 0,
+      image: data.image || "",
+      bio: data.bio || "",
+      isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (this.isMongoConnected) {
+      const doc = new TeamMemberModel(newMember);
+      await doc.save();
+      return doc.toJSON() as unknown as ITeamMember;
+    }
+
+    if (!this.localData.team) {
+      this.localData.team = [];
+    }
+    this.localData.team.push(newMember);
+    this.persistLocal(this.localData);
+    return newMember;
+  }
+
+  public async updateTeamMember(id: string, data: Partial<ITeamMember>): Promise<ITeamMember | null> {
+    if (this.isMongoConnected) {
+      const doc = await TeamMemberModel.findOneAndUpdate(
+        { id },
+        { ...data, updatedAt: new Date() },
+        { new: true }
+      );
+      return doc ? (doc.toJSON() as unknown as ITeamMember) : null;
+    }
+
+    if (!this.localData.team) this.localData.team = [];
+    const idx = this.localData.team.findIndex((t) => t.id === id);
+    if (idx === -1) return null;
+
+    this.localData.team[idx] = {
+      ...this.localData.team[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    this.persistLocal(this.localData);
+    return this.localData.team[idx];
+  }
+
+  public async deleteTeamMember(id: string): Promise<boolean> {
+    if (this.isMongoConnected) {
+      const res = await TeamMemberModel.deleteOne({ id });
+      return res.deletedCount > 0;
+    }
+
+    if (!this.localData.team) return false;
+    const initialLen = this.localData.team.length;
+    this.localData.team = this.localData.team.filter((t) => t.id !== id);
+    if (this.localData.team.length !== initialLen) {
+      this.persistLocal(this.localData);
+      return true;
+    }
+    return false;
   }
 }
 

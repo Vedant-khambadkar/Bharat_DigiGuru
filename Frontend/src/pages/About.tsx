@@ -35,15 +35,14 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
       {/* =========================================================================
           EDITORIAL PHOTO GRID (Matching Reference Mockup)
          ========================================================================= */}
-      <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 items-start">
+      <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 items-start">
         {/* =========================================================================
             TOP LEFT: "ABOUT US" TITLE & INTRO STATEMENT (Spans 2 cols on desktop)
            ========================================================================= */}
-        <div className="lg:col-span-2 flex flex-col justify-start pr-0 lg:pr-8 mb-6 lg:mb-0">
+        <div className="col-span-full lg:col-span-2 flex flex-col justify-start pr-0 lg:pr-8 mb-6 lg:mb-0">
           {/* Header with red square accent */}
           <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-
-            <h2 className="font-neuropol font-normal text-6xl uppercase tracking-wider text-white leading-none select-none">
+            <h2 className="font-neuropol font-normal text-4xl sm:text-5xl lg:text-6xl uppercase tracking-wider text-white leading-none select-none">
               <LensText text="ABOUT" strokeWidth="2px" strokeColor="#ffffff" />
             </h2>
           </div>
@@ -51,7 +50,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
           {/* Primary Lead Paragraph */}
           <WordReveal
             text="Bharat DigiGuru is a digital media company providing clients with top-notch digital-based solutions tailored to their unique needs. We aim to be your committed partner to propel your business to success amidst the dynamic digital landscape. Whether you're a startup looking to establish a strong online presence or an established enterprise seeking to stay ahead of the curve, Bharat DigiGuru is here to be your trusted digital age partner every step of the way."
-            className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-300 leading-relaxed sm:leading-loose tracking-wider uppercase max-w-md block"
+            className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-300 leading-relaxed sm:leading-loose tracking-wider uppercase max-w-xl lg:max-w-md block"
             delay={100}
           />
         </div>
@@ -60,7 +59,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
             TOP RIGHT: 3 VERTICAL / SQUARE IMAGES (1 col each on desktop)
            ========================================================================= */}
         {/* Image 1: Camera Lens */}
-        <div className="aspect-[3/4] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
+        <div className="w-full aspect-[3/4] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
             src={Img1}
             alt="Analog camera lens"
@@ -69,7 +68,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         </div>
 
         {/* Image 2: Woman with Prism/Lens */}
-        <div className="aspect-[3/4] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
+        <div className="w-full aspect-[3/4] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
             src={Img2}
             alt="Portrait with crystal lens"
@@ -78,7 +77,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         </div>
 
         {/* Image 3: Laptop Hands & Mug */}
-        <div className="aspect-[3/4] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
+        <div className="w-full aspect-[3/4] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 sm:col-span-2 lg:col-span-1">
           <ColorLensImage
             src={Img3}
             alt="Overhead laptop keyboard typing"
@@ -87,7 +86,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         </div>
 
         {/* Image 4: Wide Graphic Tablet with Stylus & Laptop Screen */}
-        <div className="lg:col-span-3 aspect-[16/9] md:aspect-[16/8] lg:aspect-[16/8.2] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
+        <div className="col-span-full lg:col-span-3 aspect-[16/9] lg:aspect-[16/8.2] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
             src={Img4}
             alt="Drawing on digital tablet with stylus and laptop"
@@ -96,7 +95,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         </div>
 
         {/* Image 5: Studio/Classroom with Desks & Green Board */}
-        <div className="aspect-[3/4.85] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
+        <div className="w-full aspect-[3/4] lg:aspect-[3/4.85] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
             src={Img5}
             alt="Studio workshop and classroom desks"
@@ -105,7 +104,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         </div>
 
         {/* Image 6: Controller / Architectural Light Beams & Shadows */}
-        <div className="aspect-[3/4.85] rounded-md overflow-hidden  transition-all duration-300 hover:border-neutral-600">
+        <div className="w-full aspect-[3/4] lg:aspect-[3/4.85] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
             src={Img6}
             alt="White gaming controller"

@@ -69,9 +69,54 @@ export interface IAdminUser {
   updatedAt?: string;
 }
 
+export interface IServiceWorkItem {
+  id: string;
+  title: string;
+  type: "video" | "image" | "youtube";
+  url: string;
+  thumbnail?: string;
+  tag: string;
+  description?: string;
+  metrics?: string;
+  youtubeId?: string;
+}
+
+export interface IServiceItem {
+  id: string;
+  number: string;
+  title: string;
+  subtitle: string;
+  tag?: string;
+  image?: string;
+  works?: IServiceWorkItem[];
+  details?: {
+    deliverables: string[];
+    timeline: string;
+    description: string;
+    chips?: string[];
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ITeamMember {
+  id: string;
+  name: string;
+  role: string;
+  column: number; // 1 to 5
+  order?: number;
+  image: string;
+  bio?: string;
+  isActive?: boolean;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
 export interface IDatabaseSchema {
   portfolio: IPortfolioItem[];
   threed: IThreeDProject[];
+  services?: IServiceItem[];
+  team?: ITeamMember[];
   inquiries: IInquiry[];
   adminUser: IAdminUser;
   adminUsers?: IAdminUser[];

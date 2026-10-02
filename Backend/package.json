@@ -8,7 +8,9 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "seed": "tsx src/data/seedData.ts"
+    "seed": "tsx src/data/seedData.ts",
+    "seed:services": "tsx src/scripts/seedServices.ts",
+    "seed:team": "tsx src/scripts/seedTeam.ts"
   },
   "keywords": [
     "express",

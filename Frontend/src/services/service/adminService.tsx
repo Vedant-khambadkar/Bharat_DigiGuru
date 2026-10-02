@@ -143,6 +143,108 @@ class AdminService {
     return res;
   }
 
+  // Services
+  async getServices(
+    params?: { page?: number; limit?: number; search?: string },
+    forceRefresh = false
+  ) {
+    const key = this.getCacheKey("services", params);
+
+    if (!forceRefresh) {
+      const cached = getApiCache<any>(key);
+      if (cached) {
+        return cached;
+      }
+      if (this._inflightRequests.has(key)) {
+        return this._inflightRequests.get(key);
+      }
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await adminApi.getServices(params);
+        if (res) {
+          setApiCache(key, res);
+        }
+        return res;
+      } finally {
+        this._inflightRequests.delete(key);
+      }
+    })();
+
+    this._inflightRequests.set(key, promise);
+    return promise;
+  }
+
+  async createService(data: any) {
+    const res = await adminApi.createService(data);
+    invalidateApiCache(["services", "admin_services", "services_items", "admin_stats"]);
+    return res;
+  }
+
+  async updateService(id: string, data: any) {
+    const res = await adminApi.updateService(id, data);
+    invalidateApiCache(["services", "admin_services", "services_items", "admin_stats"]);
+    if (data.image) {
+      invalidateMediaCache(data.image);
+    }
+    return res;
+  }
+
+  // Team Members
+  async getTeamMembers(
+    params?: { page?: number; limit?: number; search?: string },
+    forceRefresh = false
+  ) {
+    const key = this.getCacheKey("team", params);
+
+    if (!forceRefresh) {
+      const cached = getApiCache<any>(key);
+      if (cached) {
+        return cached;
+      }
+      if (this._inflightRequests.has(key)) {
+        return this._inflightRequests.get(key);
+      }
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await adminApi.getTeam(params);
+        if (res) {
+          setApiCache(key, res);
+        }
+        return res;
+      } finally {
+        this._inflightRequests.delete(key);
+      }
+    })();
+
+    this._inflightRequests.set(key, promise);
+    return promise;
+  }
+
+  async createTeamMember(data: any) {
+    const res = await adminApi.createTeamMember(data);
+    invalidateApiCache(["team", "admin_team", "team_members", "admin_stats"]);
+    return res;
+  }
+
+  async updateTeamMember(id: string, data: any) {
+    const res = await adminApi.updateTeamMember(id, data);
+    invalidateApiCache(["team", "admin_team", "team_members", "admin_stats"]);
+    if (data.image) {
+      invalidateMediaCache(data.image);
+    }
+    return res;
+  }
+
+  async deleteTeamMember(id: string) {
+    const res = await adminApi.deleteTeamMember(id);
+    invalidateApiCache(["team", "admin_team", "team_members", "admin_stats"]);
+    return res;
+  }
+
   // Inquiries
   async getInquiries(
     params?: { status?: string; page?: number; limit?: number; search?: string },

@@ -1,278 +1,321 @@
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import LensText from "../components/LensText";
 
 gsap.registerPlugin(ScrollTrigger);
 
-interface SlideItem {
-  id: "mission" | "vision" | "values";
+interface CardItem {
+  id: "vision" | "mission" | "values";
   number: string;
+  title: string;
+  subtitle: string;
   tag: string;
-  backdropNumber: string;
-  headlineWord1: string;
-  headlineWord2?: string;
-  aboutLabel: string;
-  aboutText: string;
-  imageUrl: string;
-  imageAlt: string;
-  rightMeta: string;
+  description: string;
   highlights: string[];
+  metrics: string;
+  iconType: "sphere" | "globe" | "cylinder";
 }
 
-const SLIDES: SlideItem[] = [
-  {
-    id: "mission",
-    number: "01",
-    tag: "01 // STRATEGIC PURPOSE",
-    backdropNumber: "01",
-    headlineWord1: "OUR MISSION",
-    aboutLabel: "About Our Mission",
-    aboutText:
-      "Our mission is to empower businesses, regardless of size, by employing advanced digital marketing strategies, unmatched creativity, and data-driven insights.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85",
-    imageAlt: "Digital Power & Cinematic Landscape",
-    rightMeta: "Bharat DigiGuru // Strategic Purpose",
-    highlights: ["Advanced Strategies", "Unmatched Creativity", "Data-Driven Insights"],
-  },
+const CARDS: CardItem[] = [
   {
     id: "vision",
+    number: "01",
+    title: "OUR VISION",
+    subtitle: "AI-DRIVEN TRANSFORMATION",
+    tag: "FUTURE HORIZON",
+    description:
+      "To redefine the frontiers of digital commerce and brand storytelling by fusing next-generation AI intelligence, immersive cinematic design, and hyper-scalable cloud infrastructure.",
+    highlights: ["Cognitive AI Marketing", "Omnichannel Leadership", "Predictive Analytics"],
+    metrics: "2026-2030 Horizon // 100% Native AI",
+    iconType: "sphere",
+  },
+  {
+    id: "mission",
     number: "02",
-    tag: "02 // FUTURE HORIZON",
-    backdropNumber: "02",
-    headlineWord1: "FUTURE",
-    headlineWord2: "VISION",
-    aboutLabel: "About Our Vision",
-    aboutText:
-      "Our vision is to transform the digital marketing realm through cutting-edge solutions and to empower businesses for success in the digital age.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?auto=format&fit=crop&w=1200&q=85",
-    imageAlt: "Future Crystal Cave Vision",
-    rightMeta: "02 // Future Horizon & Leadership",
-    highlights: ["Cutting-Edge Solutions", "Digital Era Success", "Transformative Impact"],
+    title: "OUR MISSION",
+    subtitle: "HIGH-VELOCITY EXECUTION",
+    tag: "SOP FLYWHEEL",
+    description:
+      "Empower visionary founders and enterprise leaders through disciplined agile sprints, data-backed conversion engineering, and relentlessly creative craftsmanship that compounds enterprise value.",
+    highlights: ["7-14 Day Sprint Delivery", "Performance Funnels", "Continuous Optimization"],
+    metrics: "99.4% Execution Accuracy // Rapid Deploy",
+    iconType: "globe",
   },
   {
     id: "values",
     number: "03",
-    tag: "03 // CORE ETHOS",
-    backdropNumber: "03",
-    headlineWord1: "CORE",
-    headlineWord2: "VALUES",
-    aboutLabel: "About Our Values",
-    aboutText:
-      "At Bharat DigiGuru, we champion uncompromising reliability, rapid sprint delivery, deep empathy, and bold creativity. By placing our clients' success at the absolute center, we build long-term partnerships engineered for mutual triumph.",
-    imageUrl:
-      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=85",
-    imageAlt: "Architectural Precision and Excellence",
-    rightMeta: "03 // Core Ethos & Standards",
-    highlights: ["Sprint Velocity", "Empathy-Led Craft", "Uncompromising Quality"],
+    title: "CORE VALUES",
+    subtitle: "TRANSPARENCY & ROI",
+    tag: "FOUNDATIONAL ETHOS",
+    description:
+      "We anchor every client partnership on unyielding transparency, creative mastery, agile sprint velocity, and measurable financial return on investment. If it doesn't move the business needle, we don't build it.",
+    highlights: ["Radical Transparency", "Engineering Craft", "Measurable ROI"],
+    metrics: "4.8X Avg ROAS // 96.8% Client Retention",
+    iconType: "cylinder",
   },
 ];
 
 export const MissionVision: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const progressBarRef = useRef<HTMLDivElement>(null);
-  const hudSlideRef = useRef<HTMLSpanElement>(null);
+  const [activeCard, setActiveCard] = useState<"vision" | "mission" | "values">("vision");
 
-  // GSAP Horizontal Pin & ScrollTrigger Scrub along X-Axis
+  // GSAP scroll entrance animation
   useEffect(() => {
-    const section = sectionRef.current;
-    const track = trackRef.current;
-    if (!section || !track) return;
-
-    let lastActive = -1;
+    const el = sectionRef.current;
+    if (!el) return;
 
     const ctx = gsap.context(() => {
-      const getScrollAmount = () => -(track.scrollWidth - window.innerWidth);
+      gsap.fromTo(
+        ".mv-header-elem",
+        { opacity: 0, y: 25 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          stagger: 0.1,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: el,
+            start: "top 75%",
+          },
+        }
+      );
 
-      const horizontalTween = gsap.to(track, {
-        x: getScrollAmount,
-        ease: "none",
-      });
-
-      ScrollTrigger.create({
-        trigger: section,
-        start: "top top",
-        end: () => `+=${track.scrollWidth - window.innerWidth}`,
-        pin: true,
-        pinSpacing: true,
-        scrub: 0.85,
-        anticipatePin: 1,
-        fastScrollEnd: true,
-        animation: horizontalTween,
-        invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          // Update horizontal progress bar
-          if (progressBarRef.current) {
-            progressBarRef.current.style.width = `${self.progress * 100}%`;
-          }
-
-          // Compute active slide index for live HUD updates
-          const numSlides = SLIDES.length;
-          const idx = Math.min(numSlides - 1, Math.floor(self.progress * numSlides + 0.15));
-          if (idx !== lastActive) {
-            lastActive = idx;
-            if (hudSlideRef.current) {
-              hudSlideRef.current.textContent = `DISCIPLINE // 0${idx + 1} OF 0${numSlides}`;
-            }
-          }
-        },
-      });
-    }, section);
+      gsap.fromTo(
+        ".mv-grid-card",
+        { opacity: 0, y: 35 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.85,
+          stagger: 0.15,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: el,
+            start: "top 70%",
+          },
+        }
+      );
+    }, el);
 
     return () => ctx.revert();
   }, []);
 
   return (
     <section
-      id="mission-vision-section"
+      id="mission-vision"
       ref={sectionRef}
-      className="relative w-full h-screen bg-transparent text-white overflow-hidden select-none"
+      className="relative w-full min-h-[90vh] text-white py-20 sm:py-28 px-6 sm:px-10 lg:px-16 overflow-hidden select-none "
     >
-      {/* Background Subtle Dot-Matrix Texture (Monochrome) */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-10 z-0"
-        style={{
-          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.2) 1.25px, transparent 1.25px)`,
-          backgroundSize: "28px 28px",
-        }}
-      />
-
-      {/* Top Header Fixed Telemetry HUD with Progress Wire */}
-      <div className="absolute top-0 inset-x-0 z-30 flex flex-col pointer-events-none p-4 sm:p-6 md:p-8">
-        {/* 1.5px Horizontal Scroll Progress Wire */}
-        <div className="w-full max-w-7xl mx-auto h-[1.5px] bg-white/10 relative mt-2.5 overflow-hidden rounded-full">
-          <div
-            ref={progressBarRef}
-            className="h-full bg-white transition-[width] duration-75 ease-out rounded-full"
-            style={{ width: "0%" }}
-          />
-        </div>
+      {/* Background Falling Meteor Streaks (Pure White/Monochrome) */}
+      <div className="absolute top-0 right-0 w-96 h-96 pointer-events-none opacity-40 overflow-hidden z-0">
+        <div className="absolute top-6 right-16 w-24 h-[1px] bg-gradient-to-l from-white to-transparent rotate-[-35deg] opacity-70 animate-pulse" />
+        <div className="absolute top-16 right-36 w-32 h-[1px] bg-gradient-to-l from-white to-transparent rotate-[-35deg] opacity-40" />
+        <div className="absolute top-28 right-8 w-20 h-[1.5px] bg-gradient-to-l from-white to-transparent rotate-[-35deg] opacity-80 animate-pulse" />
+        <div className="absolute top-44 right-28 w-40 h-[1px] bg-gradient-to-l from-white to-transparent rotate-[-35deg] opacity-50" />
       </div>
 
-      {/* =========================================================================
-          HORIZONTAL SCROLL TRACK (Glides along X-Axis on vertical scroll)
-         ========================================================================= */}
-      <div
-        ref={trackRef}
-        className="flex flex-row flex-nowrap h-full items-center will-change-transform z-10"
-      >
-        {SLIDES.map((slide, idx) => (
-          <div
-            key={slide.id}
-            className="w-screen h-full shrink-0 flex flex-col justify-center px-6 sm:px-12 md:px-16 lg:px-24 pt-16 sm:pt-20 pb-20 sm:pb-24 relative"
-          >
-            <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col justify-center">
-              {/* Heading */}
-              <div className="w-full mb-3 sm:mb-4 relative z-20 pointer-events-none text-left pl-1 sm:pl-2">
-                <h2 className="font-neuropol text-2xl sm:text-3xl md:text-4xl lg:text-[44px] xl:text-[50px] uppercase tracking-tight text-white leading-tight">
-                  {slide.headlineWord2 ? (
-                    <>
-                      <span className="text-white">{slide.headlineWord1} </span>
-                      <span className="text-white">{slide.headlineWord2}</span>
-                    </>
-                  ) : (
-                    <LensText text={slide.headlineWord1} strokeWidth="1.5px" strokeColor="#ffffff" />
-                  )}
-                </h2>
-              </div>
+      {/* Subtle Monochrome Ambient Radial Glow */}
+      <div className="absolute top-1/3 left-1/3 w-[600px] h-[400px] bg-white/[0.02] blur-[160px] rounded-full pointer-events-none" />
 
-              {/* Composition Stage: Clean Dark Glass Card + Floating Editorial Image */}
-              <div className="relative w-full flex flex-col lg:flex-row items-center lg:items-stretch min-h-[340px] sm:min-h-[380px] md:min-h-[420px]">
-                {/* 1. Clean Dark Luxury Glassmorphism Card (Zero colored tint) */}
-                <div className="w-full lg:w-[62%] bg-[#101010]/90 border border-white/10 text-white p-6 sm:p-8 md:p-10 lg:pr-24 rounded-2xl sm:rounded-3xl shadow-2xl backdrop-blur-xl flex flex-col justify-between relative z-10 transition-colors duration-300 hover:border-white/20">
-                  <div className="flex flex-col gap-3 max-w-full lg:max-w-md">
-                    {/* Pillar Badge */}
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-white/80" />
-                      <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-widest text-neutral-400 font-semibold">
-                        {slide.tag}
-                      </span>
-                    </div>
+      {/* Main Container */}
+      <div className="relative z-10 max-w-8xl mx-auto flex flex-col justify-between h-full">
+        
+        {/* =========================================================================
+            1. SECTION HEADER (Clean Monochrome Typography)
+           ========================================================================= */}
+        <div className="mb-14 sm:mb-18 text-left mv-header-elem">
+          <h2 className="font-neuropol text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider text-white font-semibold leading-tight">
+            THIS IS WHAT DRIVES US
+          </h2>
+          <p className="font-neuropol text-xs sm:text-sm md:text-[15px] text-neutral-400 mt-2 font-normal tracking-wide">
+            Our strategic purpose, operational mission, and foundational values
+          </p>
+        </div>
 
-                    <div className="flex flex-col gap-1">
-                      <span className="font-['Space_Grotesk',sans-serif] text-base font-bold tracking-tight text-white">
-                        {slide.aboutLabel}
-                      </span>
-                      <div className="w-9 h-[2px] rounded-full bg-white/40" />
-                    </div>
+        {/* =========================================================================
+            2. THREE-CARD MINIMALIST ROW (Pure Black & White Theme)
+           ========================================================================= */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 w-full">
+          {CARDS.map((card) => {
+            const isActive = activeCard === card.id;
 
-                    <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm md:text-[15px] text-neutral-300 font-normal leading-relaxed mt-1">
-                      {slide.aboutText}
-                    </p>
+            return (
+              <div
+                key={card.id}
+                onClick={() => setActiveCard(card.id)}
+                onMouseEnter={() => setActiveCard(card.id)}
+                className={`mv-grid-card group relative cursor-pointer rounded-3xl p-7 sm:p-8 md:p-9 lg:p-10 flex flex-col justify-between min-h-[460px] sm:min-h-[500px] transition-all duration-500 ease-out  ${
+                  isActive
+                    ? "bg-gradient-to-b from-[#1c1c22]/95 via-[#121216]/95 to-[#09090b]  shadow-[0_0_35px_rgba(255,255,255,0.06)] scale-[1.01]"
+                    : "bg-[#0b0b0e]/80  hover:bg-[#111116]/90"
+                }`}
+              >
+                {/* Subtle Card Inner Top Rim Glow (Monochrome White) */}
+                {isActive && (
+                  <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+                )}
+
+                {/* Top Geometric Minimalist Wireframe Icon */}
+                <div className="w-full flex items-start justify-between">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 relative flex items-center justify-center">
+                    
+                    {/* Icon 1: 3D Sphere Wireframe */}
+                    {card.iconType === "sphere" && (
+                      <svg viewBox="0 0 64 64" className="w-full h-full stroke-current" fill="none">
+                        <circle
+                          cx="32"
+                          cy="32"
+                          r="26"
+                          stroke={isActive ? "#ffffff" : "rgba(255, 255, 255, 0.4)"}
+                          strokeWidth="1.25"
+                        />
+                        <ellipse
+                          cx="32"
+                          cy="32"
+                          rx="26"
+                          ry="10"
+                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
+                          strokeWidth="1.25"
+                        />
+                        <ellipse
+                          cx="32"
+                          cy="32"
+                          rx="10"
+                          ry="26"
+                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
+                          strokeWidth="1.25"
+                        />
+                      </svg>
+                    )}
+
+                    {/* Icon 2: 3D Wireframe Globe with Lat/Long lines */}
+                    {card.iconType === "globe" && (
+                      <svg viewBox="0 0 64 64" className="w-full h-full stroke-current" fill="none">
+                        <circle
+                          cx="32"
+                          cy="32"
+                          r="26"
+                          stroke={isActive ? "#ffffff" : "rgba(255, 255, 255, 0.4)"}
+                          strokeWidth="1.25"
+                        />
+                        <line
+                          x1="6"
+                          y1="32"
+                          x2="58"
+                          y2="32"
+                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
+                          strokeWidth="1.25"
+                        />
+                        <line
+                          x1="32"
+                          y1="6"
+                          x2="32"
+                          y2="58"
+                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
+                          strokeWidth="1.25"
+                        />
+                        <ellipse
+                          cx="32"
+                          cy="32"
+                          rx="16"
+                          ry="26"
+                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
+                          strokeWidth="1.25"
+                        />
+                      </svg>
+                    )}
+
+                    {/* Icon 3: Stacked 3D Ellipses / Cylinder Wireframe */}
+                    {card.iconType === "cylinder" && (
+                      <svg viewBox="0 0 64 64" className="w-full h-full stroke-current" fill="none">
+                        <ellipse
+                          cx="32"
+                          cy="18"
+                          rx="24"
+                          ry="8"
+                          stroke={isActive ? "#ffffff" : "rgba(255, 255, 255, 0.4)"}
+                          strokeWidth="1.25"
+                        />
+                        <ellipse
+                          cx="32"
+                          cy="32"
+                          rx="24"
+                          ry="8"
+                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
+                          strokeWidth="1.25"
+                        />
+                        <ellipse
+                          cx="32"
+                          cy="46"
+                          rx="24"
+                          ry="8"
+                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
+                          strokeWidth="1.25"
+                        />
+                      </svg>
+                    )}
                   </div>
 
-                  {/* Highlights Pills Row */}
-                  <div className="flex flex-wrap items-center gap-2 mt-5 pt-3.5 border-t border-white/[0.08]">
-                    {slide.highlights.map((item, hIdx) => (
+                  {/* Card Number Badge */}
+                  <span className="font-mono text-xs text-neutral-500 font-semibold">
+                    {card.number}
+                  </span>
+                </div>
+
+                {/* Bottom Content Area */}
+                <div className="mt-auto pt-10">
+                  
+                  {/* Title */}
+                  <h3 className="font-neuropol text-xl sm:text-2xl font-bold uppercase tracking-wide text-white leading-tight">
+                    {card.title}
+                  </h3>
+                  <div className="font-mono text-[10px] sm:text-[11px] text-neutral-400 tracking-wider uppercase mt-1">
+                    {card.subtitle}
+                  </div>
+
+                  {/* Thin Divider Line (Matching Image) */}
+                  <div className="w-full h-[1px] bg-white/15 my-4 group-hover:bg-white/30 transition-colors" />
+
+                  {/* Description */}
+                  <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-[13px] text-neutral-300 leading-relaxed font-normal min-h-[72px]">
+                    {card.description}
+                  </p>
+
+                  {/* Highlights Pills (Monochrome) */}
+                  <div className="flex flex-wrap gap-1.5 mt-4">
+                    {card.highlights.map((h, hIdx) => (
                       <span
                         key={hIdx}
-                        className="px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-mono uppercase tracking-wider bg-white/[0.05] border border-white/[0.08] text-neutral-300"
+                        className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono bg-white/[0.04]  text-neutral-300"
                       >
-                        ✦ {item}
+                        ✦ {h}
                       </span>
                     ))}
                   </div>
-                </div>
 
-                {/* 2. Floating High-Resolution Image Card */}
-                <div className="relative lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 w-full sm:w-[88%] lg:w-[50%] h-56 sm:h-68 md:h-80 lg:h-[360px] mt-4 lg:mt-0 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl z-20 border border-white/15 group bg-neutral-900">
-                  <img
-                    src={slide.imageUrl}
-                    alt={slide.imageAlt}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out brightness-95 contrast-105"
-                  />
+                  {/* Bottom Footer: Metric and Downward-Diagonal Arrow ↘ */}
+                  <div className="flex items-center justify-between mt-6 pt-3 ">
+                    <span className="font-mono text-[9px] sm:text-[10px] text-neutral-400 uppercase tracking-wider">
+                      {card.metrics}
+                    </span>
 
-                  {/* Subtle Slide Indicator Badge */}
-                  <div className="absolute bottom-3.5 right-3.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 font-mono text-[9px] sm:text-[10px] text-white/90">
-                    DISCIPLINE 0{idx + 1}
-                  </div>
-                </div>
-
-                {/* 3. Giant Background Numeral Watermark */}
-                <div className="hidden lg:block absolute right-[-1.5rem] bottom-[-2rem] font-neuropol text-[150px] xl:text-[180px] leading-none text-white/[0.035] select-none pointer-events-none z-0">
-                  {slide.backdropNumber}
-                </div>
-
-                {/* 4. Right Vertical Metadata Label */}
-                <div className="hidden xl:flex absolute right-[-4.5rem] top-1/2 -translate-y-1/2 flex-col items-center gap-3 [writing-mode:vertical-rl] font-mono text-[10px] tracking-[0.25em] text-neutral-500 uppercase select-none">
-                  <span>{slide.rightMeta}</span>
-                  <div className="flex flex-col gap-1 items-center">
-                    <div className="w-[1.5px] h-3 bg-neutral-700" />
-                    <div className="w-[2px] h-6 rounded-full bg-white/60" />
-                    <div className="w-[1.5px] h-3 bg-neutral-700" />
+                    <svg
+                      viewBox="0 0 24 24"
+                      className={`w-6 h-6 stroke-current transition-transform duration-300 group-hover:translate-x-0.5 group-hover:translate-y-0.5 ${
+                        isActive ? "text-white" : "text-neutral-500"
+                      }`}
+                      fill="none"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M7 7L17 17" />
+                      <path d="M7 17h10V7" />
+                    </svg>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Bottom Soft Fade Gradient for Seamless Section Transition */}
-      <div className="absolute bottom-0 inset-x-0 h-36 bg-gradient-to-b from-transparent via-[#050505]/80 to-[#050505] pointer-events-none z-20" />
-
-      {/* Bottom Footer Fixed HUD Bar */}
-      <div className="absolute bottom-0 inset-x-0 z-30 p-4 sm:p-6 md:p-8 pointer-events-none">
-        <div className="w-full max-w-7xl mx-auto flex items-center justify-between font-mono text-[10px] sm:text-xs text-neutral-400 uppercase tracking-widest pt-3 border-t border-white/[0.06] pointer-events-auto">
-          <div className="flex items-center gap-3">
-            <span className="text-white font-bold tracking-tight font-['Space_Grotesk',sans-serif] text-xs sm:text-sm">
-              Bharat DigiGuru
-            </span>
-            <span className="text-neutral-600">/</span>
-            <span ref={hudSlideRef} className="text-neutral-400">
-              DISCIPLINE // 01 OF 0{SLIDES.length}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-neutral-400">HORIZONTAL SCROLL</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse" />
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>

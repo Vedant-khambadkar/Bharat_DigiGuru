@@ -13,6 +13,10 @@ import {
   BarChart3,
   LogOut,
   Search,
+  Layers,
+  Upload,
+  Image as ImageIcon,
+  Check,
 } from "lucide-react";
 import { adminService } from "../../services/service/adminService";
 import { socket, onSocketEvent } from "../../utils/socket";
@@ -25,7 +29,7 @@ interface AdminDashboardModalProps {
   onLogout: () => void;
 }
 
-type TabType = "overview" | "portfolio" | "threed" | "inquiries";
+type TabType = "overview" | "portfolio" | "threed" | "services" | "inquiries";
 
 const extractPaginatedData = (res: any) => {
   if (!res) return { items: [], total: 0, totalPages: 1, page: 1 };
@@ -78,11 +82,13 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
       getApiCache<{
         totalPortfolio: number;
         totalThreeD: number;
+        totalServices: number;
         totalInquiries: number;
         newInquiries: number;
       }>("admin_stats") || {
         totalPortfolio: 0,
         totalThreeD: 0,
+        totalServices: 0,
         totalInquiries: 0,
         newInquiries: 0,
       }
@@ -118,6 +124,20 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   const [threeDSearch, setThreeDSearch] = useState<string>("");
 
   // ==========================================
+  // SERVICES STATE (SERVER-SIDE PAGINATION)
+  // ==========================================
+  const initialServCache = extractPaginatedData(
+    getApiCache<any>("admin_services_limit=6&page=1&search=")
+  );
+  const [servicesItems, setServicesItems] = useState<any[]>(initialServCache.items);
+  const [servicesPage, setServicesPage] = useState<number>(1);
+  const [servicesTotalPages, setServicesTotalPages] = useState<number>(
+    initialServCache.totalPages || 1
+  );
+  const [servicesTotal, setServicesTotal] = useState<number>(initialServCache.total || 0);
+  const [servicesSearch, setServicesSearch] = useState<string>("");
+
+  // ==========================================
   // INQUIRIES STATE (SERVER-SIDE PAGINATION)
   // ==========================================
   const initialInqCache = extractPaginatedData(
@@ -135,7 +155,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 
   // Edit / Create Modal State
   const [editingItem, setEditingItem] = useState<{
-    type: "portfolio" | "threed";
+    type: "portfolio" | "threed" | "services";
     isNew: boolean;
     data: any;
   } | null>(null);
@@ -145,7 +165,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   // Custom Delete Confirmation Modal State
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
-    type: "portfolio" | "threed" | "inquiries";
+    type: "portfolio" | "threed" | "services" | "inquiries";
     id: string | number;
     title?: string;
     isDeleting: boolean;
@@ -218,6 +238,34 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     [threeDPage, threeDSearch]
   );
 
+  const fetchServices = useCallback(
+    async (page = servicesPage, search = servicesSearch, forceRefresh = false) => {
+      try {
+        const res = await adminService.getServices(
+          {
+            page,
+            limit: 6,
+            search: search.trim() || undefined,
+          },
+          forceRefresh
+        );
+        const clean = extractPaginatedData(res);
+        setServicesItems(clean.items);
+        setServicesTotal(clean.total);
+        setServicesTotalPages(clean.totalPages);
+        setServicesPage(clean.page);
+        setStats((prev) => {
+          const updated = { ...prev, totalServices: clean.total };
+          setApiCache("admin_stats", updated);
+          return updated;
+        });
+      } catch (err) {
+        console.error("Failed to load services:", err);
+      }
+    },
+    [servicesPage, servicesSearch]
+  );
+
   const fetchInquiries = useCallback(
     async (page = inquiriesPage, forceRefresh = false) => {
       try {
@@ -256,6 +304,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     if (currentUserRole === "managedAdmin") {
       fetchThreeD(1, undefined, true);
     }
+    fetchServices(1, undefined, true);
     fetchInquiries(1, true);
   };
 
@@ -314,6 +363,10 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     const unsubThreeDUpdated = onSocketEvent("threed:updated", () => fetchThreeD(undefined, undefined, true));
     const unsubThreeDDeleted = onSocketEvent("threed:deleted", () => fetchThreeD(undefined, undefined, true));
 
+    const unsubServCreated = onSocketEvent("service:created", () => fetchServices(undefined, undefined, true));
+    const unsubServUpdated = onSocketEvent("service:updated", () => fetchServices(undefined, undefined, true));
+    const unsubServDeleted = onSocketEvent("service:deleted", () => fetchServices(undefined, undefined, true));
+
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
@@ -326,8 +379,11 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
       unsubThreeDCreated();
       unsubThreeDUpdated();
       unsubThreeDDeleted();
+      unsubServCreated();
+      unsubServUpdated();
+      unsubServDeleted();
     };
-  }, [fetchPortfolio, fetchThreeD]);
+  }, [fetchPortfolio, fetchThreeD, fetchServices]);
 
   if (!isOpen) return null;
 
@@ -352,6 +408,13 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
           await adminService.updateThreeD(data.id, data);
         }
         fetchThreeD(threeDPage, threeDSearch, true);
+      } else if (type === "services") {
+        if (isNew) {
+          await adminService.createService(data);
+        } else {
+          await adminService.updateService(data.id, data);
+        }
+        fetchServices(servicesPage, servicesSearch, true);
       }
 
       showNotification(`${type.toUpperCase()} saved & synchronized successfully!`);
@@ -361,12 +424,12 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     }
   };
 
-  const handleDeleteItem = (type: "portfolio" | "threed" | "inquiries", id: string | number, title?: string) => {
+  const handleDeleteItem = (type: "portfolio" | "threed" | "services" | "inquiries", id: string | number, title?: string) => {
     setDeleteModal({
       isOpen: true,
       type,
       id,
-      title: title || (type === "portfolio" ? "Portfolio Project" : type === "threed" ? "3D Showcase" : "Inquiry Record"),
+      title: title || (type === "portfolio" ? "Portfolio Project" : type === "threed" ? "3D Showcase" : type === "services" ? "Service" : "Inquiry Record"),
       isDeleting: false,
     });
   };
@@ -382,6 +445,9 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
       } else if (type === "threed") {
         await adminService.deleteThreeD(String(id));
         fetchThreeD(threeDPage, threeDSearch, true);
+      } else if (type === "services") {
+        await adminService.deleteService(String(id));
+        fetchServices(servicesPage, servicesSearch, true);
       } else if (type === "inquiries") {
         await adminService.deleteInquiry(String(id));
         fetchInquiries(inquiriesPage, true);
@@ -521,6 +587,21 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 
             <button
               onClick={() => {
+                setActiveTab("services");
+                fetchServices(1);
+              }}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-mono tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === "services"
+                  ? "bg-[#ff3b30] text-white font-bold shadow-[0_0_15px_rgba(255,59,48,0.3)]"
+                  : "text-neutral-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Layers size={14} />
+              <span>SERVICES ({stats.totalServices})</span>
+            </button>
+
+            <button
+              onClick={() => {
                 setActiveTab("inquiries");
                 fetchInquiries(1);
               }}
@@ -547,7 +628,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
             {/* OVERVIEW TAB */}
             {activeTab === "overview" && (
               <div className="flex flex-col gap-6">
-                <div className={`grid grid-cols-1 ${currentUserRole === "managedAdmin" ? "sm:grid-cols-3" : "sm:grid-cols-2"} gap-4`}>
+                <div className={`grid grid-cols-1 ${currentUserRole === "managedAdmin" ? "sm:grid-cols-4" : "sm:grid-cols-3"} gap-4`}>
                   <div
                     onClick={() => {
                       setActiveTab("portfolio");
@@ -586,13 +667,30 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 
                   <div
                     onClick={() => {
+                      setActiveTab("services");
+                      fetchServices(1);
+                    }}
+                    className="p-5 rounded-2xl bg-[#12141c] border border-white/10 hover:border-emerald-500/40 flex flex-col gap-2 cursor-pointer transition-all"
+                  >
+                    <div className="flex items-center justify-between text-neutral-400 font-mono text-xs">
+                      <span>{currentUserRole === "managedAdmin" ? "3. SERVICES" : "2. SERVICES"}</span>
+                      <Layers className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div className="font-['Syne',sans-serif] font-bold text-3xl text-white">
+                      {stats.totalServices}
+                    </div>
+                    <span className="text-[11px] text-emerald-400 font-mono">Dynamic Capabilities</span>
+                  </div>
+
+                  <div
+                    onClick={() => {
                       setActiveTab("inquiries");
                       fetchInquiries(1);
                     }}
                     className="p-5 rounded-2xl bg-[#12141c] border border-white/10 hover:border-amber-500/40 flex flex-col gap-2 cursor-pointer transition-all"
                   >
                     <div className="flex items-center justify-between text-neutral-400 font-mono text-xs">
-                      <span>{currentUserRole === "managedAdmin" ? "3. INQUIRIES" : "2. INQUIRIES"}</span>
+                      <span>{currentUserRole === "managedAdmin" ? "4. INQUIRIES" : "3. INQUIRIES"}</span>
                       <Mail className="w-4 h-4 text-amber-400" />
                     </div>
                     <div className="font-['Syne',sans-serif] font-bold text-3xl text-white">
@@ -846,6 +944,158 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
               </div>
             )}
 
+            {/* SERVICES TAB */}
+            {activeTab === "services" && (
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-['Syne',sans-serif] font-bold text-lg text-white">
+                    Services ({servicesTotal})
+                  </h3>
+                  <button
+                    onClick={() =>
+                      setEditingItem({
+                        type: "services",
+                        isNew: true,
+                        data: {
+                          id: `service-${Date.now()}`,
+                          number: `(0${servicesTotal + 1})`,
+                          title: "",
+                          subtitle: "",
+                          tag: "",
+                          image: "",
+                          works: [],
+                          details: {
+                            description: "",
+                            deliverables: [
+                              "Strategic Consulting & Roadmap",
+                              "High-Impact Creative Production",
+                            ],
+                            chips: ["Custom Solutions", "24/7 Support"],
+                            timeline: "Ongoing Retainer / Sprint Based",
+                          },
+                        },
+                      })
+                    }
+                    className="px-3.5 py-2 rounded-xl bg-white text-black font-mono text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-neutral-200 transition-colors"
+                  >
+                    <Plus size={13} />
+                    <span>ADD SERVICE</span>
+                  </button>
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#12141c] border border-white/10 flex gap-2 items-center">
+                  <Search className="w-3.5 h-3.5 text-neutral-500" />
+                  <input
+                    type="text"
+                    placeholder="Search services by title, scope, chips or deliverables..."
+                    value={servicesSearch}
+                    onChange={(e) => {
+                      setServicesSearch(e.target.value);
+                      fetchServices(1, e.target.value);
+                    }}
+                    className="flex-1 bg-transparent text-xs text-white focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {servicesItems.map((s) => {
+                    const firstWorkImg =
+                      s.works?.[0]?.thumbnail ||
+                      s.works?.[0]?.url ||
+                      (s.works?.[0]?.type === "youtube" && s.works?.[0]?.youtubeId
+                        ? `https://img.youtube.com/vi/${s.works[0].youtubeId}/hqdefault.jpg`
+                        : s.image);
+
+                    return (
+                      <div
+                        key={s.id}
+                        className="p-4 rounded-xl bg-[#12141c] border border-white/10 flex flex-col justify-between gap-3 text-xs group hover:border-emerald-500/50 transition-all"
+                      >
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between text-emerald-400 font-mono text-[11px]">
+                            <span className="font-bold">{s.number} {s.tag || ""}</span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => setEditingItem({ type: "services", isNew: false, data: JSON.parse(JSON.stringify(s)) })}
+                                className="p-1 rounded text-neutral-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                                title="Edit Service"
+                              >
+                                <Edit2 size={12} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteItem("services", s.id, s.title)}
+                                className="p-1 rounded text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                title="Delete Service"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {firstWorkImg && (
+                            <div className="w-full h-28 rounded-lg overflow-hidden relative bg-black/50 border border-white/5">
+                              <img
+                                src={firstWorkImg}
+                                alt={s.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                              <div className="absolute top-2 left-2 px-2 py-0.5 rounded text-[9px] font-mono uppercase bg-black/70 backdrop-blur-md text-neutral-300">
+                                Hover Thumbnail
+                              </div>
+                            </div>
+                          )}
+
+                          <h4 className="font-bold text-white text-sm line-clamp-1">{s.title}</h4>
+                          <p className="text-neutral-400 font-mono text-[11px] line-clamp-1">{s.subtitle}</p>
+                          <p className="text-neutral-300 text-[11px] line-clamp-2 leading-relaxed">
+                            {s.details?.description || "No overview provided."}
+                          </p>
+
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {s.details?.chips?.slice(0, 3).map((c: string, idx: number) => (
+                              <span key={idx} className="px-1.5 py-0.5 rounded bg-white/5 text-[10px] text-neutral-400 font-mono">
+                                {c}
+                              </span>
+                            ))}
+                            {(s.details?.chips?.length || 0) > 3 && (
+                              <span className="px-1.5 py-0.5 rounded bg-white/5 text-[10px] text-neutral-500 font-mono">
+                                +{(s.details?.chips?.length || 0) - 3}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] font-mono text-neutral-400">
+                          <span>{s.works?.length || 0} Showcases</span>
+                          <span className="text-emerald-400">{s.details?.timeline || "Standard"}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="p-3 rounded-xl bg-[#12141c] border border-white/10 flex items-center justify-between text-xs font-mono">
+                  <span>Page {servicesPage} of {servicesTotalPages}</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => fetchServices(servicesPage - 1)}
+                      disabled={servicesPage <= 1}
+                      className="px-2.5 py-1 rounded bg-white/5 disabled:opacity-30 cursor-pointer"
+                    >
+                      PREV
+                    </button>
+                    <button
+                      onClick={() => fetchServices(servicesPage + 1)}
+                      disabled={servicesPage >= servicesTotalPages}
+                      className="px-2.5 py-1 rounded bg-white/5 disabled:opacity-30 cursor-pointer"
+                    >
+                      NEXT
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* INQUIRIES TAB */}
             {activeTab === "inquiries" && (
               <div className="flex flex-col gap-5">
@@ -970,71 +1220,441 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
 
       {/* Editing Item Modal */}
       {editingItem && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="w-full max-w-xl bg-[#11131b] border border-white/15 rounded-3xl p-6 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
-            <h4 className="font-['Syne',sans-serif] font-bold text-base text-white">
-              {editingItem.isNew ? "Create" : "Edit"} {editingItem.type.toUpperCase()}
-            </h4>
-            <form onSubmit={handleSaveItem} className="flex flex-col gap-3 text-xs">
-              <div className="flex flex-col gap-1">
-                <label className="font-mono text-neutral-400">Title</label>
-                <input
-                  type="text"
-                  value={editingItem.data.title || ""}
-                  onChange={(e) =>
-                    setEditingItem({
-                      ...editingItem,
-                      data: { ...editingItem.data, title: e.target.value },
-                    })
-                  }
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
-                  required
-                />
-              </div>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md">
+          <div className="w-full max-w-2xl bg-[#11131b] border border-white/15 rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h4 className="font-['Syne',sans-serif] font-bold text-base text-white">
+                {editingItem.isNew ? "Create" : "Edit"} {editingItem.type.toUpperCase()}
+              </h4>
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                className="text-neutral-400 hover:text-white"
+              >
+                <X size={16} />
+              </button>
+            </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="font-mono text-neutral-400">Category</label>
-                <input
-                  type="text"
-                  value={editingItem.data.category || ""}
-                  onChange={(e) =>
-                    setEditingItem({
-                      ...editingItem,
-                      data: { ...editingItem.data, category: e.target.value },
-                    })
-                  }
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
-                />
-              </div>
+            <form onSubmit={handleSaveItem} className="flex flex-col gap-4 text-xs">
+              {/* SERVICE SPECIFIC FORM */}
+              {editingItem.type === "services" ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-neutral-400">Number (e.g. (01))</label>
+                      <input
+                        type="text"
+                        value={editingItem.data.number || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, number: e.target.value },
+                          })
+                        }
+                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                        required
+                      />
+                    </div>
+                    <div className="sm:col-span-2 flex flex-col gap-1">
+                      <label className="font-mono text-neutral-400">Service Title</label>
+                      <input
+                        type="text"
+                        value={editingItem.data.title || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, title: e.target.value },
+                          })
+                        }
+                        placeholder="e.g. Digital Media Services"
+                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                        required
+                      />
+                    </div>
+                  </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="font-mono text-neutral-400">Description</label>
-                <textarea
-                  rows={3}
-                  value={editingItem.data.description || ""}
-                  onChange={(e) =>
-                    setEditingItem({
-                      ...editingItem,
-                      data: { ...editingItem.data, description: e.target.value },
-                    })
-                  }
-                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
-                />
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-neutral-400">Subtitle / Scope Summary</label>
+                      <input
+                        type="text"
+                        value={editingItem.data.subtitle || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, subtitle: e.target.value },
+                          })
+                        }
+                        placeholder="e.g. 360° SMM, SEO, PERFORMANCE ADS"
+                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-neutral-400">Feature Tag</label>
+                      <input
+                        type="text"
+                        value={editingItem.data.tag || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, tag: e.target.value },
+                          })
+                        }
+                        placeholder="e.g. & 360° DIGITAL ACCELERATION"
+                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-white/10">
+                  <div className="flex flex-col gap-1">
+                    <label className="font-mono text-neutral-400">Default / Hover Image URL</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={editingItem.data.image || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, image: e.target.value },
+                          })
+                        }
+                        placeholder="https://... or upload below"
+                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                      />
+                      <label className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-neutral-200 cursor-pointer flex items-center gap-1 shrink-0 font-mono text-[11px]">
+                        <Upload size={12} />
+                        <span>Upload</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              showNotification("Uploading media...");
+                              const res = await adminService.uploadMedia(file);
+                              const fileUrl = res.url || res.fileUrl || res.mediaUrl || res.data?.url;
+                              if (fileUrl) {
+                                setEditingItem({
+                                  ...editingItem,
+                                  data: { ...editingItem.data, image: fileUrl },
+                                });
+                                showNotification("Media uploaded successfully!");
+                              }
+                            } catch (uploadErr: any) {
+                              showNotification(`Upload failed: ${uploadErr.message}`, "error");
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="font-mono text-neutral-400">Scope & Solution Overview Description</label>
+                    <textarea
+                      rows={4}
+                      value={editingItem.data.details?.description || ""}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: {
+                            ...editingItem.data,
+                            details: {
+                              ...editingItem.data.details,
+                              description: e.target.value,
+                            },
+                          },
+                        })
+                      }
+                      placeholder="Comprehensive service description detailing scope, methodology, and values delivered..."
+                      className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-neutral-400">Service Delivery Timeline</label>
+                      <input
+                        type="text"
+                        value={editingItem.data.details?.timeline || "Ongoing Retainer / Sprint Based"}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: {
+                              ...editingItem.data,
+                              details: {
+                                ...editingItem.data.details,
+                                timeline: e.target.value,
+                              },
+                            },
+                          })
+                        }
+                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-neutral-400">Specializations / Chips (comma separated)</label>
+                      <input
+                        type="text"
+                        value={(editingItem.data.details?.chips || []).join(", ")}
+                        onChange={(e) => {
+                          const chips = e.target.value.split(",").map((c) => c.trim()).filter(Boolean);
+                          setEditingItem({
+                            ...editingItem,
+                            data: {
+                              ...editingItem.data,
+                              details: {
+                                ...editingItem.data.details,
+                                chips,
+                              },
+                            },
+                          });
+                        }}
+                        placeholder="SMM, SEO, Facebook Ads, Google Ads"
+                        className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="font-mono text-neutral-400">Key Deliverables (one per line)</label>
+                    <textarea
+                      rows={3}
+                      value={(editingItem.data.details?.deliverables || []).join("\n")}
+                      onChange={(e) => {
+                        const deliverables = e.target.value.split("\n").map((d) => d.trim()).filter(Boolean);
+                        setEditingItem({
+                          ...editingItem,
+                          data: {
+                            ...editingItem.data,
+                            details: {
+                              ...editingItem.data.details,
+                              deliverables,
+                            },
+                          },
+                        });
+                      }}
+                      placeholder="Strategic Social Media Marketing (SMM)&#10;Search Engine Optimization (SEO & SMO)&#10;Online Reputation Management (ORM)"
+                      className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none font-mono text-[11px]"
+                    />
+                  </div>
+
+                  {/* SHOWCASE WORKS LIST MANAGER */}
+                  <div className="flex flex-col gap-3 pt-3 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                      <label className="font-mono font-bold text-neutral-300">
+                        Showcase Works & Live Media ({editingItem.data.works?.length || 0})
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newWork = {
+                            id: `work-${Date.now()}`,
+                            title: "New Showcase Work",
+                            type: "image",
+                            url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=900",
+                            thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=900",
+                            tag: "Live Showcase",
+                            description: "Work deliverable execution and key performance metrics.",
+                            metrics: "4K Master",
+                          };
+                          const updatedWorks = [...(editingItem.data.works || []), newWork];
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, works: updatedWorks },
+                          });
+                        }}
+                        className="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white font-mono text-[10px] flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus size={11} />
+                        <span>Add Work</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                      {(editingItem.data.works || []).map((work: any, wIdx: number) => (
+                        <div key={work.id || wIdx} className="p-3.5 rounded-xl bg-black/40 border border-white/10 flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-emerald-400 font-bold text-[11px]">
+                              Work #{wIdx + 1} ({work.type?.toUpperCase()})
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updatedWorks = (editingItem.data.works || []).filter((_: any, idx: number) => idx !== wIdx);
+                                setEditingItem({
+                                  ...editingItem,
+                                  data: { ...editingItem.data, works: updatedWorks },
+                                });
+                              }}
+                              className="text-red-400 hover:text-red-300 p-1 cursor-pointer"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              placeholder="Work Title"
+                              value={work.title || ""}
+                              onChange={(e) => {
+                                const worksCopy = [...editingItem.data.works];
+                                worksCopy[wIdx].title = e.target.value;
+                                setEditingItem({ ...editingItem, data: { ...editingItem.data, works: worksCopy } });
+                              }}
+                              className="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none"
+                              required
+                            />
+                            <select
+                              value={work.type || "image"}
+                              onChange={(e) => {
+                                const worksCopy = [...editingItem.data.works];
+                                worksCopy[wIdx].type = e.target.value;
+                                setEditingItem({ ...editingItem, data: { ...editingItem.data, works: worksCopy } });
+                              }}
+                              className="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none"
+                            >
+                              <option value="image">Image</option>
+                              <option value="video">Direct Video (MP4)</option>
+                              <option value="youtube">YouTube Video</option>
+                            </select>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              placeholder={work.type === "youtube" ? "YouTube URL (https://www.youtube.com/watch?v=...)" : "Media URL"}
+                              value={work.url || ""}
+                              onChange={(e) => {
+                                const worksCopy = [...editingItem.data.works];
+                                worksCopy[wIdx].url = e.target.value;
+                                setEditingItem({ ...editingItem, data: { ...editingItem.data, works: worksCopy } });
+                              }}
+                              className="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none"
+                              required
+                            />
+                            <input
+                              type="text"
+                              placeholder="Tag (e.g. Ad Campaign Reel, Pre-Wedding)"
+                              value={work.tag || ""}
+                              onChange={(e) => {
+                                const worksCopy = [...editingItem.data.works];
+                                worksCopy[wIdx].tag = e.target.value;
+                                setEditingItem({ ...editingItem, data: { ...editingItem.data, works: worksCopy } });
+                              }}
+                              className="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              placeholder="Thumbnail URL (Optional)"
+                              value={work.thumbnail || ""}
+                              onChange={(e) => {
+                                const worksCopy = [...editingItem.data.works];
+                                worksCopy[wIdx].thumbnail = e.target.value;
+                                setEditingItem({ ...editingItem, data: { ...editingItem.data, works: worksCopy } });
+                              }}
+                              className="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Metrics badge (e.g. +280% ROI, 4K Cinema)"
+                              value={work.metrics || ""}
+                              onChange={(e) => {
+                                const worksCopy = [...editingItem.data.works];
+                                worksCopy[wIdx].metrics = e.target.value;
+                                setEditingItem({ ...editingItem, data: { ...editingItem.data, works: worksCopy } });
+                              }}
+                              className="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none"
+                            />
+                          </div>
+
+                          <input
+                            type="text"
+                            placeholder="Brief description of this showcase..."
+                            value={work.description || ""}
+                            onChange={(e) => {
+                              const worksCopy = [...editingItem.data.works];
+                              worksCopy[wIdx].description = e.target.value;
+                              setEditingItem({ ...editingItem, data: { ...editingItem.data, works: worksCopy } });
+                            }}
+                            className="bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* DEFAULT FORM FOR PORTFOLIO / 3D */
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label className="font-mono text-neutral-400">Title</label>
+                    <input
+                      type="text"
+                      value={editingItem.data.title || ""}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, title: e.target.value },
+                        })
+                      }
+                      className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="font-mono text-neutral-400">Category</label>
+                    <input
+                      type="text"
+                      value={editingItem.data.category || ""}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, category: e.target.value },
+                        })
+                      }
+                      className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="font-mono text-neutral-400">Description</label>
+                    <textarea
+                      rows={3}
+                      value={editingItem.data.description || ""}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, description: e.target.value },
+                        })
+                      }
+                      className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setEditingItem(null)}
-                  className="px-3 py-1.5 rounded-xl bg-white/5 text-neutral-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl bg-white/5 text-neutral-400 hover:text-white cursor-pointer font-mono"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-[#ff3b30] text-white font-bold"
+                  className="px-5 py-2 rounded-xl bg-[#ff3b30] text-white font-bold cursor-pointer font-mono hover:bg-[#e0342a] transition-colors"
                 >
-                  Save
+                  Save Changes
                 </button>
               </div>
             </form>
