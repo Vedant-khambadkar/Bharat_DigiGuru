@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, lazy, Suspense } from "react";
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
@@ -29,54 +29,17 @@ const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 
 gsap.registerPlugin(ScrollTrigger);
 
-const App = () => {
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
-
-  // Listen to browser history navigation (back/forward)
-  useEffect(() => {
-    const handlePopState = () => {
-      setCurrentPath(window.location.pathname);
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
-
-  // 1. DEDICATED SEPARATE PAGE: Admin Login (/admin/login)
-  if (currentPath === "/admin/login" || currentPath === "/admin/login/") {
-    return (
-      <Suspense fallback={<div className="w-screen h-screen bg-[#050505]" />}>
-        <AdminLoginPage />
-      </Suspense>
-    );
-  }
-
-  // 2. DEDICATED SEPARATE PAGE: Admin Dashboard (/admin or /admin/dashboard)
-  if (
-    currentPath === "/admin" ||
-    currentPath === "/admin/" ||
-    currentPath === "/admin/dashboard" ||
-    currentPath === "/admin/dashboard/"
-  ) {
-    return (
-      <Suspense fallback={<div className="w-screen h-screen bg-[#050505]" />}>
-        <AdminDashboardPage />
-      </Suspense>
-    );
-  }
-
+const MainLandingPage = () => {
   const boxRef = useRef<HTMLDivElement>(null);
-  const hudRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [framesProgress, setFramesProgress] = useState(0);
-  const [isFramesReady, setIsFramesReady] = useState(false);
 
   // Admin Portal State (for modal fallback if triggered from main site)
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
 
-  const handleOpenAdminPortal = () => {
+  const handleOpenAdminPortal = useCallback(() => {
     const token =
       localStorage.getItem("accessToken") ||
       sessionStorage.getItem("accessToken");
@@ -85,25 +48,23 @@ const App = () => {
     } else {
       setIsAdminAuthOpen(true);
     }
-  };
+  }, []);
 
-  const handleAdminLoginSuccess = () => {
+  const handleAdminLoginSuccess = useCallback(() => {
     setIsAdminAuthOpen(false);
     setIsAdminDashboardOpen(true);
-  };
+  }, []);
 
-  const handleAdminLogout = () => {
+  const handleAdminLogout = useCallback(() => {
     localStorage.removeItem("accessToken");
     sessionStorage.removeItem("accessToken");
     setIsAdminDashboardOpen(false);
-  };
+  }, []);
 
   // Keyboard shortcut Ctrl+Shift+A, Custom Event, and URL (#admin or /admin) listener for Admin Access
   useEffect(() => {
     const checkAdminRoute = () => {
-      if (
-        window.location.pathname === "/admin"
-      ) {
+      if (window.location.pathname === "/admin") {
         handleOpenAdminPortal();
       }
     };
@@ -131,19 +92,10 @@ const App = () => {
       window.removeEventListener("open-admin-portal", handleOpenEvent);
       window.removeEventListener("hashchange", checkAdminRoute);
     };
-  }, []);
-
-
-
-  const handleFramesProgress = (progress: number, isComplete: boolean) => {
-    setFramesProgress(progress);
-    if (isComplete) {
-      setIsFramesReady(true);
-    }
-  };
+  }, [handleOpenAdminPortal]);
 
   // Triggered concurrently the exact moment the preloader begins sliding up
-  const handleStartPageReveal = () => {
+  const handleStartPageReveal = useCallback(() => {
     (window as any).lenis?.start();
     window.dispatchEvent(new CustomEvent("start-hero-letters"));
     const homeSection = document.getElementById("home-section");
@@ -163,15 +115,15 @@ const App = () => {
         }
       );
     }
-  };
+  }, []);
 
-  const handlePreloaderComplete = () => {
+  const handlePreloaderComplete = useCallback(() => {
     setIsLoading(false);
     window.dispatchEvent(new CustomEvent("start-hero-letters"));
     (window as any).lenis?.scrollTo(0, { immediate: true });
     window.scrollTo(0, 0);
     ScrollTrigger.refresh();
-  };
+  }, []);
 
   // Background idle preloading of 3D Portfolio data & textures after Preloader exits
   useEffect(() => {
@@ -202,7 +154,6 @@ const App = () => {
 
   // Global Lenis Smooth Momentum Scrolling synchronized with GSAP ScrollTrigger
   useEffect(() => {
-    // Ensure manual scroll restoration so browser never restores old scroll offset on refresh
     if ("scrollRestoration" in history) {
       history.scrollRestoration = "manual";
     }
@@ -224,37 +175,30 @@ const App = () => {
 
     (window as any).lenis = lenis;
 
-    // Force Lenis and Window to start from absolute top (0, 0)
     lenis.scrollTo(0, { immediate: true });
     window.scrollTo(0, 0);
 
-    // Lock scrolling while preloader is running, resume on complete
     if (isLoading) {
       lenis.stop();
     } else {
       lenis.start();
     }
 
-    // Synchronize Lenis scroll updates with GSAP ScrollTrigger
     lenis.on("scroll", () => {
       ScrollTrigger.update();
     });
 
-    // Drive Lenis directly via GSAP's high-precision RAF ticker
     const tickerCallback = (time: number) => {
       lenis.raf(time * 1000);
     };
     gsap.ticker.add(tickerCallback);
-    // Smooth lag compensation prevents frame delta explosions during 3D/canvas loads
     gsap.ticker.lagSmoothing(500, 33);
 
-    // Reset to top before page unload
     const handleBeforeUnload = () => {
       window.scrollTo(0, 0);
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
 
-    // Debounced window resize handler for ScrollTrigger & Lenis
     let resizeTimer: number;
     const handleResize = () => {
       clearTimeout(resizeTimer);
@@ -265,7 +209,6 @@ const App = () => {
     };
     window.addEventListener("resize", handleResize, { passive: true });
 
-    // Global Lenis smooth scroll handler for all internal anchor links (#...)
     const handleAnchorClick = (e: MouseEvent) => {
       const target = (e.target as HTMLElement)?.closest("a[href^='#']");
       if (!target) return;
@@ -293,9 +236,9 @@ const App = () => {
       lenis.destroy();
       delete (window as any).lenis;
     };
-  }, []);
+  }, [isLoading]);
 
-  // Layout Synchronization: Auto-refresh ScrollTrigger & Lenis whenever dynamic content or accordions change height
+  // Layout Synchronization: Auto-refresh ScrollTrigger & Lenis whenever dynamic content changes height
   useEffect(() => {
     if (!mainContentRef.current) return;
 
@@ -319,27 +262,21 @@ const App = () => {
   // Custom Cursor Box with Lens interaction
   useEffect(() => {
     const box = boxRef.current;
-    const hud = hudRef.current;
     if (!box) return;
 
-    // Center cursor box on mouse position
     gsap.set(box, {
       xPercent: -50,
       yPercent: -50,
-      opacity: 0, // initially hidden until mouse enters window
+      opacity: 0,
     });
 
-    // High performance smooth GSAP quickTo tracking
     const xTo = gsap.quickTo(box, "x", { duration: 0.18, ease: "power3.out" });
     const yTo = gsap.quickTo(box, "y", { duration: 0.18, ease: "power3.out" });
 
     let isOverText = false;
     let isInitialized = false;
-    let currentX = window.innerWidth / 2;
-    let currentY = window.innerHeight / 2;
     let scrollTimer: number | null = null;
 
-    // Function to update cursor lens state based on element under cursor
     const updateHoverState = (target: HTMLElement | null) => {
       const lensCandidate = target?.closest(
         "[data-lens-text='true'], h1, h2, h3, a, button"
@@ -348,8 +285,6 @@ const App = () => {
       if (lensCandidate) {
         if (!isOverText) {
           isOverText = true;
-
-          // Expand box into targeting lens around the circle
           gsap.to(box, {
             scale: 3.2,
             backgroundColor: "rgba(250, 250, 250, 0.15)",
@@ -360,21 +295,10 @@ const App = () => {
             duration: 0.25,
             ease: "back.out(1.7)",
           });
-
-          if (hud) {
-            gsap.to(hud, {
-              opacity: 1,
-              scale: 1,
-              rotation: "+=90",
-              duration: 0.3,
-            });
-          }
         }
       } else {
         if (isOverText) {
           isOverText = false;
-
-          // Return box to standard red capsule
           gsap.to(box, {
             scale: 1,
             scaleX: 1,
@@ -386,14 +310,6 @@ const App = () => {
             duration: 0.25,
             ease: "power2.out",
           });
-
-          if (hud) {
-            gsap.to(hud, {
-              opacity: 0,
-              scale: 0.4,
-              duration: 0.2,
-            });
-          }
         }
       }
     };
@@ -404,22 +320,14 @@ const App = () => {
         isInitialized = true;
       }
 
-      currentX = e.clientX;
-      currentY = e.clientY;
-
-      // Track clientX and clientY
-      xTo(currentX);
-      yTo(currentY);
-
-      // Check element directly from event target without layout reflow
+      xTo(e.clientX);
+      yTo(e.clientY);
       updateHoverState(e.target as HTMLElement);
     };
 
-    // Follow and react to mouse scroll
     const handleScroll = () => {
       if (!isInitialized) return;
 
-      // Subtle responsive stretch effect during active scroll
       if (!isOverText) {
         gsap.to(box, {
           scaleY: 1.25,
@@ -461,7 +369,6 @@ const App = () => {
 
   return (
     <>
-
       {/* Red Cursor Box with GSAP Tracking & Targeting Lens */}
       <div
         ref={boxRef}
@@ -471,8 +378,6 @@ const App = () => {
       {/* 3D Preloader Overlay */}
       {isLoading && (
         <Preloader3D
-          realProgress={framesProgress}
-          isReady={isFramesReady}
           onStartExit={handleStartPageReveal}
           onComplete={handlePreloaderComplete}
         />
@@ -484,9 +389,9 @@ const App = () => {
       {/* Floating Glassmorphism Navbar */}
       <Navbar />
 
-      {/* Main Sections Flow (Permanent Stable Layout) */}
+      {/* Main Sections Flow */}
       <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
-        <Home onFramesProgress={handleFramesProgress} />
+        <Home />
         <Services />
         <PlatformsWeManage />
         <Portfolio />
@@ -526,6 +431,41 @@ const App = () => {
       )}
     </>
   );
+};
+
+const App = () => {
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  if (currentPath === "/admin/login" || currentPath === "/admin/login/") {
+    return (
+      <Suspense fallback={<div className="w-screen h-screen bg-[#050505]" />}>
+        <AdminLoginPage />
+      </Suspense>
+    );
+  }
+
+  if (
+    currentPath === "/admin" ||
+    currentPath === "/admin/" ||
+    currentPath === "/admin/dashboard" ||
+    currentPath === "/admin/dashboard/"
+  ) {
+    return (
+      <Suspense fallback={<div className="w-screen h-screen bg-[#050505]" />}>
+        <AdminDashboardPage />
+      </Suspense>
+    );
+  }
+
+  return <MainLandingPage />;
 };
 
 export default App;

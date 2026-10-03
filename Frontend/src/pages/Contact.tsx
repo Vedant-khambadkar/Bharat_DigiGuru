@@ -44,17 +44,16 @@ export const Contact: React.FC = () => {
 
   const clientEmail = "contactbharatdigiguru@gmail.com";
 
-  const toggleService = (service: string) => {
-    if (selectedServices.includes(service)) {
-      if (selectedServices.length > 1) {
-        setSelectedServices(selectedServices.filter((s) => s !== service));
+  const toggleService = React.useCallback((service: string) => {
+    setSelectedServices((prev) => {
+      if (prev.includes(service)) {
+        return prev.length > 1 ? prev.filter((s) => s !== service) : prev;
       }
-    } else {
-      setSelectedServices([...selectedServices, service]);
-    }
-  };
+      return [...prev, service];
+    });
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = React.useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -69,7 +68,6 @@ export const Contact: React.FC = () => {
         message: formData.message,
       });
 
-      // Dispatch real-time socket notification for connected admin dashboard
       socket.emit("inquiry:new", {
         id: `inq-${Date.now()}`,
         name: formData.name,
@@ -86,17 +84,16 @@ export const Contact: React.FC = () => {
       setIsSubmitted(true);
     } catch (err: any) {
       console.error("Inquiry submission error:", err);
-      // Ensure smooth user experience with instant UI confirmation
       setIsSubmitting(false);
       setIsSubmitted(true);
     }
-  };
+  }, [formData, selectedServices]);
 
-  const handleCopyEmail = () => {
+  const handleCopyEmail = React.useCallback(() => {
     navigator.clipboard.writeText(clientEmail);
     setCopiedEmail(true);
     setTimeout(() => setCopiedEmail(false), 2000);
-  };
+  }, []);
 
   return (
     <section

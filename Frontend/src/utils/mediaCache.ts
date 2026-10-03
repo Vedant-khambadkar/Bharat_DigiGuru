@@ -156,10 +156,7 @@ export function useCachedMedia(url?: string): string {
   });
 
   useEffect(() => {
-    if (!url) {
-      setCachedUrl("");
-      return;
-    }
+    if (!url) return;
     let isMounted = true;
     getCachedMediaUrl(url)
       .then((res) => {
@@ -176,5 +173,5 @@ export function useCachedMedia(url?: string): string {
     };
   }, [url]);
 
-  return cachedUrl;
+  return url ? cachedUrl : "";
 }

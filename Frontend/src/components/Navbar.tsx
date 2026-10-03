@@ -117,7 +117,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
   }, []);
 
   // Smooth scroll handler using Lenis or native smooth scroll
-  const handleLinkClick = (
+  const handleLinkClick = React.useCallback((
     e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>,
     href: string,
     id: string
@@ -138,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
     } else if (targetEl) {
       targetEl.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, []);
 
   // Close mobile drawer on desktop resize
   useEffect(() => {

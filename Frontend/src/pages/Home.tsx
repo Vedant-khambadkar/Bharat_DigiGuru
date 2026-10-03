@@ -42,10 +42,6 @@ const YoutubeIcon = () => (
 
 gsap.registerPlugin(ScrollTrigger);
 
-interface HomeProps {
-  onFramesProgress?: (progress: number, isComplete: boolean) => void;
-}
-
 function ScrollTriggerSync({ progressRef }: { progressRef: React.MutableRefObject<number> }) {
   const scrollData = useScroll();
 
@@ -58,7 +54,7 @@ function ScrollTriggerSync({ progressRef }: { progressRef: React.MutableRefObjec
   return null;
 }
 
-function Home({}: HomeProps) {
+function Home() {
   const sectionRef = useRef<HTMLElement>(null);
   const bgTextRef = useRef<HTMLDivElement>(null);
   const fgUiRef = useRef<HTMLDivElement>(null);

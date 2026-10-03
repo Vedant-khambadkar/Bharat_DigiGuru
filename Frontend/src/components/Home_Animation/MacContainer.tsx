@@ -1,6 +1,6 @@
 import { useGLTF, useScroll, useTexture, ContactShadows } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 
@@ -44,48 +44,56 @@ const MacContainer = () => {
   const screen = useTexture(heroImg);
   const keyboard = useTexture(keyboardImg);
 
-  // Maximum crispness and accurate color reproduction
-  const maxAnisotropy = gl.capabilities.getMaxAnisotropy();
+  // Setup textures and materials cleanly with useMemo to avoid re-creation on every render
+  const { meshes } = useMemo(() => {
+    const maxAnisotropy = gl.capabilities.getMaxAnisotropy();
 
-  keyboard.colorSpace = THREE.SRGBColorSpace;
-  keyboard.anisotropy = maxAnisotropy;
-  keyboard.minFilter = THREE.LinearMipmapLinearFilter;
-  keyboard.magFilter = THREE.LinearFilter;
-  keyboard.generateMipmaps = true;
-  keyboard.needsUpdate = true;
+    keyboard.colorSpace = THREE.SRGBColorSpace;
+    keyboard.anisotropy = maxAnisotropy;
+    keyboard.minFilter = THREE.LinearMipmapLinearFilter;
+    keyboard.magFilter = THREE.LinearFilter;
+    keyboard.generateMipmaps = true;
+    keyboard.needsUpdate = true;
 
-  screen.colorSpace = THREE.SRGBColorSpace;
-  screen.anisotropy = maxAnisotropy;
-  screen.minFilter = THREE.LinearMipmapLinearFilter;
-  screen.magFilter = THREE.LinearFilter;
-  screen.generateMipmaps = true;
-  screen.needsUpdate = true;
+    screen.colorSpace = THREE.SRGBColorSpace;
+    screen.anisotropy = maxAnisotropy;
+    screen.minFilter = THREE.LinearMipmapLinearFilter;
+    screen.magFilter = THREE.LinearFilter;
+    screen.generateMipmaps = true;
+    screen.needsUpdate = true;
 
-  const meshes: Record<string, any> = {};
-  mac.scene.traverse((child: any) => {
-    meshes[child.name] = child;
+    const screenMaterial = new THREE.MeshBasicMaterial({
+      map: screen,
+      toneMapped: false,
+    });
 
-    if (child.isMesh) {
-      if (child.name === "matte") {
-        child.material = new THREE.MeshBasicMaterial({
-          map: screen,
-          toneMapped: false,
-        });
-      } else {
-        // Highly reflective anodized space-black aluminum chassis
-        child.material = new THREE.MeshStandardMaterial({
-          color: new THREE.Color("#14161a"),
-          metalness: 0.94,
-          roughness: 0.24,
-          envMapIntensity: 2.2,
-        });
+    const chassisMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color("#14161a"),
+      metalness: 0.94,
+      roughness: 0.24,
+      envMapIntensity: 2.2,
+    });
+
+    const meshMap: Record<string, THREE.Object3D> = {};
+    mac.scene.traverse((child: THREE.Object3D) => {
+      meshMap[child.name] = child;
+
+      if ((child as THREE.Mesh).isMesh) {
+        const meshChild = child as THREE.Mesh;
+        if (child.name === "matte") {
+          meshChild.material = screenMaterial;
+        } else {
+          meshChild.material = chassisMaterial;
+        }
       }
-    }
-  });
+    });
 
-  if (meshes.screen) {
-    meshes.screen.rotation.x = THREE.MathUtils.degToRad(182);
-  }
+    if (meshMap.screen) {
+      meshMap.screen.rotation.x = THREE.MathUtils.degToRad(182);
+    }
+
+    return { meshes: meshMap, screenMaterial, chassisMaterial };
+  }, [mac.scene, screen, keyboard, gl]);
 
   // Setup exact camera parameters
   useEffect(() => {

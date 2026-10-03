@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
   Play,
@@ -247,58 +247,32 @@ export const ThreeDProjects: React.FC = () => {
     };
   }, [activeTheaterProject]);
 
-  // Intelligent GPU Video Decoding: Pause offscreen videos to preserve 60FPS
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const videoEl = entry.target.querySelector("video");
-          if (videoEl) {
-            const id = Object.keys(videoRefs.current).find(
-              (key) => videoRefs.current[key] === videoEl
-            );
-            if (id) {
-              const shouldPlay = playingStates[id] ?? true;
-              if (entry.isIntersecting && shouldPlay) {
-                videoEl.play().catch(() => {});
-              } else {
-                videoEl.pause();
-              }
-            }
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    const cards = document.querySelectorAll("#threed-section .group");
-    cards.forEach((card) => observer.observe(card));
-
-    return () => observer.disconnect();
-  }, [playingStates, projects]);
-
-  const toggleInlinePlay = (id: string, e: React.MouseEvent) => {
+  const toggleInlinePlay = useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const vid = videoRefs.current[id];
     if (!vid) return;
 
     if (vid.paused) {
-      vid.play();
+      vid.play().catch(() => {});
       setPlayingStates((prev) => ({ ...prev, [id]: true }));
     } else {
       vid.pause();
       setPlayingStates((prev) => ({ ...prev, [id]: false }));
     }
-  };
+  }, []);
 
-  const toggleInlineMute = (id: string, e: React.MouseEvent) => {
+  const toggleInlineMute = useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const vid = videoRefs.current[id];
     if (!vid) return;
 
     vid.muted = !vid.muted;
     setMutedStates((prev) => ({ ...prev, [id]: vid.muted }));
-  };
+  }, []);
+
+  const handleCloseTheater = useCallback(() => {
+    setActiveTheaterProject(null);
+  }, []);
 
   return (
     <section
@@ -349,7 +323,7 @@ export const ThreeDProjects: React.FC = () => {
       {activeTheaterProject && (
         <TheaterModal
           project={activeTheaterProject}
-          onClose={() => setActiveTheaterProject(null)}
+          onClose={handleCloseTheater}
         />
       )}
     </section>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import ScrollExploreBadge from "../components/ScrollExploreBadge";
@@ -442,12 +442,12 @@ const Services: React.FC = () => {
     const hoveredRef = useRef<boolean>(false);
 
     // Fetch dynamic services from API (cached for single network hit)
-    const fetchServices = async (forceRefresh = false) => {
+    const fetchServices = useCallback(async (forceRefresh = false) => {
         if (!forceRefresh) {
             const cached = getApiCache<ServiceData[]>("services_items");
             if (cached && cached.length > 0) {
                 setServices(cached);
-                return; // Zero network call on repeat visits
+                return;
             }
         }
 
@@ -461,7 +461,7 @@ const Services: React.FC = () => {
         } catch (err) {
             console.warn("Using fallback local services data:", err);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchServices();
@@ -497,6 +497,18 @@ const Services: React.FC = () => {
             unsubUpdated();
             unsubDeleted();
         };
+    }, [fetchServices]);
+
+    const handleToggleService = useCallback((id: string) => {
+        setOpenServiceId((prev) => (prev === id ? null : id));
+    }, []);
+
+    const handleHoverService = useCallback((service: ServiceData) => {
+        setHoveredService(service);
+    }, []);
+
+    const handleLeaveService = useCallback(() => {
+        setHoveredService(null);
     }, []);
 
     // Refresh ScrollTrigger & Lenis when service accordion is expanded/collapsed
@@ -654,11 +666,6 @@ const Services: React.FC = () => {
                             <h2 className="font-neuropol text-4xl sm:text-7xl md:text-8xl lg:text-[120px] xl:text-[110px] uppercase tracking-wider text-white leading-[0.95] select-none mt-1 sm:mt-2">
                                 <LensText text="SERVICES" strokeWidth="1px" strokeColor="#ffffff" />
                             </h2>
-
-                            <div className="relative w-full flex flex-col lg:flex-row items-center justify-center mt-1 sm:mt-2">
-                                <div className="mt-6 lg:mt-0 lg:absolute lg:right-0 lg:bottom-2 max-w-xs sm:max-w-sm text-center lg:text-left">
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -673,7 +680,7 @@ const Services: React.FC = () => {
                    ========================================================================= */}
                 <section
                     id="services-list"
-                    onMouseLeave={() => setHoveredService(null)}
+                    onMouseLeave={handleLeaveService}
                     className="relative px-6 sm:px-10 md:px-12 lg:px-16 py-16 sm:py-24 max-w-8xl mx-auto w-full"
                 >
                     {/* Section Subheader for SEO & Context */}
@@ -694,11 +701,9 @@ const Services: React.FC = () => {
                                 service={service}
                                 index={index}
                                 isOpen={openServiceId === service.id}
-                                onToggle={() => {
-                                    setOpenServiceId((prev) => (prev === service.id ? null : service.id));
-                                }}
-                                onHover={(s) => setHoveredService(s)}
-                                onLeave={() => setHoveredService(null)}
+                                onToggle={() => handleToggleService(service.id)}
+                                onHover={handleHoverService}
+                                onLeave={handleLeaveService}
                             />
                         ))}
                     </div>

@@ -1,18 +1,14 @@
 import React, { useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import LensText from "../components/LensText";
 import ColorLensImage from "../components/ColorLensImage";
 import WordReveal from "../components/WordReveal";
 import { Sparkles, Target, Zap } from "lucide-react";
-import Img1 from "../assets/Picture/Picture12.webp"
-import Img2 from "../assets/Picture/Picture2.webp"
-import Img3 from "../assets/Picture/Picture3.webp"
-import Img4 from "../assets/Picture/Picture4.webp"
-import Img5 from "../assets/Picture/Picture5.webp"
-import Img6 from "../assets/Picture/Picture6.webp"
-
-gsap.registerPlugin(ScrollTrigger);
+import Img1 from "../assets/Picture/Picture12.webp";
+import Img2 from "../assets/Picture/Picture2.webp";
+import Img3 from "../assets/Picture/Picture3.webp";
+import Img4 from "../assets/Picture/Picture4.webp";
+import Img5 from "../assets/Picture/Picture5.webp";
+import Img6 from "../assets/Picture/Picture6.webp";
 
 interface AboutProps {
   id?: string;

@@ -107,18 +107,15 @@ export const Portfolio: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
-  // Preload textures immediately if cached planes already exist on mount
-  useEffect(() => {
-    if (planes.length > 0) {
-      planes.forEach((p) => {
-        if (p.textureUrl) {
-          preloadSkinnedTexture(p.textureUrl).catch(() => { });
-        }
-      });
-    }
+  const handleReady = React.useCallback(() => {
+    setIs3DReady(true);
   }, []);
 
-  // 1. Fetch Dynamic Portfolio directly from API / Database (with Cache Sync)
+  const handleSelectPlane = React.useCallback((plane: PlaneItem) => {
+    setSelectedPlane(plane);
+  }, []);
+
+  // Fetch Dynamic Portfolio directly from API / Database (with Cache Sync)
   useEffect(() => {
     const fetchPortfolioData = async () => {
       const cached = getApiCache<PlaneItem[]>("portfolio_items");
@@ -328,9 +325,6 @@ export const Portfolio: React.FC = () => {
               near: 0.1,
               far: 100,
             }}
-            onCreated={() => {
-              // Ensure canvas context is active
-            }}
           >
             {/* Dark Background matching website */}
             <color attach="background" args={["#050505"]} />
@@ -348,10 +342,8 @@ export const Portfolio: React.FC = () => {
               planes={planes}
               selectedId={selectedPlane?.id}
               scrollProgressRef={scrollProgressRef}
-              onSelectPlane={setSelectedPlane}
-              onReady={() => {
-                setIs3DReady(true);
-              }}
+              onSelectPlane={handleSelectPlane}
+              onReady={handleReady}
             />
           </Canvas>
         ) : (
