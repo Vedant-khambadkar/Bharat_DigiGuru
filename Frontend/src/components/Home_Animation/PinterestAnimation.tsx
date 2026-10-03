@@ -127,4 +127,6 @@ const PinterestAnimation: React.FC = () => {
   );
 };
 
+useTexture.preload(PinterestImg);
+
 export default PinterestAnimation;

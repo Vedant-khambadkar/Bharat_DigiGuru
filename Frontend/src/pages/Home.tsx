@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useRef } from 'react'
+import React, { Suspense, useEffect, useRef, useCallback } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment, ScrollControls, useScroll } from '@react-three/drei'
 import gsap from 'gsap'
@@ -54,11 +54,28 @@ function ScrollTriggerSync({ progressRef }: { progressRef: React.MutableRefObjec
   return null;
 }
 
-function Home() {
+function CanvasReadyNotifier({ onReady }: { onReady: () => void }) {
+  useEffect(() => {
+    onReady();
+  }, [onReady]);
+
+  return null;
+}
+
+interface HomeProps {
+  on3DReady?: () => void;
+}
+
+function Home({ on3DReady }: HomeProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const bgTextRef = useRef<HTMLDivElement>(null);
   const fgUiRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<number>(0);
+
+  const handle3DReady = useCallback(() => {
+    on3DReady?.();
+    window.dispatchEvent(new CustomEvent("3d-model-ready"));
+  }, [on3DReady]);
 
   // GSAP ScrollTrigger Pinning for smooth 5-stage laptop animation and synced 2-layer text parallax
   useEffect(() => {
@@ -124,7 +141,6 @@ function Home() {
     return () => ctx.revert();
   }, []);
 
-
   return (
     <main
       id="home-section"
@@ -146,7 +162,7 @@ function Home() {
         </div>
 
         {/* Top Hero Typography (Behind 3D Model) */}
-        <div className="relative z-10 flex flex-col items-start w-full max-w-8xl  mx-auto">
+        <div className="relative z-10 flex flex-col items-start w-full max-w-8xl mx-auto">
           <h1
             className="hero-text-item font-serif font-bold uppercase text-white tracking-[0.06em] sm:tracking-[0.12em] md:tracking-[0.16em] leading-none select-none text-left w-full"
             style={{
@@ -173,23 +189,26 @@ function Home() {
           LAYER 1: MIDDLE LAYER (3D CANVAS WITH MACBOOK & SOCIALS)
          ========================================================================= */}
       <div className="absolute inset-0 z-10 w-full h-full">
-        <Canvas
-          dpr={[1, 2]}
-          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-          camera={{ position: [0, 4.3, 38], fov: 40 }}
-        >
-          <Suspense fallback={null}>
-            <Environment preset="city" />
-            <ScrollControls pages={5} damping={0.15}>
-              <ScrollTriggerSync progressRef={progressRef} />
-              <MacContainer />
-              <InstagramAnimation />
-              <YoutubeAnimation />
-              <PinterestAnimation />
-              <TikTokAnimation />
-            </ScrollControls>
-          </Suspense>
-        </Canvas>
+        <div className="w-full h-full">
+          <Canvas
+            dpr={[1, 2]}
+            gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+            camera={{ position: [0, 4.3, 38], fov: 40 }}
+          >
+            <Suspense fallback={null}>
+              <CanvasReadyNotifier onReady={handle3DReady} />
+              <Environment preset="city" />
+              <ScrollControls pages={5} damping={0.15}>
+                <ScrollTriggerSync progressRef={progressRef} />
+                <MacContainer />
+                <InstagramAnimation />
+                <YoutubeAnimation />
+                <PinterestAnimation />
+                <TikTokAnimation />
+              </ScrollControls>
+            </Suspense>
+          </Canvas>
+        </div>
       </div>
 
       {/* =========================================================================
@@ -212,7 +231,6 @@ function Home() {
               Meets Photorealistic Digital Craft.
             </p>
           </div>
-
 
           {/* Bottom Right: Luxury Social Media Links */}
           <div className="pointer-events-auto flex items-center gap-3.5 sm:gap-4 text-neutral-400">
@@ -269,4 +287,4 @@ function Home() {
   )
 }
 
-export default Home
+export default Home;

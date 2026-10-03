@@ -120,4 +120,6 @@ const TikTokAnimation: React.FC = () => {
   );
 };
 
+useTexture.preload(TikTokImg);
+
 export default TikTokAnimation;

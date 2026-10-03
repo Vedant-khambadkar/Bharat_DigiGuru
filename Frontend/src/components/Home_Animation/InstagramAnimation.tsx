@@ -122,4 +122,6 @@ const InstagramAnimation: React.FC = () => {
   );
 };
 
+useTexture.preload(InstagramImg);
+
 export default InstagramAnimation;

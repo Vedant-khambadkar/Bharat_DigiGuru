@@ -34,6 +34,37 @@ const MainLandingPage = () => {
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [is3DReady, setIs3DReady] = useState(false);
+
+  const handleStartPageReveal = useCallback(() => {
+    (window as any).lenis?.start();
+    window.dispatchEvent(new CustomEvent("start-hero-letters"));
+    const homeSection = document.getElementById("home-section");
+    if (homeSection) {
+      gsap.fromTo(
+        homeSection,
+        { opacity: 0.3, scale: 0.96 },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 1.5,
+          ease: "power3.out",
+          clearProps: "all",
+          onComplete: () => {
+            ScrollTrigger.refresh();
+          },
+        }
+      );
+    }
+  }, []);
+
+  const handlePreloaderComplete = useCallback(() => {
+    setIsLoading(false);
+    window.dispatchEvent(new CustomEvent("start-hero-letters"));
+    (window as any).lenis?.scrollTo(0, { immediate: true });
+    window.scrollTo(0, 0);
+    ScrollTrigger.refresh();
+  }, []);
 
   // Admin Portal State (for modal fallback if triggered from main site)
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
@@ -69,7 +100,6 @@ const MainLandingPage = () => {
       }
     };
 
-    // Check on initial load
     checkAdminRoute();
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -94,41 +124,8 @@ const MainLandingPage = () => {
     };
   }, [handleOpenAdminPortal]);
 
-  // Triggered concurrently the exact moment the preloader begins sliding up
-  const handleStartPageReveal = useCallback(() => {
-    (window as any).lenis?.start();
-    window.dispatchEvent(new CustomEvent("start-hero-letters"));
-    const homeSection = document.getElementById("home-section");
-    if (homeSection) {
-      gsap.fromTo(
-        homeSection,
-        { opacity: 0.3, scale: 0.96 },
-        {
-          opacity: 1,
-          scale: 1,
-          duration: 1.5,
-          ease: "power3.out",
-          clearProps: "all",
-          onComplete: () => {
-            ScrollTrigger.refresh();
-          },
-        }
-      );
-    }
-  }, []);
-
-  const handlePreloaderComplete = useCallback(() => {
-    setIsLoading(false);
-    window.dispatchEvent(new CustomEvent("start-hero-letters"));
-    (window as any).lenis?.scrollTo(0, { immediate: true });
-    window.scrollTo(0, 0);
-    ScrollTrigger.refresh();
-  }, []);
-
-  // Background idle preloading of 3D Portfolio data & textures after Preloader exits
+  // Background idle preloading of 3D Portfolio data & textures on initial mount
   useEffect(() => {
-    if (isLoading) return;
-
     let isDisposed = false;
     const triggerPortfolioPreload = () => {
       if (isDisposed) return;
@@ -150,7 +147,7 @@ const MainLandingPage = () => {
         clearTimeout(timerId);
       };
     }
-  }, [isLoading]);
+  }, []);
 
   // Global Lenis Smooth Momentum Scrolling synchronized with GSAP ScrollTrigger
   useEffect(() => {
@@ -177,12 +174,7 @@ const MainLandingPage = () => {
 
     lenis.scrollTo(0, { immediate: true });
     window.scrollTo(0, 0);
-
-    if (isLoading) {
-      lenis.stop();
-    } else {
-      lenis.start();
-    }
+    lenis.start();
 
     lenis.on("scroll", () => {
       ScrollTrigger.update();
@@ -236,7 +228,7 @@ const MainLandingPage = () => {
       lenis.destroy();
       delete (window as any).lenis;
     };
-  }, [isLoading]);
+  }, []);
 
   // Layout Synchronization: Auto-refresh ScrollTrigger & Lenis whenever dynamic content changes height
   useEffect(() => {
@@ -375,9 +367,10 @@ const MainLandingPage = () => {
         className="w-1 h-1 rounded-full z-50 fixed top-0 left-0 pointer-events-none flex items-center justify-center transition-opacity"
       />
 
-      {/* 3D Preloader Overlay */}
+      {/* 3D Preloader Overlay (Strictly tracks 3D model & asset loading) */}
       {isLoading && (
         <Preloader3D
+          isReady={is3DReady}
           onStartExit={handleStartPageReveal}
           onComplete={handlePreloaderComplete}
         />
@@ -391,7 +384,7 @@ const MainLandingPage = () => {
 
       {/* Main Sections Flow */}
       <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
-        <Home />
+        <Home on3DReady={() => setIs3DReady(true)} />
         <Services />
         <PlatformsWeManage />
         <Portfolio />

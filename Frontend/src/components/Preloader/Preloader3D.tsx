@@ -25,7 +25,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
   const counterRef = useRef({ value: 0 });
   const isExitingRef = useRef(false);
 
-  // Read Three.js asset loading progress from Drei
+  // Read Three.js asset loading progress directly from Drei
   const { progress: dreiProgress, active: dreiActive, loaded, total } = useProgress();
 
   const updateDisplay = (val: number) => {
@@ -34,7 +34,8 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     if (telemetryPercentRef.current) telemetryPercentRef.current.textContent = `${val}%`;
     if (progressBarRef.current) progressBarRef.current.style.width = `${val}%`;
     if (telemetryStatusRef.current) {
-      telemetryStatusRef.current.textContent = val < 100 ? "INITIALIZING 3D ENVIRONMENT" : "3D ENVIRONMENT INITIALIZED";
+      telemetryStatusRef.current.textContent =
+        val < 100 ? "INITIALIZING 3D ASSETS & HARDWARE" : "3D ENVIRONMENT READY";
     }
   };
 
@@ -55,7 +56,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     tl.to(contentRef.current, {
       opacity: 0,
       y: -25,
-      duration: 0.4,
+      duration: 0.35,
       ease: "power2.inOut",
     });
 
@@ -64,30 +65,42 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       containerRef.current,
       {
         yPercent: -100,
-        duration: 1.0,
+        duration: 0.9,
         ease: "power3.inOut",
       },
-      "-=0.2"
+      "-=0.15"
     );
   };
 
-  // Progress interpolation driven by 3D asset loader + simulated minimum ramp
+  // Progress interpolation driven STRICTLY by 3D asset loader and model readiness
   useEffect(() => {
-    const is3DFinished = (!dreiActive && (dreiProgress >= 99 || (total > 0 && loaded >= total))) || isReady;
-    const calculatedTarget = is3DFinished ? 100 : Math.max(realProgress, dreiProgress);
+    const is3DFinished =
+      isReady || (!dreiActive && (dreiProgress >= 99 || (total > 0 && loaded >= total)));
+
+    // Calculate genuine progress percentage
+    let calculatedTarget = 0;
+    if (is3DFinished) {
+      calculatedTarget = 100;
+    } else if (dreiProgress > 0) {
+      // While downloading assets, cap at 98 until 3D scene is fully parsed and ready
+      calculatedTarget = Math.min(98, Math.max(realProgress, Math.round(dreiProgress)));
+    } else {
+      // Initial subtle pulse so it is not completely static at 0 while initial fetch starts
+      calculatedTarget = Math.max(counterRef.current.value, 15);
+    }
 
     const target = Math.min(100, Math.max(counterRef.current.value, calculatedTarget));
 
     const tween = gsap.to(counterRef.current, {
       value: target,
       duration: target >= 100 ? 0.35 : 0.6,
-      ease: "power2.out",
+      ease: target >= 100 ? "power3.out" : "power2.out",
       onUpdate: () => {
         const val = Math.round(counterRef.current.value);
         updateDisplay(val);
       },
       onComplete: () => {
-        if (counterRef.current.value >= 99.5 && !isExitingRef.current) {
+        if (is3DFinished && counterRef.current.value >= 99.5 && !isExitingRef.current) {
           triggerExit();
         }
       },
@@ -97,40 +110,6 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       tween.kill();
     };
   }, [realProgress, dreiProgress, dreiActive, isReady, loaded, total]);
-
-  // Fail-safe & initial progressive counter ramp
-  useEffect(() => {
-    // Initial ramp to make the loader feel responsive immediately
-    const rampTween = gsap.to(counterRef.current, {
-      value: 90,
-      duration: 1.8,
-      ease: "power1.out",
-      onUpdate: () => {
-        const val = Math.round(counterRef.current.value);
-        updateDisplay(val);
-      },
-    });
-
-    // Safety timeout: Ensure page always reveals within 2.5s maximum
-    const safetyTimeout = setTimeout(() => {
-      gsap.to(counterRef.current, {
-        value: 100,
-        duration: 0.3,
-        ease: "power2.out",
-        onUpdate: () => {
-          updateDisplay(100);
-        },
-        onComplete: () => {
-          triggerExit();
-        },
-      });
-    }, 2500);
-
-    return () => {
-      rampTween.kill();
-      clearTimeout(safetyTimeout);
-    };
-  }, []);
 
   // Space key to bypass
   useEffect(() => {
@@ -164,7 +143,6 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
           <span className="text-neutral-300 font-semibold">BDG // SYS.INIT</span>
         </div>
-
       </div>
 
       {/* Centerpiece Minimalist Hero */}
@@ -186,7 +164,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
 
         {/* Micro Telemetry Status Line */}
         <div className="flex items-center justify-between w-full max-w-sm sm:max-w-md mt-3 font-mono text-[9px] sm:text-[10px] text-neutral-500 uppercase tracking-widest">
-          <span ref={telemetryStatusRef}>LOADING HARDWARE ASSETS</span>
+          <span ref={telemetryStatusRef}>INITIALIZING 3D ASSETS & HARDWARE</span>
           <span ref={telemetryPercentRef} className="text-neutral-300 font-semibold">0%</span>
         </div>
       </div>

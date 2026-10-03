@@ -119,4 +119,6 @@ const YoutubeAnimation: React.FC = () => {
   );
 };
 
+useTexture.preload(YTImg);
+
 export default YoutubeAnimation;

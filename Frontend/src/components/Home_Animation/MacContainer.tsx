@@ -193,6 +193,8 @@ const MacContainer = () => {
 };
 
 useGLTF.preload(macModel);
+useTexture.preload(heroImg);
+useTexture.preload(keyboardImg);
 
 export default MacContainer;
 
