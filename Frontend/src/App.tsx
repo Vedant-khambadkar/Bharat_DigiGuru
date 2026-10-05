@@ -37,19 +37,10 @@ const MainLandingPage = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [is3DReady, setIs3DReady] = useState(false);
-  const isHomeReadyRef = useRef(false);
-  const isBackgroundReadyRef = useRef(false);
-
-  const checkAllReady = useCallback(() => {
-    if (isHomeReadyRef.current && isBackgroundReadyRef.current) {
-      setIs3DReady(true);
-    }
-  }, []);
 
   const handleHome3DReady = useCallback(() => {
-    isHomeReadyRef.current = true;
-    checkAllReady();
-  }, [checkAllReady]);
+    setIs3DReady(true);
+  }, []);
 
   const handleStartPageReveal = useCallback(() => {
     (window as any).lenis?.start();
@@ -139,16 +130,13 @@ const MainLandingPage = () => {
     };
   }, [handleOpenAdminPortal]);
 
-  // Preload all 3D scene models (Portfolio & OurTeam 3D Character) in background while preloader runs
+  // Preload below-the-fold 3D scene models (Portfolio & OurTeam 3D Character) in background without blocking Hero reveal
   useEffect(() => {
     Promise.allSettled([
       import("./pages/Portfolio").then((m) => m.preloadPortfolioAssets?.()),
       import("./pages/OurTeam").then((m) => m.preloadOurTeamAssets?.()),
-    ]).then(() => {
-      isBackgroundReadyRef.current = true;
-      checkAllReady();
-    });
-  }, [checkAllReady]);
+    ]);
+  }, []);
 
   // Global Lenis Smooth Momentum Scrolling synchronized with GSAP ScrollTrigger
   useEffect(() => {
