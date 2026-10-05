@@ -34,11 +34,7 @@ const MainLandingPage = () => {
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isHome3DReady, setIsHome3DReady] = useState(false);
-  const [isPortfolioReady, setIsPortfolioReady] = useState(false);
-
-  // Ready only when BOTH Home 3D model and Portfolio 3D textures are decoded into GPU memory
-  const isOverall3DReady = isHome3DReady && isPortfolioReady;
+  const [is3DReady, setIs3DReady] = useState(false);
 
   const handleStartPageReveal = useCallback(() => {
     (window as any).lenis?.start();
@@ -326,10 +322,10 @@ const MainLandingPage = () => {
         className="w-1 h-1 rounded-full z-50 fixed top-0 left-0 pointer-events-none flex items-center justify-center transition-opacity"
       />
 
-      {/* 3D Preloader Overlay (Strictly tracks 3D models & Portfolio textures loading) */}
+      {/* 3D Preloader Overlay (Strictly tracks 3D model & asset loading) */}
       {isLoading && (
         <Preloader3D
-          isReady={isOverall3DReady}
+          isReady={is3DReady}
           onStartExit={handleStartPageReveal}
           onComplete={handlePreloaderComplete}
         />
@@ -343,7 +339,7 @@ const MainLandingPage = () => {
 
       {/* Main Sections Flow */}
       <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
-        <Home on3DReady={() => setIsHome3DReady(true)} />
+        <Home on3DReady={() => setIs3DReady(true)} />
         <Services />
         <PlatformsWeManage />
         <Portfolio />
