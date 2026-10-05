@@ -60,7 +60,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       tl.to(contentRef.current, {
         opacity: 0,
         y: -25,
-        duration: 0.25,
+        duration: 0.2,
         ease: "power2.inOut",
       });
     }
@@ -70,10 +70,11 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       containerRef.current,
       {
         yPercent: -100,
-        duration: 0.6,
+        opacity: 0,
+        duration: 0.5,
         ease: "power3.inOut",
       },
-      contentRef.current ? "-=0.1" : 0
+      contentRef.current ? "-=0.05" : 0
     );
   }, [onStartExit, onComplete]);
 
@@ -91,7 +92,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     if (isReady || target >= 100) {
       const tween = gsap.to(counterRef.current, {
         value: 100,
-        duration: 0.35,
+        duration: 0.25,
         ease: "power2.out",
         onUpdate: () => {
           const val = Math.round(counterRef.current.value);
@@ -101,7 +102,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
           updateDisplay(100);
           const timer = setTimeout(() => {
             triggerExit();
-          }, 120);
+          }, 80);
           return () => clearTimeout(timer);
         },
       });
@@ -112,7 +113,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
 
     const tween = gsap.to(counterRef.current, {
       value: target,
-      duration: 0.5,
+      duration: 0.4,
       ease: "power2.out",
       onUpdate: () => {
         const val = Math.round(counterRef.current.value);
@@ -125,12 +126,12 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     };
   }, [dreiProgress, isReady, triggerExit]);
 
-  // Safety fallback: Auto-reveal in 12s if slow network hangs, guaranteeing no infinite stall
+  // Safety fallback: Auto-reveal in 2.5s maximum guaranteeing zero infinite stall or black screen
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
       updateDisplay(100);
       triggerExit();
-    }, 12000);
+    }, 2500);
 
     return () => clearTimeout(safetyTimer);
   }, [triggerExit]);

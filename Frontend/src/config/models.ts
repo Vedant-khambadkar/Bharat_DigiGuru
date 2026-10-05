@@ -16,3 +16,8 @@ export const MODEL_URLS = {
 } as const;
 
 export type ModelKey = keyof typeof MODEL_URLS;
+
+if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+  console.log("[3D] Mac URL:", MODEL_URLS.mac);
+  console.log("[3D] Businessman URL:", MODEL_URLS.businessman);
+}

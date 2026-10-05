@@ -60,22 +60,13 @@ function ResponsiveCamera() {
 }
 
 function CanvasReadyNotifier({ onReady }: { onReady: () => void }) {
-  const { gl, scene, camera } = useThree();
-
   useEffect(() => {
-    try {
-      gl.compile(scene, camera);
-      gl.render(scene, camera);
-    } catch (e) {
-      console.warn("WebGL warmup compile notice:", e);
-    }
-
-    const timer = setTimeout(() => {
+    // Notify on initial render frame without synchronous gl.compile blocking
+    const rafId = requestAnimationFrame(() => {
       onReady();
-    }, 60);
-
-    return () => clearTimeout(timer);
-  }, [gl, scene, camera, onReady]);
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [onReady]);
 
   return null;
 }
@@ -146,23 +137,23 @@ function Home({ on3DReady }: HomeProps) {
             }}
             camera={{ position: [0, 4.3, 38], fov: 40 }}
           >
-            <ModelErrorBoundary fallback={null}>
-              <Suspense fallback={<ModelLoader />}>
-                <ResponsiveCamera />
-                <CanvasReadyNotifier onReady={handle3DReady} />
-                <ambientLight intensity={1.8} />
-                <directionalLight position={[10, 15, 10]} intensity={2.2} color="#ffffff" />
-                <directionalLight position={[-10, 8, -5]} intensity={0.9} color="#90b0e0" />
-                <ScrollControls pages={5} damping={0.15}>
-                  <ScrollTriggerSync progressRef={progressRef} />
+            <ResponsiveCamera />
+            <CanvasReadyNotifier onReady={handle3DReady} />
+            <ambientLight intensity={1.8} />
+            <directionalLight position={[10, 15, 10]} intensity={2.2} color="#ffffff" />
+            <directionalLight position={[-10, 8, -5]} intensity={0.9} color="#90b0e0" />
+            <ScrollControls pages={5} damping={0.15}>
+              <ScrollTriggerSync progressRef={progressRef} />
+              <ModelErrorBoundary fallback={null}>
+                <Suspense fallback={<ModelLoader label="Loading MacBook" />}>
                   <MacContainer />
-                  <InstagramAnimation />
-                  <YoutubeAnimation />
-                  <PinterestAnimation />
-                  <TikTokAnimation />
-                </ScrollControls>
-              </Suspense>
-            </ModelErrorBoundary>
+                </Suspense>
+              </ModelErrorBoundary>
+              <InstagramAnimation />
+              <YoutubeAnimation />
+              <PinterestAnimation />
+              <TikTokAnimation />
+            </ScrollControls>
           </Canvas>
         </div>
       </div>

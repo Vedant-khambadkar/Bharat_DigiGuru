@@ -45,6 +45,36 @@ export const OurTeam: React.FC = () => {
     return false;
   });
 
+  const [isInRange, setIsInRange] = useState(false);
+
+  // Lazy-load businessman 3D asset only when section approaches viewport (800px margin)
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || typeof window === "undefined" || !("IntersectionObserver" in window)) {
+      setIsInRange(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          setIsInRange(true);
+          try {
+            useGLTF.preload(MODEL_URLS.businessman);
+          } catch (e) {
+            console.warn("OurTeam model preload notice:", e);
+          }
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "800px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // Optimized window resize listener
   useEffect(() => {
     let timeoutId: number;
@@ -171,13 +201,15 @@ export const OurTeam: React.FC = () => {
         >
           <ModelErrorBoundary fallback={null}>
             <Suspense fallback={<ModelLoader theme="light" label="Loading 3D" />}>
-              <PeopleScene
-                sceneState={sceneState}
-                onSelectFounder={handleSelectFounder}
-                onTransitionComplete={handleTransitionComplete}
-                onReturnComplete={handleReturnComplete}
-                isMobile={isMobile}
-              />
+              {isInRange && (
+                <PeopleScene
+                  sceneState={sceneState}
+                  onSelectFounder={handleSelectFounder}
+                  onTransitionComplete={handleTransitionComplete}
+                  onReturnComplete={handleReturnComplete}
+                  isMobile={isMobile}
+                />
+              )}
             </Suspense>
           </ModelErrorBoundary>
         </Canvas>

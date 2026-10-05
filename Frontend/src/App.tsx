@@ -164,8 +164,11 @@ const MainLandingPage = () => {
     lenis.scrollTo(0, { immediate: true });
     window.scrollTo(0, 0);
     
-    // Stop scrolling while preloader is active; started on completion
+    // Stop scrolling while initial hero transition runs; guarantee start via timeout
     lenis.stop();
+    const lenisSafetyUnlock = window.setTimeout(() => {
+      lenis.start();
+    }, 2000);
 
     lenis.on("scroll", () => {
       ScrollTrigger.update();
@@ -216,6 +219,7 @@ const MainLandingPage = () => {
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("click", handleAnchorClick);
       clearTimeout(resizeTimer);
+      clearTimeout(lenisSafetyUnlock);
       gsap.ticker.remove(tickerCallback);
       lenis.destroy();
       delete (window as any).lenis;
