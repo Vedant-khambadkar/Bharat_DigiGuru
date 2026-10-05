@@ -1,10 +1,4 @@
-/**
- * Centralized 3D Model Configuration
- * 
- * CloudFront CDN URLs for optimized 3D GLB assets.
- * Uses VITE_CLOUDFRONT_URL from environment variables if available,
- * falling back to the verified production CloudFront distribution.
- */
+import { useGLTF } from "@react-three/drei";
 
 const CDN_BASE =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_CLOUDFRONT_URL) ||
@@ -16,6 +10,18 @@ export const MODEL_URLS = {
 } as const;
 
 export type ModelKey = keyof typeof MODEL_URLS;
+
+// Initiate early parallel preload via Drei GLTF cache
+if (typeof window !== "undefined") {
+  (window as any).__bdgMacStartTime = performance.now();
+  (window as any).__bdgBusinessmanStartTime = performance.now();
+  try {
+    useGLTF.preload(MODEL_URLS.mac);
+    useGLTF.preload(MODEL_URLS.businessman);
+  } catch (e) {
+    console.debug("[3D] Preload notice:", e);
+  }
+}
 
 if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
   console.log("[3D] Mac URL:", MODEL_URLS.mac);

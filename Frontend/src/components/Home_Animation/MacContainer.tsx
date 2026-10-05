@@ -46,6 +46,15 @@ interface MacContainerProps {
 const MacContainer = ({ onReady }: MacContainerProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const { camera, gl, size } = useThree();
+
+  if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+    if (!(window as any).__bdgMacLoggedStart) {
+      (window as any).__bdgMacLoggedStart = true;
+      console.log("[HERO] MacBook loading");
+      console.log("[3D TIMING] MacBook request start");
+    }
+  }
+
   const mac = useGLTF(MODEL_URLS.mac);
   const screen = useTexture(heroImg);
   const keyboard = useTexture(keyboardImg);
@@ -191,10 +200,10 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
         const tFirstFrame = performance.now();
 
         if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-          console.log("[HERO] Mac GLB loaded");
-          console.log("[HERO] Mac scene ready");
-          console.log("[HERO] Mac first frame");
-          console.log("[HERO] Hero ready");
+          console.log("[HERO] MacBook GLB loaded");
+          console.log("[HERO] MacBook scene ready");
+          console.log("[HERO] MacBook first frame");
+          console.log("[HERO] MacBook ready");
 
           // Calculate timing stages
           const startTime = Number((window as any).__bdgMacStartTime) || tMount;
@@ -204,23 +213,19 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
           const sceneStart = Number(meshes.tSceneStart) || tMount;
           const sceneEnd = Number(meshes.tSceneEnd) || tMount;
 
-          const networkDownload = glbEntry && glbEntry.responseEnd > glbEntry.requestStart && glbEntry.requestStart > 0
+          const downloadDuration = glbEntry && glbEntry.responseEnd > glbEntry.requestStart && glbEntry.requestStart > 0
             ? glbEntry.responseEnd - glbEntry.requestStart
             : glbEntry ? glbEntry.duration : Math.max(0, sceneStart - startTime);
 
-          const parsingDecompression = glbEntry && glbEntry.responseEnd > 0
-            ? Math.max(0, sceneStart - glbEntry.responseEnd)
-            : 0;
+          const glbLoadedTime = Math.max(downloadDuration, sceneStart - startTime);
+          const sceneSetupTime = Math.max(0, sceneEnd - sceneStart);
+          const firstFrameTime = Math.max(0, tFirstFrame - sceneEnd);
+          const totalDuration = Math.max(0, tFirstFrame - startTime);
 
-          const sceneSetup = Math.max(0, sceneEnd - sceneStart);
-          const firstRender = Math.max(0, tFirstFrame - sceneEnd);
-
-          console.groupCollapsed("[HERO] 3D Performance Breakdown");
-          console.log(`1. Network Download: ${networkDownload.toFixed(1)}ms`);
-          console.log(`2. GLB Parse/Decompress: ${parsingDecompression.toFixed(1)}ms`);
-          console.log(`3. Scene Setup: ${sceneSetup.toFixed(1)}ms`);
-          console.log(`4. First Render: ${firstRender.toFixed(1)}ms`);
-          console.groupEnd();
+          console.log(`[3D TIMING] MacBook GLB loaded: ${glbLoadedTime.toFixed(1)} ms`);
+          console.log(`[3D TIMING] MacBook scene ready: ${sceneSetupTime.toFixed(1)} ms`);
+          console.log(`[3D TIMING] MacBook first frame: ${firstFrameTime.toFixed(1)} ms`);
+          console.log(`[3D TIMING] MacBook total: ${totalDuration.toFixed(1)} ms`);
         }
         onReady?.();
       });

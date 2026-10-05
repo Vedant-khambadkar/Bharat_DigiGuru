@@ -1,6 +1,5 @@
 import React, { useState, useEffect, Suspense, useCallback, useMemo, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { PeopleScene } from '../components/FounderScene/PeopleScene';
 import { FounderProfileModal } from '../components/FounderScene/FounderProfileModal';
@@ -8,7 +7,6 @@ import ModelLoader from '../components/ModelLoader/ModelLoader';
 import ModelErrorBoundary from '../components/ModelLoader/ModelErrorBoundary';
 import desktopVignette from '../assets/Monochrome Vignette White Space.png';
 import mobileVignette from '../assets/Minimalist Black and White Vignette  mobile.png';
-import { MODEL_URLS } from '../config/models';
 import type { SceneState } from '../types/scene';
 
 /**
@@ -33,7 +31,15 @@ export const preloadOurTeamAssets = async () => {
   }
 };
 
-export const OurTeam: React.FC = () => {
+interface OurTeamProps {
+  onBusinessmanReady?: () => void;
+  onBusinessmanError?: (error: Error) => void;
+}
+
+export const OurTeam: React.FC<OurTeamProps> = ({
+  onBusinessmanReady,
+  onBusinessmanError,
+}) => {
   const [sceneState, setSceneState] = useState<SceneState>('overview');
   const sectionRef = useRef<HTMLElement>(null);
   const [isMobile, setIsMobile] = useState<boolean>(() => {
@@ -42,36 +48,6 @@ export const OurTeam: React.FC = () => {
     }
     return false;
   });
-
-  const [isInRange, setIsInRange] = useState(false);
-
-  // Lazy-load businessman 3D asset only when section approaches viewport (800px margin)
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el || typeof window === "undefined" || !("IntersectionObserver" in window)) {
-      setIsInRange(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting) {
-          setIsInRange(true);
-          try {
-            useGLTF.preload(MODEL_URLS.businessman);
-          } catch (e) {
-            console.warn("OurTeam model preload notice:", e);
-          }
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "800px 0px" }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   // Optimized window resize listener
   useEffect(() => {
@@ -197,17 +173,16 @@ export const OurTeam: React.FC = () => {
           camera={cameraProps}
           className="w-full h-full block"
         >
-          <ModelErrorBoundary fallback={null}>
+          <ModelErrorBoundary fallback={null} onError={onBusinessmanError}>
             <Suspense fallback={<ModelLoader theme="light" label="Loading 3D" />}>
-              {isInRange && (
-                <PeopleScene
-                  sceneState={sceneState}
-                  onSelectFounder={handleSelectFounder}
-                  onTransitionComplete={handleTransitionComplete}
-                  onReturnComplete={handleReturnComplete}
-                  isMobile={isMobile}
-                />
-              )}
+              <PeopleScene
+                sceneState={sceneState}
+                onSelectFounder={handleSelectFounder}
+                onTransitionComplete={handleTransitionComplete}
+                onReturnComplete={handleReturnComplete}
+                isMobile={isMobile}
+                onReady={onBusinessmanReady}
+              />
             </Suspense>
           </ModelErrorBoundary>
         </Canvas>

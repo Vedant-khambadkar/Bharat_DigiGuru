@@ -62,10 +62,9 @@ function ResponsiveCamera() {
 function CanvasReadyNotifier({ onReady }: { onReady: () => void }) {
   useEffect(() => {
     const rafId = requestAnimationFrame(() => {
-      (window as any).__bdgMacStartTime = performance.now();
+      (window as any).__bdgMacStartTime = (window as any).__bdgMacStartTime || performance.now();
       if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-        console.log("[HERO] Canvas ready");
-        console.log("[HERO] Mac loading");
+        console.log("[HERO] Canvas initialized");
       }
       onReady();
     });
@@ -76,43 +75,27 @@ function CanvasReadyNotifier({ onReady }: { onReady: () => void }) {
 }
 
 interface HomeProps {
-  on3DReady?: () => void;
+  onMacReady?: () => void;
+  onMacError?: (error: Error) => void;
 }
 
-const HERO_TIMEOUT_MS = 10000;
-
-function Home({ on3DReady }: HomeProps) {
+function Home({ onMacReady, onMacError }: HomeProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const progressRef = useRef<number>(0);
-  const isHeroReadyTriggered = useRef(false);
-
-  const triggerHeroReady = useCallback((_reason: "model" | "timeout" | "error" = "model") => {
-    if (isHeroReadyTriggered.current) return;
-    isHeroReadyTriggered.current = true;
-    on3DReady?.();
-    window.dispatchEvent(new CustomEvent("3d-model-ready"));
-  }, [on3DReady]);
 
   const handleCanvasReady = useCallback(() => {
-    // Canvas WebGL context is initialized; MacContainer is loading within Suspense
+    // Canvas WebGL context is initialized
   }, []);
 
   const handleMacReady = useCallback(() => {
-    triggerHeroReady("model");
-  }, [triggerHeroReady]);
+    onMacReady?.();
+    window.dispatchEvent(new CustomEvent("3d-model-ready"));
+  }, [onMacReady]);
 
-  const handleModelError = useCallback(() => {
-    console.warn("[HERO] MacBook model loading error, falling back to 2D poster");
-    triggerHeroReady("error");
-  }, [triggerHeroReady]);
-
-  // Failsafe 10s timeout to never permanently trap user
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      triggerHeroReady("timeout");
-    }, HERO_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [triggerHeroReady]);
+  const handleModelError = useCallback((error: Error) => {
+    console.error("[HERO] MacBook model loading error:", error);
+    onMacError?.(error);
+  }, [onMacError]);
 
   // GSAP ScrollTrigger Pinning for smooth 5-stage laptop animation
   useEffect(() => {

@@ -8,6 +8,8 @@ import Navbar from "./components/Navbar";
 import TopHeader from "./components/TopHeader";
 import Preloader3D from "./components/Preloader/Preloader3D";
 
+import OurTeam, { preloadOurTeamAssets } from "./pages/OurTeam";
+
 // Code-Split Below-The-Fold Sections to eliminate initial load bottleneck
 const PlatformsWeManage = lazy(() => import("./pages/PlatformsWeManage"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
@@ -17,7 +19,6 @@ const Process = lazy(() => import("./pages/Process"));
 const About = lazy(() => import("./pages/About"));
 const MissionVision = lazy(() => import("./pages/MissionVision"));
 const MilestoneShowcase = lazy(() => import("./components/MilestoneShowcase"));
-const OurTeam = lazy(() => import("./pages/OurTeam"));
 const WorkWithUs = lazy(() => import("./pages/WhyWorkWithUs"));
 const Blogs = lazy(() => import("./pages/Blogs"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -36,10 +37,30 @@ const MainLandingPage = () => {
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [is3DReady, setIs3DReady] = useState(false);
+  const [macReady, setMacReady] = useState(false);
+  const [businessmanReady, setBusinessmanReady] = useState(false);
+  const [macFailed, setMacFailed] = useState(false);
+  const [businessmanFailed, setBusinessmanFailed] = useState(false);
 
-  const handleHome3DReady = useCallback(() => {
-    setIs3DReady(true);
+  const all3DReady = (macReady && businessmanReady) ||
+    ((macFailed || macReady) && (businessmanFailed || businessmanReady) && (macFailed || businessmanFailed));
+
+  const handleMacReady = useCallback(() => {
+    setMacReady(true);
+  }, []);
+
+  const handleMacError = useCallback((error: Error) => {
+    console.error("[HERO] MacBook model failed:", error);
+    setMacFailed(true);
+  }, []);
+
+  const handleBusinessmanReady = useCallback(() => {
+    setBusinessmanReady(true);
+  }, []);
+
+  const handleBusinessmanError = useCallback((error: Error) => {
+    console.error("[TEAM] Businessman model failed:", error);
+    setBusinessmanFailed(true);
   }, []);
 
   const handleStartPageReveal = useCallback(() => {
@@ -133,11 +154,11 @@ const MainLandingPage = () => {
     };
   }, [handleOpenAdminPortal]);
 
-  // Preload below-the-fold 3D scene models (Portfolio & OurTeam 3D Character) in background without blocking Hero reveal
+  // Preload below-the-fold assets in background without blocking Hero reveal
   useEffect(() => {
     Promise.allSettled([
       import("./pages/Portfolio").then((m) => m.preloadPortfolioAssets?.()),
-      import("./pages/OurTeam").then((m) => m.preloadOurTeamAssets?.()),
+      preloadOurTeamAssets(),
     ]);
   }, []);
 
@@ -348,7 +369,9 @@ const MainLandingPage = () => {
       {/* 3D Preloader Overlay (Strictly tracks 3D model & asset loading) */}
       {isLoading && (
         <Preloader3D
-          isReady={is3DReady}
+          isReady={all3DReady}
+          macReady={macReady}
+          businessmanReady={businessmanReady}
           onStartExit={handleStartPageReveal}
           onComplete={handlePreloaderComplete}
         />
@@ -362,7 +385,7 @@ const MainLandingPage = () => {
 
       {/* Main Sections Flow */}
       <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
-        <Home on3DReady={handleHome3DReady} />
+        <Home onMacReady={handleMacReady} onMacError={handleMacError} />
         <Services />
         <Suspense fallback={null}>
           <PlatformsWeManage />
@@ -373,7 +396,12 @@ const MainLandingPage = () => {
           <About />
           <MissionVision />
           <MilestoneShowcase />
-          <OurTeam />
+        </Suspense>
+        <OurTeam
+          onBusinessmanReady={handleBusinessmanReady}
+          onBusinessmanError={handleBusinessmanError}
+        />
+        <Suspense fallback={null}>
           <WorkWithUs />
           <Blogs />
           <Contact />

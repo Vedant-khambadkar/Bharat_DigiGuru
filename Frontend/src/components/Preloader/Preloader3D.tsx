@@ -4,12 +4,16 @@ import { useProgress } from "@react-three/drei";
 
 interface Preloader3DProps {
   isReady?: boolean;
+  macReady?: boolean;
+  businessmanReady?: boolean;
   onStartExit?: () => void;
   onComplete: () => void;
 }
 
 export const Preloader3D: React.FC<Preloader3DProps> = ({
   isReady = false,
+  macReady = false,
+  businessmanReady = false,
   onStartExit,
   onComplete,
 }) => {
@@ -37,11 +41,16 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     }
   };
 
-  const triggerExit = useCallback(() => {
+  const triggerExit = useCallback((isTimeout = false) => {
     if (isExitingRef.current) return;
     isExitingRef.current = true;
 
-    // Immediately trigger page reveal callback
+    if (isTimeout && typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+      console.log("[PRELOADER] timeout");
+      console.log("[PRELOADER] releasing UI");
+    }
+
+    // Immediately trigger page reveal callback (starts Lenis and reveals hero)
     onStartExit?.();
 
     if (!containerRef.current) {
@@ -51,7 +60,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
 
     const tl = gsap.timeline({
       onComplete: () => {
-        if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+        if (!isTimeout && typeof import.meta !== "undefined" && import.meta.env?.DEV) {
           console.log("[PRELOADER] hidden");
         }
         onComplete();
@@ -81,17 +90,8 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     );
   }, [onStartExit, onComplete]);
 
-  // Progress interpolation driven directly by Hero readiness
+  // Progress interpolation driven directly by Both 3D Models Readiness
   useEffect(() => {
-    let target = 45;
-    if (isReady) {
-      target = 100;
-    } else if (dreiProgress > 0) {
-      target = Math.min(90, Math.max(counterRef.current.value, Math.round(dreiProgress * 0.9)));
-    } else {
-      target = Math.max(counterRef.current.value, 40);
-    }
-
     if (isReady) {
       const tween = gsap.to(counterRef.current, {
         value: 100,
@@ -105,9 +105,10 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
           updateDisplay(100);
           if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
             console.log("[PRELOADER] 100%");
+            console.log("[PRELOADER] hiding");
           }
           const timer = setTimeout(() => {
-            triggerExit();
+            triggerExit(false);
           }, 120);
           return () => clearTimeout(timer);
         },
@@ -115,6 +116,18 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       return () => {
         tween.kill();
       };
+    }
+
+    // Neither or only one model ready: clamp progress strictly < 100%
+    let target = 35;
+    const readyCount = (macReady ? 1 : 0) + (businessmanReady ? 1 : 0);
+
+    if (readyCount === 1) {
+      target = Math.max(70, Math.min(88, Math.round(dreiProgress * 0.88)));
+    } else if (dreiProgress > 0) {
+      target = Math.min(65, Math.max(counterRef.current.value, Math.round(dreiProgress * 0.65)));
+    } else {
+      target = Math.max(counterRef.current.value, 30);
     }
 
     const tween = gsap.to(counterRef.current, {
@@ -130,13 +143,13 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     return () => {
       tween.kill();
     };
-  }, [dreiProgress, isReady, triggerExit]);
+  }, [dreiProgress, isReady, macReady, businessmanReady, triggerExit]);
 
-  // Safety fallback: Auto-reveal in 10s maximum to release the user without blocking
+  // Safety fallback: Auto-reveal in 12s maximum to release the user without blocking
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
-      triggerExit();
-    }, 10000);
+      triggerExit(true);
+    }, 12000);
 
     return () => clearTimeout(safetyTimer);
   }, [triggerExit]);
@@ -145,7 +158,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.code === "Space" || e.code === "Enter" || e.code === "Escape") && !isExitingRef.current) {
-        triggerExit();
+        triggerExit(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -155,7 +168,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
   return (
     <div
       ref={containerRef}
-      onClick={triggerExit}
+      onClick={() => triggerExit(false)}
       className="fixed inset-0 z-[9999] w-screen h-screen bg-[#050505] text-white flex flex-col justify-between p-6 sm:p-10 md:p-14 select-none overflow-hidden will-change-transform cursor-pointer"
     >
       {/* Subtle Background Grid Texture (Pure Monochrome) */}

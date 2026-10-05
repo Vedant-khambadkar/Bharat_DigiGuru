@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { useGLTF } from '@react-three/drei';
 import { DESKTOP_PEOPLE, DESKTOP_FOUNDER, MOBILE_PEOPLE, MOBILE_FOUNDER } from './PeopleData';
@@ -15,6 +15,7 @@ interface PeopleSceneProps {
   onTransitionComplete: () => void;
   onReturnComplete: () => void;
   isMobile: boolean;
+  onReady?: () => void;
 }
 
 export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
@@ -23,12 +24,23 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
   onTransitionComplete,
   onReturnComplete,
   isMobile,
+  onReady,
 }) => {
+  if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+    if (!(window as any).__bdgBusinessmanLoggedStart) {
+      (window as any).__bdgBusinessmanLoggedStart = true;
+      console.log("[TEAM] Businessman loading");
+      console.log("[3D TIMING] Businessman request start");
+    }
+  }
+
   // Load authentic 3D businessman model
   const gltf = useGLTF(MODEL_URLS.businessman);
+  const isReadySignaled = useRef(false);
 
   // Prepare normalized base model scene
-  const baseScene = useMemo(() => {
+  const { baseScene, tSceneStart, tSceneEnd } = useMemo(() => {
+    const tStart = performance.now();
     const scene = gltf.scene.clone(true);
     scene.updateMatrixWorld(true);
 
@@ -58,8 +70,56 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
       }
     });
 
-    return scene;
+    const tEnd = performance.now();
+    return { baseScene: scene, tSceneStart: tStart, tSceneEnd: tEnd };
   }, [gltf.scene]);
+
+  // Signal Businessman Model Readiness once rendered in R3F lifecycle
+  useEffect(() => {
+    if (!gltf.scene || isReadySignaled.current) return;
+
+    const tMount = performance.now();
+    let frameId2: number;
+    const frameId1 = requestAnimationFrame(() => {
+      frameId2 = requestAnimationFrame(() => {
+        if (isReadySignaled.current) return;
+        isReadySignaled.current = true;
+        const tFirstFrame = performance.now();
+
+        if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+          console.log("[TEAM] Businessman GLB loaded");
+          console.log("[TEAM] Businessman scene ready");
+          console.log("[TEAM] Businessman first frame");
+          console.log("[TEAM] Businessman ready");
+
+          const startTime = Number((window as any).__bdgBusinessmanStartTime) || tMount;
+          const resourceEntries = performance.getEntriesByName(MODEL_URLS.businessman) as PerformanceResourceTiming[];
+          const glbEntry = resourceEntries.length > 0 ? resourceEntries[resourceEntries.length - 1] : undefined;
+
+          const downloadDuration = glbEntry && glbEntry.responseEnd > glbEntry.requestStart && glbEntry.requestStart > 0
+            ? glbEntry.responseEnd - glbEntry.requestStart
+            : glbEntry ? glbEntry.duration : Math.max(0, tSceneStart - startTime);
+
+          const glbLoadedTime = Math.max(downloadDuration, tSceneStart - startTime);
+          const sceneSetupTime = Math.max(0, tSceneEnd - tSceneStart);
+          const firstFrameTime = Math.max(0, tFirstFrame - tSceneEnd);
+          const totalDuration = Math.max(0, tFirstFrame - startTime);
+
+          console.log(`[3D TIMING] Businessman GLB loaded: ${glbLoadedTime.toFixed(1)} ms`);
+          console.log(`[3D TIMING] Businessman scene ready: ${sceneSetupTime.toFixed(1)} ms`);
+          console.log(`[3D TIMING] Businessman first frame: ${firstFrameTime.toFixed(1)} ms`);
+          console.log(`[3D TIMING] Businessman total: ${totalDuration.toFixed(1)} ms`);
+        }
+
+        onReady?.();
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId1);
+      cancelAnimationFrame(frameId2);
+    };
+  }, [gltf.scene, tSceneStart, tSceneEnd, onReady]);
 
   const peopleList = useMemo(() => (isMobile ? MOBILE_PEOPLE : DESKTOP_PEOPLE), [isMobile]);
   const founderConfig = useMemo(() => (isMobile ? MOBILE_FOUNDER : DESKTOP_FOUNDER), [isMobile]);
