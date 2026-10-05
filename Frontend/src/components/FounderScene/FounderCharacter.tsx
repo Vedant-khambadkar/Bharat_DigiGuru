@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, memo } from 'react';
+import React, { useRef, useState, useEffect, useMemo, memo } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
@@ -6,8 +6,7 @@ import type { PersonConfig, SceneState } from '../../types/scene';
 
 interface FounderCharacterProps {
   config: PersonConfig;
-  geometry: THREE.BufferGeometry;
-  material: THREE.Material;
+  modelScene: THREE.Group;
   sceneState: SceneState;
   onSelect: () => void;
   isMobile: boolean;
@@ -15,8 +14,7 @@ interface FounderCharacterProps {
 
 export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
   config,
-  geometry,
-  material,
+  modelScene,
   sceneState,
   onSelect,
   isMobile,
@@ -27,6 +25,18 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
   // Smooth animation tracking refs
   const hoverProgressRef = useRef(0);
   const focusProgressRef = useRef(0);
+
+  // Clone authentic 3D businessman model for the Founder
+  const clonedScene = useMemo(() => {
+    const clone = modelScene.clone(true);
+    clone.traverse((child: any) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = false;
+      }
+    });
+    return clone;
+  }, [modelScene]);
 
   const [baseX, baseY, baseZ] = config.position;
   const baseRotX = config.rotationX ?? 0;
@@ -72,17 +82,13 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
     const hoverVal = hoverProgressRef.current;
     const focusVal = focusProgressRef.current;
 
-    // Subtle idle breathing
+    // Subtle idle rotation
     const time = state.clock.getElapsedTime() * config.idleSpeed;
-    const idleY = Math.sin(time * 1.1) * 0.012;
     const idleRot = Math.sin(time * 0.75) * 0.012;
-
-    // Elevation on hover (+0.12)
-    const hoverElevateY = hoverVal * 0.12;
 
     group.position.set(
       baseX,
-      baseY + idleY + hoverElevateY,
+      baseY,
       baseZ
     );
 
@@ -123,37 +129,122 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
     >
-      <mesh
-        geometry={geometry}
-        material={material}
-        castShadow
-        receiveShadow={false}
-      />
+      <primitive object={clonedScene} />
 
       {/* Enlarged hit-box for smooth selection */}
       <mesh visible={false} position={[0, 0.9, 0]}>
-        <boxGeometry args={[1.2, 2.2, 1.2]} />
+        <boxGeometry args={[1.4, 2.2, 1.4]} />
         <meshBasicMaterial />
       </mesh>
 
-      {/* Subtle "MEET THE FOUNDER" hover label (Desktop only) */}
-      {!isMobile && sceneState === 'overview' && (
+      {/* EXACT 1:1 FLOOR HUD CIRCULAR RETICLE SYSTEM */}
+      {sceneState === 'overview' && (
+        <group
+          position={[0, 0.002, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          scale={isMobile ? 0.78 : 1.0}
+        >
+          {/* 1. Inner Fine Orbit Ring */}
+          <mesh>
+            <ringGeometry args={[0.78, 0.795, 64]} />
+            <meshBasicMaterial color="#000000" transparent opacity={0.25} side={THREE.DoubleSide} />
+          </mesh>
+
+          {/* 2. Middle Segmented Ring Base */}
+          <mesh>
+            <ringGeometry args={[0.98, 0.995, 64]} />
+            <meshBasicMaterial color="#000000" transparent opacity={0.35} side={THREE.DoubleSide} />
+          </mesh>
+
+          {/* 3. Outer Perimeter Ring */}
+          <mesh>
+            <ringGeometry args={[1.22, 1.235, 64]} />
+            <meshBasicMaterial color="#000000" transparent opacity={0.2} side={THREE.DoubleSide} />
+          </mesh>
+
+          {/* 4. Glowing Orange Accent Arcs */}
+          <mesh rotation={[0, 0, 0.35]}>
+            <ringGeometry args={[0.96, 1.015, 32, 1, 0, Math.PI * 0.35]} />
+            <meshBasicMaterial color="#ff5500" transparent opacity={0.9} side={THREE.DoubleSide} />
+          </mesh>
+
+          <mesh rotation={[0, 0, Math.PI + 0.5]}>
+            <ringGeometry args={[0.96, 1.015, 32, 1, 0, Math.PI * 0.28]} />
+            <meshBasicMaterial color="#ff5500" transparent opacity={0.9} side={THREE.DoubleSide} />
+          </mesh>
+
+          <mesh rotation={[0, 0, -Math.PI * 0.4]}>
+            <ringGeometry args={[1.20, 1.25, 32, 1, 0, Math.PI * 0.18]} />
+            <meshBasicMaterial color="#ff5500" transparent opacity={0.85} side={THREE.DoubleSide} />
+          </mesh>
+
+          {/* 5. Four Cardinal Orange Accent Dots */}
+          {[0, Math.PI * 0.5, Math.PI, Math.PI * 1.5].map((angle, i) => (
+            <mesh
+              key={i}
+              position={[Math.cos(angle) * 1.23, Math.sin(angle) * 1.23, 0.001]}
+            >
+              <circleGeometry args={[0.022, 16]} />
+              <meshBasicMaterial color="#ff5500" transparent opacity={0.95} side={THREE.DoubleSide} />
+            </mesh>
+          ))}
+        </group>
+      )}
+
+      {/* EXACT 1:1 ANGLED LEADER LINE & CALLOUT HUD BADGE */}
+      {sceneState === 'overview' && (
         <Html
-          position={[0.7, 1.85, 0]}
-          center
-          distanceFactor={11}
+          position={isMobile ? [0.02, 0.95, 0] : [0.22, 0.95, 0]}
+          center={false}
+          distanceFactor={isMobile ? 12 : 10.5}
           style={{
-            pointerEvents: 'none',
-            opacity: hovered ? 1 : 0,
-            transform: `translate3d(${hovered ? '0' : '-8px'}, 0, 0) scale(${hovered ? 1 : 0.95})`,
-            transition: 'opacity 0.35s ease-out, transform 0.35s ease-out',
+            pointerEvents: 'auto',
+            cursor: 'pointer',
+            userSelect: 'none',
           }}
         >
-          <div className="flex items-center gap-2.5 px-3.5 py-1.5 bg-black/90 text-white rounded-full backdrop-blur-md shadow-2xl border border-black/80 whitespace-nowrap select-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            <span className="text-[10px] tracking-[0.22em] font-medium font-mono uppercase">
-              MEET THE FOUNDER
-            </span>
+          <div
+            onClick={handleClick}
+            className="relative flex items-center group cursor-pointer"
+            style={{
+              transform: isMobile ? 'scale(0.72) translateY(-50%)' : 'translateY(-50%)',
+              transformOrigin: 'left center',
+            }}
+          >
+            {/* Precision Angled Leader Line (SVG) */}
+            <svg
+              width={isMobile ? "42" : "56"}
+              height={isMobile ? "32" : "40"}
+              viewBox={isMobile ? "0 0 42 32" : "0 0 56 40"}
+              fill="none"
+              className="overflow-visible shrink-0 transition-opacity duration-300 group-hover:opacity-100 opacity-90"
+            >
+              <polyline
+                points={isMobile ? "0,26 18,8 42,8" : "0,32 24,10 56,10"}
+                stroke="#111111"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="0" cy={isMobile ? 26 : 32} r="2.2" fill="#111111" />
+            </svg>
+
+            {/* Callout Text Block */}
+            <div className="flex flex-col items-start pl-1.5 -mt-6">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#ff5500] shadow-[0_0_8px_#ff5500] shrink-0" />
+                <span className="text-[12px] sm:text-[14px] font-mono tracking-[0.22em] font-extrabold text-[#050505] uppercase whitespace-nowrap">
+                  FOUNDER
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1 text-[8.5px] sm:text-[10px] font-mono tracking-[0.2em] text-[#333333] font-bold uppercase pl-3.5 group-hover:text-black transition-colors whitespace-nowrap">
+                <span>EXPLORE PROFILE</span>
+                <span className="text-[10px] text-[#ff5500] font-bold group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200">
+                  ↗
+                </span>
+              </div>
+            </div>
           </div>
         </Html>
       )}

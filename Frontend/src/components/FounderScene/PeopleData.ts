@@ -15,10 +15,10 @@ export const DESKTOP_PEOPLE: PersonConfig[] = [
   { id: 'p_mid_left_1', position: [-3.1, 0, 1.3], rotationY: -1.12, rotationX: 0, rotationZ: 0, scale: 0.96, phaseOffset: 1.1, idleSpeed: 0.85 },
 
   // 3. Left Back (Behind p2)
-  { id: 'p_left_back', position: [-5.6, 0.2, -1.0], rotationY: 3.18, rotationX: 0, rotationZ: 0, scale: 1.0, phaseOffset: 2.3, idleSpeed: 0.82 },
+  { id: 'p_left_back', position: [-5.6, 0, -1.0], rotationY: 3.18, rotationX: 0, rotationZ: 0, scale: 1.0, phaseOffset: 2.3, idleSpeed: 0.82 },
 
   // 4. Mid Left Row 2
-  { id: 'p_mid_left_2', position: [-2.0, -0.3, 0.0], rotationY: -0.15, rotationX: 0, rotationZ: 0, scale: 0.96, phaseOffset: 3.5, idleSpeed: 0.88 },
+  { id: 'p_mid_left_2', position: [-2.0, 0, 0.0], rotationY: -0.15, rotationX: 0, rotationZ: 0, scale: 0.96, phaseOffset: 3.5, idleSpeed: 0.88 },
 
   // 5. Center-Front Left
   { id: 'p_center_f_left', position: [-3.3, 0, -3.7], rotationY: 1.05, rotationX: 0, rotationZ: 0, scale: 0.99, phaseOffset: 4.2, idleSpeed: 0.9 },
@@ -60,7 +60,7 @@ export const DESKTOP_PEOPLE: PersonConfig[] = [
 export const DESKTOP_FOUNDER: PersonConfig = {
   id: 'founder',
   position: [-1.6, 0,3.9],
-  rotationY: 0.0,
+  rotationY: 2.3,
   rotationX: 0.0,
   rotationZ: 0.0,
   scale: 0.9,
@@ -71,23 +71,23 @@ export const DESKTOP_FOUNDER: PersonConfig = {
 
 // Mobile portrait setup
 export const MOBILE_PEOPLE: PersonConfig[] = [
-  { id: 'mp1', position: [0.0, 0, -2.0], rotationY: 0.0, scale: 0.92, phaseOffset: 0.3, idleSpeed: 0.85 },
-  { id: 'mp2', position: [-0.8, 0, -1.3], rotationY: -0.15, scale: 0.94, phaseOffset: 1.1, idleSpeed: 0.9 },
-  { id: 'mp3', position: [0.8, 0, -1.2], rotationY: 0.18, scale: 0.96, phaseOffset: 2.2, idleSpeed: 0.82 },
-  { id: 'mp4', position: [-1.3, 0, -0.3], rotationY: 0.12, scale: 0.93, phaseOffset: 3.1, idleSpeed: 0.88 },
-  { id: 'mp5', position: [-0.3, 0, 0.4], rotationY: -0.08, scale: 0.97, phaseOffset: 4.0, idleSpeed: 0.91 },
-  { id: 'mp6', position: [0.9, 0, 0.5], rotationY: -0.2, scale: 0.95, phaseOffset: 0.6, idleSpeed: 0.86 },
-  { id: 'mp7', position: [1.6, 0, -0.3], rotationY: 0.15, scale: 0.94, phaseOffset: 1.7, idleSpeed: 0.9 },
-  { id: 'mp8', position: [2.3, 0, -1.1], rotationY: -0.18, scale: 0.96, phaseOffset: 2.8, idleSpeed: 0.84 },
+  { id: 'mp1', position: [-2.0, 0, -1.8], rotationY: 0.0, scale: 0.88, phaseOffset: 0.3, idleSpeed: 0.85 },
+  { id: 'mp2', position: [-0.9, 0, -1.1], rotationY: 10.15, scale: 0.88, phaseOffset: 1.1, idleSpeed: 0.9 },
+  { id: 'mp3', position: [0.9, 0, -3.0], rotationY: 2.18, scale: 0.88, phaseOffset: 2.2, idleSpeed: 0.82 },
+  { id: 'mp4', position: [-1.4, 0, 1.2], rotationY: 0.12, scale: 0.88, phaseOffset: 3.1, idleSpeed: 0.88 },
+  { id: 'mp5', position: [2, 0, 0.4], rotationY: 8, scale: 0.9, phaseOffset: 4.0, idleSpeed: 0.91 },
+  { id: 'mp6', position: [1, 0, 0.9], rotationY: 10, scale: 0.9, phaseOffset: 0.6, idleSpeed: 0.86 },
+  { id: 'mp7', position: [-0.2, 0, -5.2], rotationY: 0.15, scale: 0.88, phaseOffset: 1.7, idleSpeed: 0.9 },
+  { id: 'mp8', position: [2, 0, -5], rotationY: -0.18, scale: 0.88, phaseOffset: 2.8, idleSpeed: 0.84 },
 ];
 
 export const MOBILE_FOUNDER: PersonConfig = {
   id: 'founder-mobile',
-  position: [-0.3, 0, 3.0],
+  position: [-0.5, 0, 3.0],
   rotationY: 0.0,
   rotationX: 0.0,
   rotationZ: 0.0,
-  scale: 1.08,
+  scale: 0.9,
   phaseOffset: 0.0,
   idleSpeed: 0.85,
   isFounder: true,

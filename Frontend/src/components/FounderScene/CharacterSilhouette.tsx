@@ -1,23 +1,33 @@
-import React, { useRef, memo } from 'react';
+import React, { useRef, useMemo, memo } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import type { PersonConfig, SceneState } from '../../types/scene';
 
 interface CharacterSilhouetteProps {
   config: PersonConfig;
-  geometry: THREE.BufferGeometry;
-  material: THREE.Material;
+  modelScene: THREE.Group;
   sceneState: SceneState;
 }
 
 export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
   config,
-  geometry,
-  material,
+  modelScene,
   sceneState,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const stateProgressRef = useRef(0);
+
+  // Clone authentic 3D businessman model for each person in the crowd
+  const clonedScene = useMemo(() => {
+    const clone = modelScene.clone(true);
+    clone.traverse((child: any) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = false;
+      }
+    });
+    return clone;
+  }, [modelScene]);
 
   // Cached base values
   const [baseX, baseY, baseZ] = config.position;
@@ -46,18 +56,16 @@ export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
 
     const progress = stateProgressRef.current;
 
-    // Subtle idle animation (breathing + tiny micro-rotation)
+    // Subtle idle animation (tiny micro-rotation)
     const time = state.clock.getElapsedTime() * speed + phase;
-    const idleY = Math.sin(time * 1.2) * 0.012;
     const idleRot = Math.sin(time * 0.8) * 0.015;
 
-    // Push slightly backward and sink slightly when founder is focused
+    // Push slightly backward when founder is focused
     const pushBackZ = -progress * 1.5;
-    const pushFadeY = -progress * 0.1;
 
     group.position.set(
       baseX,
-      baseY + idleY + pushFadeY,
+      baseY,
       baseZ + pushBackZ
     );
 
@@ -72,14 +80,29 @@ export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
     group.scale.setScalar(baseScale * scaleFactor);
   });
 
+  const isApex = config.id === 'p_apex' || config.id === 'mp1';
+
   return (
     <group ref={groupRef} position={config.position} rotation={[0, baseRotY, 0]}>
-      <mesh
-        geometry={geometry}
-        material={material}
-        castShadow
-        receiveShadow={false}
-      />
+      <primitive object={clonedScene} />
+
+      {/* Apex Leader Vertical Light Line & Glowing Orange Bead */}
+      {isApex && sceneState === 'overview' && (
+        <group position={[0, 1.8, 0]}>
+          {/* Vertical Light Line */}
+          <mesh position={[0, 0.45, 0]}>
+            <cylinderGeometry args={[0.004, 0.004, 0.9, 8]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.5} />
+          </mesh>
+          {/* Glowing Orange Bead at Top */}
+          <mesh position={[0, 0.9, 0]}>
+            <sphereGeometry args={[0.035, 16, 16]} />
+            <meshBasicMaterial color="#ff5500" />
+          </mesh>
+          {/* Subtle Point Light */}
+          <pointLight position={[0, 0.9, 0]} color="#ff5500" intensity={0.8} distance={2} />
+        </group>
+      )}
     </group>
   );
 });

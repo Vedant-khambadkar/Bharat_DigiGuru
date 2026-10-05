@@ -51,7 +51,7 @@ export const Portfolio3DLoader: React.FC<Portfolio3DLoaderProps> = ({
 
   return (
     <div
-      className={`absolute inset-0 flex flex-col items-center justify-center bg-[#050505]/85 backdrop-blur-md z-20 pointer-events-none transition-opacity duration-700 select-none ${className}`}
+      className={`absolute inset-0 flex flex-col items-center justify-center bg-[#050505] z-20 pointer-events-none transition-opacity duration-700 select-none ${className}`}
     >
       {/* 1. Futuristic Holographic 3D Geometric Ring Loader */}
       <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center mb-6">

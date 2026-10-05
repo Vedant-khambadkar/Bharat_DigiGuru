@@ -5,33 +5,33 @@ interface StudioEnvironmentProps {
 }
 
 export const StudioEnvironment: React.FC<StudioEnvironmentProps> = ({ isMobile }) => {
-  // Optimized light parameters for 60fps performance & crisp shadows
-  const keyLightPos: [number, number, number] = isMobile ? [14, 11, 15] : [18, 13, 19];
-  const shadowFrustum = isMobile ? 12 : 16;
-  const mapSize = isMobile ? 512 : 1024;
+  // Optimized light parameters for 60fps performance & crisp shadows on all devices
+  const keyLightPos: [number, number, number] = isMobile ? [11, 12, 13] : [18, 13, 19];
+  const shadowFrustum = isMobile ? 10 : 16;
+  const mapSize = 1024;
 
   return (
     <>
       {/* Primary Key Directional Light */}
       <directionalLight
         position={keyLightPos}
-        intensity={1.2}
+        intensity={isMobile ? 1.4 : 1.3}
         color="#ffffff"
         castShadow
         shadow-mapSize-width={mapSize}
         shadow-mapSize-height={mapSize}
-        shadow-camera-near={1}
+        shadow-camera-near={0.5}
         shadow-camera-far={50}
         shadow-camera-left={-shadowFrustum}
         shadow-camera-right={shadowFrustum}
         shadow-camera-top={shadowFrustum}
         shadow-camera-bottom={-shadowFrustum}
-        shadow-bias={-0.0001}
-        shadow-normalBias={0.02}
+        shadow-bias={-0.00008}
+        shadow-normalBias={0.0004}
       />
 
       {/* Ambient Fill Light */}
-      <ambientLight intensity={0.8} />
+      <ambientLight intensity={isMobile ? 0.65 : 0.75} />
 
       {/* Optimized Shadow-Only Receiver Plane */}
       <mesh
@@ -40,7 +40,7 @@ export const StudioEnvironment: React.FC<StudioEnvironmentProps> = ({ isMobile }
         receiveShadow
       >
         <planeGeometry args={[140, 140]} />
-        <shadowMaterial opacity={0.36} color="#000000" />
+        <shadowMaterial opacity={isMobile ? 0.58 : 0.44} color="#000000" />
       </mesh>
     </>
   );

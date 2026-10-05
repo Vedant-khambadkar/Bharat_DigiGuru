@@ -38,6 +38,23 @@ export const PlatformsWeManage: React.FC = () => {
   const containerRef = useRef<HTMLElement>(null);
   const chaosRef = useRef<HTMLDivElement>(null);
   const [activePlatform, setActivePlatform] = useState<string | null>(null);
+  const [isInView, setIsInView] = useState(false);
+
+  // IntersectionObserver to pause all CSS animations when section is offscreen
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { rootMargin: "200px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -87,80 +104,71 @@ export const PlatformsWeManage: React.FC = () => {
       className="relative w-full bg-transparent text-white font-neuropol overflow-hidden select-none py-16 sm:py-24 md:py-32"
     >
       {/* =========================================================================
-          1. RICH AMBIENT MULTI-LAYER BACKDROP (Eliminates dead black space)
+          1. HIGH-PERFORMANCE AMBIENT BACKDROP (Single layer GPU gradient)
          ========================================================================= */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Emerald Green Ambient Bloom (Bottom-Right) */}
-        <div className="absolute bottom-1/4 right-1/4 translate-x-1/4 translate-y-1/4 w-[550px] h-[550px] bg-[#046A38]/[0.08] blur-[160px] rounded-full" />
-
-        {/* Center Pure White Atmospheric Highlight */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[350px] bg-white/[0.025] blur-[130px] rounded-full" />
-
-        {/* Dynamic Platform Brand Hover Glow Halo */}
-        {activePlatform === "instagram" && (
-          <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-pink-500/[0.12] blur-[120px] rounded-full transition-all duration-700" />
-        )}
-        {activePlatform === "linkedin" && (
-          <div className="absolute top-1/4 right-1/3 translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-500/[0.12] blur-[120px] rounded-full transition-all duration-700" />
-        )}
-        {activePlatform === "youtube" && (
-          <div className="absolute top-1/3 right-1/4 translate-x-1/2 w-[400px] h-[400px] bg-red-600/[0.12] blur-[120px] rounded-full transition-all duration-700" />
-        )}
-        {activePlatform === "tiktok" && (
-          <div className="absolute top-1/2 right-1/4 translate-x-1/2 w-[400px] h-[400px] bg-cyan-400/[0.12] blur-[120px] rounded-full transition-all duration-700" />
-        )}
-        {activePlatform === "facebook" && (
-          <div className="absolute bottom-1/4 left-1/3 -translate-x-1/2 w-[400px] h-[400px] bg-blue-600/[0.12] blur-[120px] rounded-full transition-all duration-700" />
-        )}
+        {/* Hardware-accelerated radial ambient lighting */}
+        <div
+          className="absolute inset-0 opacity-40 transition-opacity duration-700 pointer-events-none"
+          style={{
+            background:
+              activePlatform === "instagram"
+                ? "radial-gradient(circle at 35% 30%, rgba(225, 48, 108, 0.15) 0%, transparent 60%)"
+                : activePlatform === "linkedin"
+                ? "radial-gradient(circle at 65% 30%, rgba(10, 102, 194, 0.15) 0%, transparent 60%)"
+                : activePlatform === "youtube"
+                ? "radial-gradient(circle at 75% 40%, rgba(255, 0, 0, 0.15) 0%, transparent 60%)"
+                : activePlatform === "tiktok"
+                ? "radial-gradient(circle at 80% 50%, rgba(37, 244, 238, 0.15) 0%, transparent 60%)"
+                : activePlatform === "facebook"
+                ? "radial-gradient(circle at 30% 70%, rgba(24, 119, 242, 0.15) 0%, transparent 60%)"
+                : "radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, rgba(4, 106, 56, 0.06) 45%, transparent 70%)",
+            willChange: "opacity",
+          }}
+        />
       </div>
 
       {/* Subtle Dot-Matrix Texture Grid */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-20 z-0"
+        className="absolute inset-0 pointer-events-none opacity-15 z-0"
         style={{
           backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.22) 1.25px, transparent 1.25px)`,
           backgroundSize: "32px 32px",
         }}
       />
 
-      {/* Embedded CSS for 60fps Smooth Streaming Spline & Float Animations */}
+      {/* Hardware-Accelerated 60/120 FPS CSS Keyframes using translate3d & opacity only */}
       <style>{`
-        @keyframes streamDashesAnim {
-          from { stroke-dashoffset: 140; }
-          to { stroke-dashoffset: 0; }
-        }
-        @keyframes streamPulseAnim {
-          0% { stroke-dashoffset: 400; opacity: 0; }
-          30% { opacity: 0.95; }
-          70% { opacity: 0.95; }
-          100% { stroke-dashoffset: -400; opacity: 0; }
-        }
         @keyframes floatOrbital1 {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-8px) rotate(1.2deg); }
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(0, -9px, 0); }
         }
         @keyframes floatOrbital2 {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(8px) rotate(-1.2deg); }
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(0, 9px, 0); }
         }
-        @keyframes pulseRing {
-          0%, 100% { transform: scale(1); opacity: 0.25; }
-          50% { transform: scale(1.03); opacity: 0.45; }
-        }
-        .animate-spline-stream {
-          animation: streamDashesAnim 8s linear infinite;
-        }
-        .animate-spline-pulse {
-          animation: streamPulseAnim 4.5s ease-in-out infinite;
+        @keyframes pulseGlowRing {
+          0%, 100% { opacity: 0.25; transform: translate3d(0,0,0) scale(1); }
+          50% { opacity: 0.5; transform: translate3d(0,0,0) scale(1.02); }
         }
         .animate-float-1 {
-          animation: floatOrbital1 5s ease-in-out infinite;
+          animation: ${isInView ? "floatOrbital1 4.8s ease-in-out infinite" : "none"};
+          will-change: transform;
+          transform: translateZ(0);
         }
         .animate-float-2 {
-          animation: floatOrbital2 6s ease-in-out infinite;
+          animation: ${isInView ? "floatOrbital2 5.6s ease-in-out infinite" : "none"};
+          will-change: transform;
+          transform: translateZ(0);
         }
         .animate-pulse-ring {
-          animation: pulseRing 8s ease-in-out infinite;
+          animation: ${isInView ? "pulseGlowRing 6s ease-in-out infinite" : "none"};
+          will-change: transform, opacity;
+          transform: translateZ(0);
+        }
+        .floating-3d-node {
+          contain: layout style;
+          backface-visibility: hidden;
         }
       `}</style>
 
@@ -256,7 +264,6 @@ export const PlatformsWeManage: React.FC = () => {
                   background: "linear-gradient(95deg, #FF671F 0%, #FF9933 26%, #FFFFFF 50%, #138808 74%, #00A859 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 0 25px rgba(255, 103, 31, 0.35))",
                 }}
               >
                 social networks.
@@ -354,7 +361,7 @@ export const PlatformsWeManage: React.FC = () => {
             <div className="absolute w-[560px] lg:w-[680px] h-[280px] lg:h-[350px] rounded-[100%] border border-white/[0.05]" />
           </div>
 
-          {/* Smooth SVG Spline Curves */}
+          {/* Smooth High-Precision Orbit Track Spline Curves */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible"
             viewBox="0 0 1000 500"
@@ -363,100 +370,60 @@ export const PlatformsWeManage: React.FC = () => {
           >
             <defs>
               <linearGradient id="tricolorSplineGradDesk" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FF671F" stopOpacity="0" />
-                <stop offset="40%" stopColor="#FF671F" stopOpacity="0.8" />
-                <stop offset="50%" stopColor="#FFFFFF" stopOpacity="1" />
-                <stop offset="60%" stopColor="#046A38" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#046A38" stopOpacity="0" />
+                <stop offset="0%" stopColor="#FF671F" stopOpacity="0.1" />
+                <stop offset="40%" stopColor="#FF671F" stopOpacity="0.7" />
+                <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.9" />
+                <stop offset="60%" stopColor="#046A38" stopOpacity="0.7" />
+                <stop offset="100%" stopColor="#046A38" stopOpacity="0.1" />
               </linearGradient>
             </defs>
 
             <path
               d="M 280 90 C 220 160, 120 220, 80 250"
-              stroke="rgba(255, 255, 255, 0.22)"
-              strokeWidth="1.4"
-              strokeDasharray="6 6"
-              className="animate-spline-stream"
-            />
-            <path
-              d="M 280 90 C 220 160, 120 220, 80 250"
               stroke="url(#tricolorSplineGradDesk)"
-              strokeWidth="2.4"
-              strokeDasharray="60 250"
-              strokeLinecap="round"
-              className="animate-spline-pulse"
+              strokeWidth="1.6"
+              strokeDasharray="5 5"
+              className="opacity-70"
             />
 
             <path
               d="M 580 95 C 680 70, 780 120, 850 160"
-              stroke="rgba(255, 255, 255, 0.24)"
-              strokeWidth="1.4"
-              strokeDasharray="6 6"
-              className="animate-spline-stream"
-              style={{ animationDuration: "7s" }}
-            />
-            <path
-              d="M 580 95 C 680 70, 780 120, 850 160"
               stroke="url(#tricolorSplineGradDesk)"
-              strokeWidth="2.4"
-              strokeDasharray="70 260"
-              strokeLinecap="round"
-              className="animate-spline-pulse"
-              style={{ animationDelay: "1.2s" }}
+              strokeWidth="1.6"
+              strokeDasharray="5 5"
+              className="opacity-70"
             />
 
             <path
               d="M 850 170 C 920 220, 940 300, 950 360"
-              stroke="rgba(255, 255, 255, 0.22)"
+              stroke="rgba(255, 255, 255, 0.25)"
               strokeWidth="1.4"
-              strokeDasharray="6 6"
-              className="animate-spline-stream"
-              style={{ animationDuration: "6s" }}
-            />
-            <path
-              d="M 850 170 C 920 220, 940 300, 950 360"
-              stroke="url(#tricolorSplineGradDesk)"
-              strokeWidth="2.4"
-              strokeDasharray="60 220"
-              strokeLinecap="round"
-              className="animate-spline-pulse"
-              style={{ animationDelay: "2.4s" }}
+              strokeDasharray="5 5"
+              className="opacity-60"
             />
 
             <path
               d="M 500 410 C 620 430, 740 420, 850 380"
-              stroke="rgba(255, 255, 255, 0.22)"
-              strokeWidth="1.4"
-              strokeDasharray="6 6"
-              className="animate-spline-stream"
-              style={{ animationDuration: "9s" }}
-            />
-            <path
-              d="M 500 410 C 620 430, 740 420, 850 380"
               stroke="url(#tricolorSplineGradDesk)"
-              strokeWidth="2.4"
-              strokeDasharray="70 300"
-              strokeLinecap="round"
-              className="animate-spline-pulse"
-              style={{ animationDelay: "3.1s" }}
+              strokeWidth="1.6"
+              strokeDasharray="5 5"
+              className="opacity-70"
             />
 
             <path
               d="M 80 270 C 90 330, 130 380, 200 400"
-              stroke="rgba(255, 255, 255, 0.18)"
+              stroke="rgba(255, 255, 255, 0.2)"
               strokeWidth="1.4"
-              strokeDasharray="6 6"
-              className="animate-spline-stream"
-              style={{ animationDuration: "8s" }}
+              strokeDasharray="5 5"
+              className="opacity-60"
             />
 
             <path
               d="M 230 400 C 310 420, 390 425, 470 420"
-              stroke="rgba(255, 255, 255, 0.18)"
-              strokeWidth="1.4"
-              strokeDasharray="6 6"
-              className="animate-spline-stream"
-              style={{ animationDuration: "8.5s" }}
+              stroke="url(#tricolorSplineGradDesk)"
+              strokeWidth="1.6"
+              strokeDasharray="5 5"
+              className="opacity-70"
             />
           </svg>
 
@@ -636,7 +603,6 @@ export const PlatformsWeManage: React.FC = () => {
                   background: "linear-gradient(95deg, #FF671F 0%, #FF9933 26%, #FFFFFF 50%, #138808 74%, #00A859 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 0 25px rgba(255, 103, 31, 0.35)) drop-shadow(0 0 25px rgba(4, 106, 56, 0.35))",
                 }}
               >
                 social networks.

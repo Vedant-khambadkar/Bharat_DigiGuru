@@ -19,6 +19,7 @@ import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import TopHeader from "./components/TopHeader";
 import Preloader3D from "./components/Preloader/Preloader3D";
+import MilestoneShowcase from "./components/MilestoneShowcase";
 
 // Lazy-load Admin routes & modals so they don't bloat the main landing page bundle
 const AdminAuthModal = lazy(() => import("./components/Admin/AdminAuthModal"));
@@ -371,6 +372,7 @@ const MainLandingPage = () => {
         <Process />
         <About />
         <MissionVision />
+          <MilestoneShowcase />
         <OurTeam />
         <WorkWithUs />
         <Blogs />

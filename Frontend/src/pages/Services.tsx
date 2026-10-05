@@ -5,7 +5,6 @@ import ScrollExploreBadge from "../components/ScrollExploreBadge";
 import ServiceItem, { extractYouTubeId } from "../components/ServiceItem";
 import type { ServiceData } from "../components/ServiceItem";
 import LensText from "../components/LensText";
-import MilestoneShowcase from "../components/MilestoneShowcase";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 import { getApiCache, setApiCache } from "../utils/apiCache";
@@ -708,8 +707,6 @@ const Services: React.FC = () => {
                         ))}
                     </div>
 
-                    {/* Interactive Animated Digital Media Milestone Showcase */}
-                    <MilestoneShowcase />
                 </section>
             </div>
         </div>

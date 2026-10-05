@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { X, ArrowUpRight, Award, Compass, Layers } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { X, ArrowRight } from 'lucide-react';
+import founderPhoto from '../../assets/photography/photography-1.webp';
 
 interface FounderProfileModalProps {
   isOpen: boolean;
@@ -11,8 +12,6 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<'manifesto' | 'milestones'>('manifesto');
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -23,192 +22,202 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Lock background body scroll and halt Lenis smooth scrolling when modal is active
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      (window as any).lenis?.stop();
+    } else {
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      (window as any).lenis?.start();
+    }
+
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      (window as any).lenis?.start();
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-8 select-none">
-      {/* Dark Ambient Backdrop */}
+    <div
+      data-lenis-prevent="true"
+      className="fixed inset-0 z-[999999] overflow-y-auto overscroll-contain bg-[#0a0a0c]/98 flex items-start sm:items-center justify-center pt-20 pb-8 px-4 sm:p-6 md:p-8 select-none animate-fadeIn"
+    >
+      {/* Background Click to Dismiss */}
       <div
         aria-hidden="true"
         onClick={onClose}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 animate-fadeIn"
+        className="fixed inset-0 -z-10"
       />
 
-      {/* Centered Floating Editorial Modal Card */}
-      <aside
-        aria-label="Founder Profile Dialog"
-        className="relative z-10 w-full max-w-xl lg:max-w-2xl max-h-[82vh] bg-white text-neutral-900 rounded-2xl shadow-[0_25px_70px_rgba(0,0,0,0.45)] border border-neutral-200/80 flex flex-col overflow-hidden animate-scaleIn"
+      {/* Main Content Canvas (Scrollable on mobile, compact fit on desktop) */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Founders Profile"
+        className="relative z-10 w-full max-w-5xl lg:max-h-[96vh] bg-transparent text-white flex flex-col justify-between animate-scaleIn my-auto py-2 sm:py-0"
       >
-        {/* Sticky Top Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 bg-white/95 backdrop-blur-sm shrink-0">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
-            <span className="text-[10px] sm:text-[11px] font-mono font-bold tracking-[0.22em] text-neutral-900 uppercase">
-              FOUNDER & CREATIVE DIRECTOR
-            </span>
-          </div>
+    
+        {/* Top Header Row with Monumental "FOUNDERS" Title & Close Button */}
+        <div className="w-full flex items-center justify-between pb-2 sm:pb-2">
+          <h1
+            className="font-['Space_Grotesk',sans-serif] font-bold uppercase text-white tracking-tighter leading-none select-none text-left"
+            style={{
+              fontSize: "clamp(1.8rem, 5.5vw, 4.2rem)",
+              letterSpacing: "-0.04em",
+              lineHeight: 0.9,
+            }}
+          >
+            FOUNDERS
+          </h1>
+
+          {/* Close Button */}
           <button
             onClick={onClose}
-            aria-label="Close profile modal"
-            className="p-1.5 rounded-full text-neutral-600 hover:text-black hover:bg-neutral-100 transition-colors duration-200 cursor-pointer border border-transparent hover:border-neutral-300"
+            aria-label="Close founders modal"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 shadow-lg shrink-0"
           >
-            <X size={18} />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
-        {/* Scrollable Modal Body */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 sm:p-8 space-y-6">
-          {/* Monochromatic Editorial Hero Card */}
-          <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] bg-black text-white p-6 sm:p-7 rounded-xl flex flex-col justify-between overflow-hidden shadow-md">
-            <div className="flex justify-between items-start z-10">
-              <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-mono">
-                COLLECTIVE 01
-              </span>
-              <span className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 font-mono">
-                EST. 2018
+        {/* Middle Section: Hero Picture (Left) + Oval Wireframe Badge (Right) */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-center my-2 sm:my-3">
+          {/* Left: Founder Landscape Photo */}
+          <div className="md:col-span-6 lg:col-span-7 relative w-full h-[140px] sm:h-[180px] lg:h-[210px] rounded-xl sm:rounded-2xl overflow-hidden bg-neutral-900 border border-white/15 shadow-xl group">
+            <img
+              src={founderPhoto}
+              alt="Founders of Bharat DigiGuru"
+              className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700 ease-out"
+              loading="eager"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+          </div>
+
+          {/* Right: Oval Wireframe "Meet The Founders" Badge + Subtitle */}
+          <div className="md:col-span-6 lg:col-span-5 flex flex-col items-start justify-center gap-2 pl-0 md:pl-2">
+            {/* Oval Pill Badge */}
+            <div className="inline-flex items-center justify-center px-5 py-2 sm:px-6 sm:py-2.5 rounded-full border border-white/40 bg-white/[0.02] backdrop-blur-md shadow-sm">
+              <span className="text-xl sm:text-2xl lg:text-[26px] font-sans font-light text-white tracking-tight">
+                Meet The Founders
               </span>
             </div>
 
-            <div className="z-10">
-              <p className="text-[10px] sm:text-[11px] font-mono tracking-[0.22em] text-neutral-400 uppercase">
-                EXECUTIVE VISION
-              </p>
-              <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-wide mt-0.5">
-                ALEXANDER VANCE
+            {/* Subtitle in Warm Terracotta */}
+            <p className="text-xs sm:text-sm font-sans text-[#e06b3a] tracking-wide font-medium pl-1">
+              Latin roots, Uncommon minds
+            </p>
+          </div>
+        </div>
+
+        {/* Bottom Two-Column Profiles Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-10 pt-3 sm:pt-4 border-t border-white/10 mt-1 sm:mt-2">
+          
+          {/* Column 1: Oliver Muñoz */}
+          <div className="flex flex-col items-start text-left space-y-1.5 sm:space-y-2">
+            {/* Name with Orange Arrow */}
+            <div className="flex items-center gap-2">
+              <ArrowRight className="w-4 h-4 text-[#e06b3a] shrink-0" />
+              <h3 className="text-base sm:text-lg lg:text-xl font-sans font-medium text-[#e06b3a] tracking-tight">
+                Oliver Muñoz
               </h3>
             </div>
 
-            {/* Geometric Monogram Watermark */}
-            <div className="absolute right-4 -bottom-6 text-white/5 font-serif text-8xl sm:text-9xl font-black select-none pointer-events-none">
-              AV
+            {/* Role Subtitle */}
+            <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.16em] text-neutral-400 font-semibold">
+              CO-FOUNDER AND VISUAL DESIGN DIRECTOR
+            </span>
+
+            {/* Bio Paragraphs */}
+            <div className="space-y-1 sm:space-y-1.5 text-[11px] sm:text-xs text-neutral-300 font-sans leading-relaxed">
+              <p>
+                With over a decade of experience in digital, creative and design agencies across the United States, Australia and Mexico, Oli has worked with companies leading their industry sectors around the globe, leading and unifying teams around creative vision.
+              </p>
+              <p className="text-neutral-400">
+                Oli's design philosophy centres on purpose: balancing functionality and aesthetics to solve real user problems.
+              </p>
+            </div>
+
+            {/* Outlined Action Pill Buttons */}
+            <div className="flex items-center gap-2 pt-1">
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-1 rounded-full border border-white/30 hover:border-white text-white font-mono text-[9px] tracking-widest uppercase hover:bg-white/10 transition-all duration-200 cursor-pointer"
+              >
+                LIN
+              </a>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-1 rounded-full border border-white/30 hover:border-white text-white font-mono text-[9px] tracking-widest uppercase hover:bg-white/10 transition-all duration-200 cursor-pointer"
+              >
+                IG
+              </a>
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="flex gap-6 border-b border-neutral-200 pb-2 text-xs tracking-[0.18em] uppercase font-mono font-semibold">
-            <button
-              onClick={() => setActiveTab('manifesto')}
-              className={`pb-2 transition-colors cursor-pointer relative ${
-                activeTab === 'manifesto' ? 'text-black font-bold' : 'text-neutral-400 hover:text-black'
-              }`}
-            >
-              PHILOSOPHY & VISION
-              {activeTab === 'manifesto' && (
-                <span className="absolute bottom-[-9px] left-0 w-full h-[2px] bg-black" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('milestones')}
-              className={`pb-2 transition-colors cursor-pointer relative ${
-                activeTab === 'milestones' ? 'text-black font-bold' : 'text-neutral-400 hover:text-black'
-              }`}
-            >
-              RECOGNITIONS
-              {activeTab === 'milestones' && (
-                <span className="absolute bottom-[-9px] left-0 w-full h-[2px] bg-black" />
-              )}
-            </button>
+          {/* Column 2: Alejandro Mejias */}
+          <div className="flex flex-col items-start text-left space-y-1.5 sm:space-y-2">
+            {/* Name with Orange Arrow */}
+            <div className="flex items-center gap-2">
+              <ArrowRight className="w-4 h-4 text-[#e06b3a] shrink-0" />
+              <h3 className="text-base sm:text-lg lg:text-xl font-sans font-medium text-[#e06b3a] tracking-tight">
+                Alejandro Mejias
+              </h3>
+            </div>
+
+            {/* Role Subtitle */}
+            <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.16em] text-neutral-400 font-semibold">
+              CO-FOUNDER AND EXPERIENCE DESIGN DIRECTOR
+            </span>
+
+            {/* Bio Paragraphs */}
+            <div className="space-y-1 sm:space-y-1.5 text-[11px] sm:text-xs text-neutral-300 font-sans leading-relaxed">
+              <p>
+                Alejandro has worked in the Australian digital space for many years, helping well-established local and global companies design products from discovery to production. A creatively curious mind and knack for business make him a designer who sees the big picture while paying attention to detail.
+              </p>
+              <p className="text-neutral-400">
+                Ale sees design as not simply an aesthetic pursuit but a tool to solve complex architectural and business problems.
+              </p>
+            </div>
+
+            {/* Outlined Action Pill Buttons */}
+            <div className="flex items-center gap-2 pt-1">
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-1 rounded-full border border-white/30 hover:border-white text-white font-mono text-[9px] tracking-widest uppercase hover:bg-white/10 transition-all duration-200 cursor-pointer"
+              >
+                LIN
+              </a>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-1 rounded-full border border-white/30 hover:border-white text-white font-mono text-[9px] tracking-widest uppercase hover:bg-white/10 transition-all duration-200 cursor-pointer"
+              >
+                IG
+              </a>
+            </div>
           </div>
 
-          {/* Tab 1: Manifesto */}
-          {activeTab === 'manifesto' ? (
-            <div className="space-y-4 text-xs sm:text-sm text-neutral-700 leading-relaxed font-sans">
-              <p className="text-neutral-800 font-medium">
-                "We compose silhouetted spaces where light, pure form, and negative space dictate human attention. By stripping away extraneous decorative noise, the narrative achieves uncompromised clarity."
-              </p>
-              <p className="text-neutral-500 text-xs">
-                Leading a multi-disciplinary collective of computational artists, 3D architects, and creative directors across New York, London, and Tokyo.
-              </p>
-
-              {/* Key Attributes */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="p-3.5 border border-neutral-200 rounded-lg bg-neutral-50/80 flex items-center gap-3">
-                  <Compass size={20} className="text-black shrink-0" />
-                  <div>
-                    <span className="block text-[9px] uppercase tracking-wider text-neutral-400 font-mono">
-                      DIRECTION
-                    </span>
-                    <span className="text-xs font-bold text-black">Spatial Systems</span>
-                  </div>
-                </div>
-                <div className="p-3.5 border border-neutral-200 rounded-lg bg-neutral-50/80 flex items-center gap-3">
-                  <Layers size={20} className="text-black shrink-0" />
-                  <div>
-                    <span className="block text-[9px] uppercase tracking-wider text-neutral-400 font-mono">
-                      DISCIPLINE
-                    </span>
-                    <span className="text-xs font-bold text-black">Monochrome 3D</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* Tab 2: Milestones */
-            <div className="space-y-3 text-xs">
-              <div className="p-3.5 border border-neutral-200 rounded-lg bg-neutral-50/80 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Award size={18} className="text-black shrink-0" />
-                  <div>
-                    <p className="font-bold text-neutral-900">Awwwards Site of the Year</p>
-                    <p className="text-[10px] text-neutral-500 uppercase tracking-wider font-mono">
-                      Spatial Design 2025
-                    </p>
-                  </div>
-                </div>
-                <span className="font-mono text-xs text-neutral-400">01</span>
-              </div>
-
-              <div className="p-3.5 border border-neutral-200 rounded-lg bg-neutral-50/80 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Award size={18} className="text-black shrink-0" />
-                  <div>
-                    <p className="font-bold text-neutral-900">FWA of the Day × 12</p>
-                    <p className="text-[10px] text-neutral-500 uppercase tracking-wider font-mono">
-                      Interactive Direction
-                    </p>
-                  </div>
-                </div>
-                <span className="font-mono text-xs text-neutral-400">02</span>
-              </div>
-
-              <div className="p-3.5 border border-neutral-200 rounded-lg bg-neutral-50/80 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Award size={18} className="text-black shrink-0" />
-                  <div>
-                    <p className="font-bold text-neutral-900">Cannes Lions Grand Prix</p>
-                    <p className="text-[10px] text-neutral-500 uppercase tracking-wider font-mono">
-                      Digital Craft & Aesthetics
-                    </p>
-                  </div>
-                </div>
-                <span className="font-mono text-xs text-neutral-400">03</span>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Sticky Bottom Actions Bar */}
-        <div className="px-6 py-4 border-t border-neutral-200 bg-neutral-50/95 backdrop-blur-sm flex items-center gap-3 shrink-0">
-          <a
-            href="https://linkedin.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 bg-black text-white text-xs tracking-[0.2em] uppercase font-bold font-mono rounded-lg hover:bg-neutral-800 transition-colors duration-200"
-          >
-            <span>CONNECT ON LINKEDIN</span>
-            <ArrowUpRight size={14} />
-          </a>
+      </div>
 
-          <button
-            onClick={onClose}
-            className="px-5 py-3 bg-white text-neutral-800 text-xs tracking-[0.2em] uppercase font-bold font-mono border border-neutral-300 rounded-lg hover:border-black hover:bg-neutral-100 transition-colors duration-200 cursor-pointer"
-          >
-            RETURN
-          </button>
-        </div>
-      </aside>
-
-      {/* Modal Entrance Animations */}
+      {/* Smooth Animations */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -217,7 +226,7 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
         @keyframes scaleIn {
           from {
             opacity: 0;
-            transform: scale(0.94) translateY(12px);
+            transform: scale(0.98) translateY(12px);
           }
           to {
             opacity: 1;

@@ -77,8 +77,8 @@ export const OurTeam: React.FC = () => {
 
   // Memoized camera initial values
   const cameraProps = useMemo(() => ({
-    position: (isMobile ? [0, 5.8, 11.2] : [0, 5.6, 12.8]) as [number, number, number],
-    fov: isMobile ? 44 : 34,
+    position: (isMobile ? [0, 4.8, 9.8] : [0, 5.6, 12.8]) as [number, number, number],
+    fov: isMobile ? 42 : 34,
     near: 0.1,
     far: 50,
   }), [isMobile]);
@@ -98,20 +98,47 @@ export const OurTeam: React.FC = () => {
         />
       </div>
 
-      {/* Background Editorial Header */}
-      <div className="pointer-events-none absolute inset-x-0 top-10 sm:top-14 z-30 flex flex-col items-center text-center select-none px-4">
-        <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.3em] uppercase text-neutral-400 mb-1.5 font-semibold">
-          THE COLLECTIVE & DIRECTION
-        </span>
+      {/* EXACT 1:1 TOP HEADER UI */}
+      <div className="pointer-events-none absolute inset-x-0 top-6 sm:top-8 z-30 flex flex-col items-center text-center select-none px-4">
+        {/* Title flanked by horizontal lines */}
+        <div className="flex items-center gap-3 sm:gap-4 text-[20px] sm:text-[28px] font-mono tracking-[0.32em] text-white uppercase font-normal">
+          <span className="w-6 sm:w-10 h-[1px] bg-white/40" />
+          <span>THE COLLECTIVE & DIRECTION</span>
+          <span className="w-6 sm:w-10 h-[1px] bg-white/40" />
+        </div>
         
-        {sceneState === 'overview' && (
-          <div className="flex items-center gap-2 mt-3 px-3.5 py-1.5 bg-black/80 text-white rounded-full border border-white/20 backdrop-blur-md shadow-xl transition-all duration-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.2em] text-neutral-200 uppercase font-medium">
-              Click the Founder to explore profile
-            </span>
-          </div>
-        )}
+        {/* Subtitle */}
+        <span className="text-[10px] sm:text-[16px] font-mono tracking-[0.28em] uppercase text-neutral-400 mt-1.5 font-normal">
+          A VISION BUILT TOGETHER
+        </span>
+      </div>
+
+      {/* LEFT SIDE INDEX RAIL (01 / 02) */}
+      <div className="pointer-events-none absolute left-6 sm:left-10 top-1/2 -translate-y-1/2 z-30 hidden sm:flex flex-col items-start gap-3 select-none font-mono text-[9px] sm:text-[10px] tracking-widest">
+        {/* 01 Active */}
+        <div className="flex items-center gap-1.5 text-white font-medium">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#ff5500] shadow-[0_0_8px_#ff5500]" />
+          <span>01</span>
+        </div>
+        {/* Vertical Rail Line */}
+        <div className="w-[1px] h-6 bg-white/20 ml-[2.5px]" />
+        {/* 02 Inactive */}
+        <div className="text-neutral-500 font-normal pl-[9px]">
+          02
+        </div>
+      </div>
+
+      {/* RIGHT SIDE SCROLL TRACK */}
+      <div className="pointer-events-none absolute right-6 sm:right-10 top-1/2 -translate-y-1/2 z-30 hidden sm:flex flex-col items-center gap-1 select-none">
+        <div className="w-[2px] h-5 bg-[#ff5500] shadow-[0_0_8px_#ff5500] rounded-full" />
+        <div className="w-[1px] h-12 bg-white/20" />
+      </div>
+
+      {/* BOTTOM RIGHT: SCROLL TO EXPLORE */}
+      <div className="pointer-events-none absolute right-6 sm:right-10 bottom-8 sm:bottom-12 z-30 hidden sm:flex flex-col items-end select-none text-[8px] sm:text-[9px] font-mono tracking-[0.22em] text-neutral-600 font-semibold leading-tight uppercase text-right">
+        <span>SCROLL</span>
+        <span>TO</span>
+        <span>EXPLORE</span>
       </div>
 
       {/* 3D WebGL Canvas with Transparent Alpha Background */}

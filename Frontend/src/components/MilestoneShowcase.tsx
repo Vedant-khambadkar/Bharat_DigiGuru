@@ -202,7 +202,7 @@ export const MilestoneShowcase: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="relative w-full pt-12 sm:pt-16 mt-10 sm:mt-14 font-['Space_Grotesk',sans-serif] text-white"
+      className="relative  p-20 w-full pt-12 sm:pt-16 mt-10 sm:mt-14 font-['Space_Grotesk',sans-serif] text-white"
     >
       <div className="w-full flex flex-col gap-6 sm:gap-8">
         {/* =========================================================================

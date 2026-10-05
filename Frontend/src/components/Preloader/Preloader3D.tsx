@@ -81,41 +81,52 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
 
   // Progress interpolation driven by 3D asset loader and model readiness
   useEffect(() => {
-    const is3DFinished =
-      isReady || (!dreiActive && (dreiProgress >= 99 || (total > 0 && loaded >= total)));
+    // 3D scene is complete only when isReady is true (canvas mounted, textures loaded & compiled)
+    const isDreiDone = !dreiActive && (dreiProgress >= 99 || (total > 0 && loaded >= total));
+    const is3DFinished = isReady && (isDreiDone || dreiProgress >= 95 || total === 0);
 
     let target = 0;
     if (is3DFinished) {
       target = 100;
     } else if (dreiProgress > 0) {
-      target = Math.min(98, Math.max(realProgress, Math.round(dreiProgress)));
+      // Scale Drei progress up to 95% while waiting for final GPU shader compilation
+      target = Math.min(95, Math.max(realProgress, Math.round(dreiProgress * 0.95)));
     } else {
-      target = Math.max(counterRef.current.value, 30);
+      // Gentle initial progress pulse while network initializes
+      target = Math.max(counterRef.current.value, 35);
     }
 
     target = Math.min(100, Math.max(counterRef.current.value, target));
 
     if (target >= 100 && is3DFinished) {
-      updateDisplay(100);
-      const timer = setTimeout(() => {
-        triggerExit();
-      }, 150);
-      return () => clearTimeout(timer);
+      const tween = gsap.to(counterRef.current, {
+        value: 100,
+        duration: 0.35,
+        ease: "power2.out",
+        onUpdate: () => {
+          const val = Math.round(counterRef.current.value);
+          updateDisplay(val);
+        },
+        onComplete: () => {
+          updateDisplay(100);
+          const timer = setTimeout(() => {
+            triggerExit();
+          }, 180);
+          return () => clearTimeout(timer);
+        },
+      });
+      return () => {
+        tween.kill();
+      };
     }
 
     const tween = gsap.to(counterRef.current, {
       value: target,
-      duration: target >= 100 ? 0.3 : 0.5,
+      duration: target >= 100 ? 0.35 : 0.6,
       ease: "power2.out",
       onUpdate: () => {
         const val = Math.round(counterRef.current.value);
         updateDisplay(val);
-      },
-      onComplete: () => {
-        if (is3DFinished || target >= 99) {
-          updateDisplay(100);
-          triggerExit();
-        }
       },
     });
 
@@ -124,12 +135,12 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     };
   }, [realProgress, dreiProgress, dreiActive, isReady, loaded, total, triggerExit]);
 
-  // Safety hard-limit: Guarantee auto-reveal within 1.8s max so user is NEVER stuck on loading screen
+  // Safety fallback: Ensure auto-reveal if network severely stalls (8.5s fallback)
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
       updateDisplay(100);
       triggerExit();
-    }, 1800);
+    }, 8500);
 
     return () => clearTimeout(safetyTimer);
   }, [triggerExit]);

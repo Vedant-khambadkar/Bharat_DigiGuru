@@ -250,17 +250,22 @@ export const Portfolio: React.FC = () => {
       ScrollTrigger.create({
         trigger: section,
         start: "top top",
-        end: "+=2200", // Distance user scrolls through while viewing the full 360° rotation
+        end: "+=1600",
         pin: true,
         pinSpacing: true,
-        scrub: 0.6,
+        scrub: 0.1, // 0.1s near-instant sync with Lenis smooth momentum
         anticipatePin: 1,
         fastScrollEnd: true,
         invalidateOnRefresh: true,
+        onToggle: (self) => {
+          if (self.isActive) {
+            setIsInView(true);
+          }
+        },
         onUpdate: (self) => {
           scrollProgressRef.current = self.progress;
           if (progressBarRef.current) {
-            progressBarRef.current.style.width = `${self.progress * 100}%`;
+            progressBarRef.current.style.transform = `scaleX(${self.progress})`;
           }
         },
       });
@@ -287,12 +292,12 @@ export const Portfolio: React.FC = () => {
       {/* Top Soft Fade Gradient for Seamless Section Blend */}
       <div className="absolute top-0 inset-x-0 h-44 bg-gradient-to-b from-[#050505] via-[#050505]/75 to-transparent pointer-events-none z-10" />
 
-      {/* 360° Rotation Progress Glowing Wire */}
+      {/* 360° Rotation Progress Glowing Wire (GPU hardware-accelerated transform: scaleX) */}
       <div className="absolute top-0 left-0 right-0 h-[2px] z-30 pointer-events-none overflow-hidden">
         <div
           ref={progressBarRef}
-          className="h-full bg-gradient-to-r from-[#ff2d55] via-[#ff3b30] to-[#ff6b00] shadow-[0_0_12px_rgba(255,59,48,0.9)] transition-all duration-75 ease-out"
-          style={{ width: "0%" }}
+          className="h-full w-full origin-left bg-gradient-to-r from-[#ff2d55] via-[#ff3b30] to-[#ff6b00] shadow-[0_0_12px_rgba(255,59,48,0.9)] will-change-transform"
+          style={{ transform: "scaleX(0)" }}
         />
       </div>
 
@@ -338,11 +343,13 @@ export const Portfolio: React.FC = () => {
           <Canvas
             frameloop={isInView ? "always" : "never"}
             dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.5)]}
+            performance={{ min: 0.5 }}
             gl={{
               antialias: true,
               powerPreference: "high-performance",
               stencil: false,
               depth: true,
+              precision: "mediump",
             }}
             camera={{
               position: [0, 0.4, 8.8],
