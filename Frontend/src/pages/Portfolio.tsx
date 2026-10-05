@@ -2,92 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import SkinnedPlane, { type PlaneItem, preloadSkinnedTexture } from "../components/SkinnedPlane";
-import Portfolio3DLoader from "../components/Portfolio3DLoader";
+import SkinnedPlane, { type PlaneItem } from "../components/SkinnedPlane";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 import { getApiCache, setApiCache } from "../utils/apiCache";
+import { preloadMediaList } from "../utils/mediaCache";
 
 gsap.registerPlugin(ScrollTrigger);
-
-// Helper to resolve full image URLs
-export const getFullUrl = (url?: string): string => {
-  if (!url || typeof url !== "string") return "";
-  const trimmed = url.trim();
-  if (!trimmed) return "";
-  if (
-    trimmed.startsWith("http://") ||
-    trimmed.startsWith("https://") ||
-    trimmed.startsWith("data:") ||
-    trimmed.startsWith("blob:")
-  ) {
-    return trimmed;
-  }
-  const cdnBase = import.meta.env.VITE_CLOUDFRONT_URL;
-  if (cdnBase && (trimmed.startsWith("uploads/") || trimmed.startsWith("/uploads/"))) {
-    const cleanKey = trimmed.replace(/^\/+/, "");
-    return `${cdnBase.replace(/\/+$/, "")}/${cleanKey}`;
-  }
-  const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
-  const cleanUrl = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-  return `${base}${cleanUrl}`;
-};
-
-// Helper to format backend portfolio records to PlaneItem structure
-export const formatPortfolioItem = (item: any, index: number): PlaneItem => {
-  const rawImg = item.image || item.imageUrl || item.textureUrl || item.posterUrl || "";
-  const imgUrl = getFullUrl(rawImg);
-
-  return {
-    id: item.id || item._id || index + 1,
-    title: item.title || `Project 0${index + 1}`,
-    category: item.category || item.subtitle || "3D CGI & ArchViz",
-    textureUrl: imgUrl,
-    color: item.color || "#6c8ebb",
-  };
-};
-
-/**
- * Background preloader function: fetches portfolio items & pre-decodes Three.js textures in memory
- */
-export const preloadPortfolioAssets = async (): Promise<PlaneItem[]> => {
-  try {
-    const cached = getApiCache<PlaneItem[]>("portfolio_items");
-    if (cached && cached.length > 0) {
-      // 0ms Cache Hit: Preload textures into Three.js memory cache directly without DB request
-      cached.forEach((item) => {
-        if (item.textureUrl) {
-          preloadSkinnedTexture(item.textureUrl).catch(() => { });
-        }
-      });
-      return cached;
-    }
-
-    const res = await userService.getPortfolio();
-    const rawItems = Array.isArray(res)
-      ? res
-      : Array.isArray(res?.items)
-        ? res.items
-        : Array.isArray(res?.data)
-          ? res.data
-          : [];
-
-    const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
-    if (formatted.length > 0) {
-      setApiCache("portfolio_items", formatted);
-      // Preload Three.js textures in parallel in background memory
-      formatted.forEach((item) => {
-        if (item.textureUrl) {
-          preloadSkinnedTexture(item.textureUrl).catch(() => { });
-        }
-      });
-    }
-    return formatted;
-  } catch (err) {
-    console.warn("Background portfolio preload error:", err);
-    return [];
-  }
-};
 
 export const Portfolio: React.FC = () => {
   const [planes, setPlanes] = useState<PlaneItem[]>(() => {
@@ -98,75 +19,73 @@ export const Portfolio: React.FC = () => {
     const cached = getApiCache<PlaneItem[]>("portfolio_items");
     return cached && cached.length > 0 ? cached[0] : null;
   });
-  const scrollProgressRef = useRef<number>(0);
+  const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(() => {
     const cached = getApiCache<PlaneItem[]>("portfolio_items");
     return !(cached && cached.length > 0);
   });
-  const [is3DReady, setIs3DReady] = useState<boolean>(false);
-  const [isInView, setIsInView] = useState<boolean>(false);
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
-  // Pause WebGL rendering when section is offscreen to save GPU
+  // Helper to resolve full image URLs
+  const getFullUrl = (url?: string): string => {
+    if (!url || typeof url !== "string") return "";
+    const trimmed = url.trim();
+    if (!trimmed) return "";
+    if (
+      trimmed.startsWith("http://") ||
+      trimmed.startsWith("https://") ||
+      trimmed.startsWith("data:") ||
+      trimmed.startsWith("blob:")
+    ) {
+      return trimmed;
+    }
+    const cdnBase = import.meta.env.VITE_CLOUDFRONT_URL;
+    if (cdnBase && (trimmed.startsWith("uploads/") || trimmed.startsWith("/uploads/"))) {
+      const cleanKey = trimmed.replace(/^\/+/, "");
+      return `${cdnBase.replace(/\/+$/, "")}/${cleanKey}`;
+    }
+    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const cleanUrl = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    return `${base}${cleanUrl}`;
+  };
+
+  // Helper to format backend portfolio records to PlaneItem structure
+  const formatPortfolioItem = (item: any, index: number): PlaneItem => {
+    const rawImg = item.image || item.imageUrl || item.textureUrl || item.posterUrl || "";
+    const imgUrl = getFullUrl(rawImg);
+
+    return {
+      id: item.id || item._id || index + 1,
+      title: item.title || `Project 0${index + 1}`,
+      category: item.category || item.subtitle || "3D CGI & ArchViz",
+      textureUrl: imgUrl,
+      color: item.color || "#6c8ebb",
+    };
+  };
+
+  // 1. Fetch Dynamic Portfolio directly from API / Database (with Cache Sync)
   useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
+    // Pre-cache textures from initial cache immediately
+    if (planes.length > 0) {
+      preloadMediaList(planes.map((p) => p.textureUrl));
+    }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsInView(entry.isIntersecting);
-      },
-      { rootMargin: "300px 0px" }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  const handleReady = React.useCallback(() => {
-    setIs3DReady(true);
-  }, []);
-
-  const handleSelectPlane = React.useCallback((plane: PlaneItem) => {
-    setSelectedPlane(plane);
-  }, []);
-
-  // Fetch Dynamic Portfolio directly from API / Database (with Cache Sync)
-  useEffect(() => {
     const fetchPortfolioData = async () => {
-      const cached = getApiCache<PlaneItem[]>("portfolio_items");
-      if (cached && cached.length > 0) {
-        setPlanes(cached);
-        setIsLoading(false);
-        cached.forEach((item) => {
-          if (item.textureUrl) {
-            preloadSkinnedTexture(item.textureUrl).catch(() => { });
-          }
-        });
-        return; // Zero network call on page reload!
-      }
-
       try {
         const res = await userService.getPortfolio();
         const rawItems = Array.isArray(res)
           ? res
           : Array.isArray(res?.items)
-            ? res.items
-            : Array.isArray(res?.data)
-              ? res.data
-              : [];
+          ? res.items
+          : Array.isArray(res?.data)
+          ? res.data
+          : [];
 
         const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
         setPlanes(formatted);
         setApiCache("portfolio_items", formatted);
-
-        // Preload any un-cached textures
-        formatted.forEach((item) => {
-          if (item.textureUrl) {
-            preloadSkinnedTexture(item.textureUrl).catch(() => { });
-          }
-        });
+        preloadMediaList(formatted.map((p: PlaneItem) => p.textureUrl));
 
         if (formatted.length > 0) {
           setSelectedPlane((current) => {
@@ -197,6 +116,7 @@ export const Portfolio: React.FC = () => {
         if (exists) return prev;
         const updated = [formatted, ...prev];
         setApiCache("portfolio_items", updated);
+        preloadMediaList([formatted.textureUrl]);
         if (!selectedPlane) setSelectedPlane(formatted);
         return updated;
       });
@@ -211,6 +131,8 @@ export const Portfolio: React.FC = () => {
             : p
         );
         setApiCache("portfolio_items", updated);
+        const updatedItem = formatPortfolioItem(updatedCard, 0);
+        preloadMediaList([updatedItem.textureUrl]);
         return updated;
       });
       setSelectedPlane((current) =>
@@ -250,22 +172,15 @@ export const Portfolio: React.FC = () => {
       ScrollTrigger.create({
         trigger: section,
         start: "top top",
-        end: "+=1600",
+        end: "+=2200", // Distance user scrolls through while viewing the full 360° rotation
         pin: true,
         pinSpacing: true,
-        scrub: 0.1, // 0.1s near-instant sync with Lenis smooth momentum
-        anticipatePin: 1,
-        fastScrollEnd: true,
+        scrub: 0.6,
         invalidateOnRefresh: true,
-        onToggle: (self) => {
-          if (self.isActive) {
-            setIsInView(true);
-          }
-        },
         onUpdate: (self) => {
-          scrollProgressRef.current = self.progress;
+          setScrollProgress(self.progress);
           if (progressBarRef.current) {
-            progressBarRef.current.style.transform = `scaleX(${self.progress})`;
+            progressBarRef.current.style.width = `${self.progress * 100}%`;
           }
         },
       });
@@ -278,7 +193,7 @@ export const Portfolio: React.FC = () => {
     <section
       ref={sectionRef}
       id="portfolio-section"
-      className="relative w-full h-screen min-h-[640px] overflow-hidden bg-transparent text-white font-['Italiana','Cormorant_Garamond',serif] select-none"
+      className="relative w-full h-screen min-h-[640px] overflow-hidden bg-[#050505] text-white font-['Italiana','Cormorant_Garamond',serif] select-none"
     >
       {/* Background Subtle Dot-Matrix Texture matching MissionVision */}
       <div
@@ -292,65 +207,40 @@ export const Portfolio: React.FC = () => {
       {/* Top Soft Fade Gradient for Seamless Section Blend */}
       <div className="absolute top-0 inset-x-0 h-44 bg-gradient-to-b from-[#050505] via-[#050505]/75 to-transparent pointer-events-none z-10" />
 
-      {/* 360° Rotation Progress Glowing Wire (GPU hardware-accelerated transform: scaleX) */}
+      {/* 360° Rotation Progress Glowing Wire */}
       <div className="absolute top-0 left-0 right-0 h-[2px] z-30 pointer-events-none overflow-hidden">
         <div
           ref={progressBarRef}
-          className="h-full w-full origin-left bg-gradient-to-r from-[#ff2d55] via-[#ff3b30] to-[#ff6b00] shadow-[0_0_12px_rgba(255,59,48,0.9)] will-change-transform"
-          style={{ transform: "scaleX(0)" }}
+          className="h-full bg-gradient-to-r from-[#ff2d55] via-[#ff3b30] to-[#ff6b00] shadow-[0_0_12px_rgba(255,59,48,0.9)] transition-all duration-75 ease-out"
+          style={{ width: "0%" }}
         />
       </div>
 
-      {/* 1. Upper Left Section: Giant PORTFOLIO Title */}
-      <div className="absolute top-12 sm:top-16 md:top-20 left-4 sm:left-8 md:left-12 z-10 pointer-events-none flex items-start">
-        <h1 className="font-neuropol text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal leading-none tracking-wider text-white m-0 uppercase select-none">
-          PORTFOLIO
+      {/* 1. Upper Left Section */}
+      <div className="absolute top-16 sm:top-20 md:top-[125px] left-4 sm:left-8 md:left-12 max-w-[270px] sm:max-w-[340px] md:max-w-[380px] z-10 pointer-events-none">
+        <h1 className="font-neuropol text-lg sm:text-2xl md:text-[32px] font-normal leading-[1.2] tracking-wide mb-1.5 sm:mb-3 text-white uppercase">
+          Crafting Digital
+          <br />
+          Experiences That Speak.
         </h1>
+        <p className="text-[10.5px] sm:text-xs md:text-[13px] leading-relaxed text-stone-300 m-0 tracking-[0.01em]">
+          At Bharat DigiGuru, we engineer photorealistic 3D CGI, immersive visual media, and next-generation interactive architectures tailored for world-class enterprises.
+        </p>
       </div>
 
       {/* 2. Upper Right Section */}
-      <div className="hidden lg:block absolute top-8 sm:top-12 md:top-40 right-12 max-w-[360px] text-right z-10 pointer-events-none">
-        <h2 className="font-neuropol text-xl lg:text-[18px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
+      <div className="hidden lg:block absolute top-[125px] right-12 max-w-[360px] text-right z-10 pointer-events-none">
+        <h2 className="font-neuropol text-xl lg:text-[22px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
           Shaping Your Vision
           <br />
           Into Immersive Reality.
         </h2>
       </div>
 
-      {/* 3. Bottom Left Section: Descriptive Data */}
-      <div className="absolute bottom-3 sm:bottom-4 md:bottom-2 left-4 sm:left-8 md:left-12 max-w-[280px] sm:max-w-[340px] md:max-w-[400px] z-10 pointer-events-none flex flex-col gap-1.5 sm:gap-2.5">
-        <h2 className="font-neuropol text-base sm:text-xl md:text-2xl font-normal leading-[1.2] tracking-wide text-white uppercase m-0">
-          Crafting Digital
-          <br />
-          Experiences That Speak.
-        </h2>
-        <p className="text-[10.5px] sm:text-xs md:text-[13px] leading-relaxed text-stone-300 m-0 tracking-[0.01em]">
-          At Bharat DigiGuru, we engineer photorealistic 3D CGI, immersive visual media, and next-generation interactive architectures tailored for world-class enterprises.
-        </p>
-      </div>
-
       {/* 3. Center 3D Interactive SkinnedMesh Carousel */}
       <div className="absolute inset-0 z-[1]">
-        {/* Futuristic 3D Model Animated Loader HUD */}
-        {(!is3DReady || isLoading) && (
-          <Portfolio3DLoader
-            className={`transition-opacity duration-700 ${is3DReady ? "opacity-0 pointer-events-none" : "opacity-100"
-              }`}
-          />
-        )}
-
         {planes.length > 0 ? (
           <Canvas
-            frameloop={isInView ? "always" : "never"}
-            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.5)]}
-            performance={{ min: 0.5 }}
-            gl={{
-              antialias: true,
-              powerPreference: "high-performance",
-              stencil: false,
-              depth: true,
-              precision: "mediump",
-            }}
             camera={{
               position: [0, 0.4, 8.8],
               fov: 46,
@@ -373,14 +263,18 @@ export const Portfolio: React.FC = () => {
             <SkinnedPlane
               planes={planes}
               selectedId={selectedPlane?.id}
-              scrollProgressRef={scrollProgressRef}
-              onSelectPlane={handleSelectPlane}
-              onReady={handleReady}
+              scrollProgress={scrollProgress}
+              onSelectPlane={setSelectedPlane}
             />
           </Canvas>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 pointer-events-none">
-            {!isLoading && (
+            {isLoading ? (
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 rounded-full border-2 border-red-500/30 border-t-red-500 animate-spin" />
+                <span className="text-xs font-mono uppercase tracking-widest text-neutral-400">Loading Portfolio...</span>
+              </div>
+            ) : (
               <div className="text-stone-500 text-sm font-mono uppercase tracking-widest">
                 No portfolio items available in the database.
               </div>
@@ -389,6 +283,12 @@ export const Portfolio: React.FC = () => {
         )}
       </div>
 
+      {/* 4. Bottom Left Display Branding */}
+      <div className="absolute bottom-4 sm:bottom-6 md:bottom-9 left-4 sm:left-8 md:left-12 flex items-end gap-3.5 z-10 pointer-events-none">
+        <div className="font-neuropol text-6xl font-normal leading-[0.88] tracking-wider text-white m-0 uppercase select-none">
+          PORTFOLIO
+        </div>
+      </div>
     </section>
   );
 };

@@ -9,7 +9,7 @@ import MissionVision from "./pages/MissionVision";
 import ToolsAndTechnology from "./pages/ToolsAndTechnology";
 import PlatformsWeManage from "./pages/PlatformsWeManage";
 import Process from "./pages/Process";
-import Portfolio, { preloadPortfolioAssets } from "./pages/Portfolio";
+import Portfolio from "./pages/Portfolio";
 import ThreeDProjects from "./pages/ThreeDProjects";
 import WorkWithUs from "./pages/WhyWorkWithUs";
 import OurTeam from "./pages/OurTeam";
@@ -34,7 +34,11 @@ const MainLandingPage = () => {
   const mainContentRef = useRef<HTMLDivElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [is3DReady, setIs3DReady] = useState(false);
+  const [isHome3DReady, setIsHome3DReady] = useState(false);
+  const [isPortfolioReady, setIsPortfolioReady] = useState(false);
+
+  // Ready only when BOTH Home 3D model and Portfolio 3D textures are decoded into GPU memory
+  const isOverall3DReady = isHome3DReady && isPortfolioReady;
 
   const handleStartPageReveal = useCallback(() => {
     (window as any).lenis?.start();
@@ -124,30 +128,6 @@ const MainLandingPage = () => {
     };
   }, [handleOpenAdminPortal]);
 
-  // Background idle preloading of 3D Portfolio data & textures on initial mount
-  useEffect(() => {
-    let isDisposed = false;
-    const triggerPortfolioPreload = () => {
-      if (isDisposed) return;
-      preloadPortfolioAssets();
-    };
-
-    if ("requestIdleCallback" in window) {
-      const idleId = (window as any).requestIdleCallback(triggerPortfolioPreload, { timeout: 1200 });
-      return () => {
-        isDisposed = true;
-        if ("cancelIdleCallback" in window) {
-          (window as any).cancelIdleCallback(idleId);
-        }
-      };
-    } else {
-      const timerId = setTimeout(triggerPortfolioPreload, 600);
-      return () => {
-        isDisposed = true;
-        clearTimeout(timerId);
-      };
-    }
-  }, []);
 
   // Global Lenis Smooth Momentum Scrolling synchronized with GSAP ScrollTrigger
   useEffect(() => {
@@ -346,10 +326,10 @@ const MainLandingPage = () => {
         className="w-1 h-1 rounded-full z-50 fixed top-0 left-0 pointer-events-none flex items-center justify-center transition-opacity"
       />
 
-      {/* 3D Preloader Overlay (Strictly tracks 3D model & asset loading) */}
+      {/* 3D Preloader Overlay (Strictly tracks 3D models & Portfolio textures loading) */}
       {isLoading && (
         <Preloader3D
-          isReady={is3DReady}
+          isReady={isOverall3DReady}
           onStartExit={handleStartPageReveal}
           onComplete={handlePreloaderComplete}
         />
@@ -363,7 +343,7 @@ const MainLandingPage = () => {
 
       {/* Main Sections Flow */}
       <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
-        <Home on3DReady={() => setIs3DReady(true)} />
+        <Home on3DReady={() => setIsHome3DReady(true)} />
         <Services />
         <PlatformsWeManage />
         <Portfolio />

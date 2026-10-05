@@ -1,10 +1,11 @@
-import React, { useMemo, useRef, useEffect } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { getCachedMediaUrl } from "../utils/mediaCache";
 
 const WIDTH = 4.0;
 const HEIGHT = 2.5;
-const SEGMENTS = 10; // Lightweight 10-bone curve: maximum FPS, zero skeleton overhead
+const SEGMENTS = 30;
 const RADIUS = 0.12;
 
 export interface PlaneItem {
@@ -15,15 +16,18 @@ export interface PlaneItem {
   color?: string;
 }
 
+
 function createSkinnedPlaneData(
   width: number,
   height: number,
   segments: number,
-  initialTexture?: THREE.Texture,
+  _textureUrl?: string,
   color: string = "#6c8ebb"
 ) {
   // 1. Plane geometry subdivided horizontally along X-axis
   const geometry = new THREE.PlaneGeometry(width, height, segments, 1);
+
+  // Shift geometry so the left edge (top-left to bottom-left) is anchored at x = 0
   geometry.translate(width / 2, 0, 0);
 
   const position = geometry.attributes.position;
@@ -65,14 +69,15 @@ function createSkinnedPlaneData(
   const skeleton = new THREE.Skeleton(bones);
 
   const material = new THREE.MeshStandardMaterial({
-    color: initialTexture ? new THREE.Color("#ffffff") : new THREE.Color(color),
-    map: initialTexture || null,
-    side: THREE.FrontSide, // FrontSide cuts fragment shader fill-rate overhead by 50%
-    roughness: 0.4,
-    metalness: 0.0,
+    color: new THREE.Color(color),
+    side: THREE.DoubleSide,
+    roughness: 0.35,
+    metalness: 0.05,
   });
 
   const mesh = new THREE.SkinnedMesh(geometry, material);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
   mesh.add(bones[0]);
   mesh.bind(skeleton);
 
@@ -92,71 +97,8 @@ interface SingleSkinnedPlaneProps {
   radius?: number;
   showSkeleton?: boolean;
   bendState?: React.MutableRefObject<number>;
-  isRotatingRef?: React.MutableRefObject<boolean>;
+  isRotating?: boolean;
   onHoverPlane?: (plane: PlaneItem) => void;
-}
-
-// Fast in-memory texture cache to provide 0ms instant rendering
-const textureMemoryCache = new Map<string, THREE.Texture>();
-const inFlightTexturePromises = new Map<string, Promise<THREE.Texture>>();
-
-/**
- * Preloads and decodes a Three.js texture into GPU memory without CPU-blocking mipmap generation.
- */
-export function preloadSkinnedTexture(url?: string): Promise<THREE.Texture> {
-  if (!url || !url.trim()) return Promise.reject("Empty URL");
-  const cleanUrl = url.trim();
-
-  if (textureMemoryCache.has(cleanUrl)) {
-    return Promise.resolve(textureMemoryCache.get(cleanUrl)!);
-  }
-
-  if (inFlightTexturePromises.has(cleanUrl)) {
-    return inFlightTexturePromises.get(cleanUrl)!;
-  }
-
-  const promise = new Promise<THREE.Texture>((resolve, reject) => {
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin("anonymous");
-
-    const loadDirect = (targetUrl: string, isFallback = false) => {
-      loader.load(
-        targetUrl,
-        (tex) => {
-          tex.colorSpace = THREE.SRGBColorSpace;
-          tex.generateMipmaps = false; // Bypasses CPU/GPU mipmap generation freeze
-          tex.minFilter = THREE.LinearFilter;
-          tex.magFilter = THREE.LinearFilter;
-          tex.needsUpdate = true;
-          textureMemoryCache.set(cleanUrl, tex);
-          inFlightTexturePromises.delete(cleanUrl);
-          resolve(tex);
-        },
-        undefined,
-        (err) => {
-          if (!isFallback && (cleanUrl.includes("amazonaws.com") || cleanUrl.includes("cloudfront.net"))) {
-            const baseApi = import.meta.env.VITE_API_URL || "http://localhost:5000";
-            try {
-              const urlObj = new URL(cleanUrl);
-              const key = urlObj.pathname.replace(/^\/+/, "");
-              const proxyUrl = `${baseApi}/api/media/stream?key=${encodeURIComponent(key)}`;
-              loadDirect(proxyUrl, true);
-              return;
-            } catch {
-              // ignore and fail
-            }
-          }
-          inFlightTexturePromises.delete(cleanUrl);
-          reject(err);
-        }
-      );
-    };
-
-    loadDirect(cleanUrl);
-  });
-
-  inFlightTexturePromises.set(cleanUrl, promise);
-  return promise;
 }
 
 export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
@@ -170,21 +112,18 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
   radius = RADIUS,
   showSkeleton = false,
   bendState,
-  isRotatingRef,
+  isRotating = false,
   onHoverPlane,
 }) => {
   const meshRef = useRef<THREE.SkinnedMesh>(null!);
   const groupYRef = useRef<THREE.Group>(null!);
-  const isHoveredRef = useRef(false);
-  const prevBendRef = useRef(999);
+  const [isHovered, setIsHovered] = useState(false);
 
   const { mesh, skeletonHelper } = useMemo(() => {
-    const cleanUrl = textureUrl ? textureUrl.trim() : "";
-    const cachedTex = cleanUrl ? textureMemoryCache.get(cleanUrl) : undefined;
-    return createSkinnedPlaneData(width, height, segments, cachedTex, color);
-  }, [width, height, segments, color, textureUrl]);
+    return createSkinnedPlaneData(width, height, segments, undefined, color);
+  }, [width, height, segments, color]);
 
-  // Load texture: 0ms instant hit if cached, or fast progressive load
+  // Load texture asynchronously with CORS anonymous and proper Three.js lifecycle
   useEffect(() => {
     if (!textureUrl || textureUrl.trim().length === 0) {
       if (meshRef.current) {
@@ -198,42 +137,72 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
       return;
     }
 
-    const cleanUrl = textureUrl.trim();
-
-    if (textureMemoryCache.has(cleanUrl)) {
-      const tex = textureMemoryCache.get(cleanUrl)!;
-      if (meshRef.current) {
-        const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-        if (mat) {
-          mat.map = tex;
-          mat.color.set("#ffffff");
-          mat.needsUpdate = true;
-        }
-      }
-      return;
-    }
-
     let isCancelled = false;
-    preloadSkinnedTexture(cleanUrl)
-      .then((tex) => {
-        if (!isCancelled && meshRef.current) {
-          const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-          if (mat) {
-            mat.map = tex;
-            mat.color.set("#ffffff");
-            mat.needsUpdate = true;
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
+
+    const tryLoad = (url: string, isRetry = false) => {
+      loader.load(
+        url,
+        (tex) => {
+          if (isCancelled) {
+            tex.dispose();
+            return;
           }
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.generateMipmaps = true;
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.magFilter = THREE.LinearFilter;
+          tex.needsUpdate = true;
+
+          if (meshRef.current) {
+            const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+            if (mat) {
+              mat.map = tex;
+              mat.color.set("#ffffff");
+              mat.needsUpdate = true;
+            }
+          }
+        },
+        undefined,
+        (err) => {
+          if (!isRetry && (url.includes("amazonaws.com") || url.includes("cloudfront.net"))) {
+            // Attempt fallback through backend media streaming endpoint
+            const baseApi = import.meta.env.VITE_API_URL || "http://localhost:5000";
+            try {
+              const urlObj = new URL(url);
+              const key = urlObj.pathname.replace(/^\/+/, "");
+              const proxyUrl = `${baseApi}/api/media/stream?key=${encodeURIComponent(key)}`;
+              tryLoad(proxyUrl, true);
+              return;
+            } catch {
+              // Ignore URL parse error and proceed to error handler
+            }
+          }
+
+          console.warn(`[SkinnedPlane] Texture load warning for: ${url}`, err);
+          if (!isCancelled && meshRef.current) {
+            const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+            if (mat) {
+              mat.map = null;
+              mat.color.set(color);
+              mat.needsUpdate = true;
+            }
+          }
+        }
+      );
+    };
+ 
+    // Fetch via browser CacheStorage/Blob cache to eliminate repeated CloudFront hits
+    getCachedMediaUrl(textureUrl)
+      .then((cachedUrl) => {
+        if (!isCancelled) {
+          tryLoad(cachedUrl || textureUrl);
         }
       })
-      .catch((err) => {
-        console.warn(`[SkinnedPlane] Texture load warning for: ${cleanUrl}`, err);
-        if (!isCancelled && meshRef.current) {
-          const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-          if (mat) {
-            mat.map = null;
-            mat.color.set(color);
-            mat.needsUpdate = true;
-          }
+      .catch(() => {
+        if (!isCancelled) {
+          tryLoad(textureUrl);
         }
       });
 
@@ -258,41 +227,33 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
     };
   }, [mesh]);
 
-  // Frame update: highly optimized conditional calculations
+  // Frame update: bend bones on drag and smoothly animate Y elevation ONLY while actively hovered
   useFrame((_, delta) => {
-    // 1. Dynamic bone bend: only compute if bend actually changed significantly
-    if (bendState) {
+    // 1. Dynamic bone bend
+    const bones = meshRef.current?.skeleton?.bones;
+    if (bones && bendState) {
       const currentBend = bendState.current;
-      if (Math.abs(currentBend - prevBendRef.current) > 0.0002 || Math.abs(currentBend) > 0.0005) {
-        prevBendRef.current = currentBend;
-        const bones = meshRef.current?.skeleton?.bones;
-        if (bones) {
-          for (let j = 1; j < bones.length; j++) {
-            const factor = j / segments;
-            bones[j].rotation.y = currentBend * (0.4 + factor * 1.1);
-          }
-        }
+      for (let j = 1; j < bones.length; j++) {
+        const factor = j / segments;
+        bones[j].rotation.y = currentBend * (0.4 + factor * 1.1);
       }
     }
 
-    // 2. Y-Elevation: rises to +0.45 on hover; drops smoothly back to 0
+    // 2. Y-Elevation: rises to +0.45 on hover; drops immediately back to 0 when cursor leaves or when rotating
     if (groupYRef.current) {
-      const isRotating = isRotatingRef ? isRotatingRef.current : false;
-      const targetY = isHoveredRef.current && !isRotating ? 0.45 : 0;
-      if (Math.abs(groupYRef.current.position.y - targetY) > 0.001) {
-        groupYRef.current.position.y = THREE.MathUtils.damp(
-          groupYRef.current.position.y,
-          targetY,
-          8,
-          delta
-        );
-      }
+      const targetY = isHovered && !isRotating ? 0.45 : 0;
+      groupYRef.current.position.y = THREE.MathUtils.damp(
+        groupYRef.current.position.y,
+        targetY,
+        8,
+        delta
+      );
     }
   });
 
   const handlePointerOver = (e: any) => {
     e.stopPropagation();
-    isHoveredRef.current = true;
+    setIsHovered(true);
     document.body.style.cursor = "pointer";
     if (onHoverPlane) {
       onHoverPlane(plane);
@@ -301,17 +262,18 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
 
   const handlePointerOut = (e: any) => {
     e.stopPropagation();
-    isHoveredRef.current = false;
+    setIsHovered(false);
     document.body.style.cursor = "grab";
   };
 
   return (
     <group rotation={[0, rotationY, 0]}>
+      {/* Animated Y-elevation container */}
       <group ref={groupYRef} position={[0, 0, 0]}>
         <group position={[radius, 0, 0]}>
           <primitive ref={meshRef} object={mesh} />
 
-          {/* Hit mesh covering the plane for instantaneous hover detection */}
+          {/* Double-sided hit mesh covering the plane for instantaneous hover detection */}
           <mesh
             position={[width / 2, 0, 0.01]}
             onPointerOver={handlePointerOver}
@@ -340,61 +302,45 @@ interface SkinnedPlaneProps {
   radius?: number;
   selectedId?: number | string;
   scrollProgress?: number;
-  scrollProgressRef?: React.MutableRefObject<number>;
   planes?: PlaneItem[];
   onSelectPlane?: (plane: PlaneItem) => void;
-  onReady?: () => void;
 }
 
 export default function SkinnedPlane({
   showSkeleton = false,
   radius = RADIUS,
   scrollProgress = 0,
-  scrollProgressRef,
   planes = [],
   onSelectPlane,
-  onReady,
 }: SkinnedPlaneProps) {
+  // Dynamically derive geometry count directly from the API planes array
   const activePlanes = planes || [];
   const total = activePlanes.length;
   const groupRef = useRef<THREE.Group>(null!);
 
-  const hasNotifiedReady = useRef(false);
   const isDragging = useRef(false);
   const prevPointerX = useRef(0);
   const targetRotation = useRef(0);
   const currentRotation = useRef(0);
   const prevRotation = useRef(0);
   const bendState = useRef(0);
-  const isRotatingRef = useRef(false);
+  const [isRotating, setIsRotating] = useState(false);
 
-  // Intro entrance animation state (starts ready to view)
-  const introY = useRef(0);
-  const introRotation = useRef(0);
-  const introScale = useRef(1.0);
+  // Intro entrance animation state (starts below screen with initial spin & scale)
+  const introY = useRef(-5.2);
+  const introRotation = useRef(-Math.PI * 8.4);
+  const introScale = useRef(0);
 
-  // Scroll rotation damped state
+  // Scroll rotation damped state (full 360 degree revolution = 2 * PI)
   const scrollRotDamped = useRef(0);
   const lastActiveIndex = useRef(-1);
 
-  const { size, gl } = useThree();
-  const isMobile = size.width < 640;
-  const isTablet = size.width >= 640 && size.width < 1024;
-  const responsiveScale = isMobile
-    ? Math.min(Math.max(size.width / 700, 0.46), 0.58)
-    : isTablet
-      ? 0.78
-      : 1.0;
-  const responsiveYShift = isMobile ? -0.22 : 0;
-
-  // Localized pointer drag listeners on canvas DOM element instead of global window listeners
+  // Pointer drag listeners for manual exploration
   useEffect(() => {
-    const domElement = gl.domElement;
-    if (!domElement) return;
-
     let startX = 0;
 
     const handlePointerDown = (e: PointerEvent) => {
+      // Only drag if left click
       if (e.button !== 0) return;
       isDragging.current = true;
       startX = e.clientX;
@@ -408,7 +354,7 @@ export default function SkinnedPlane({
       if (Math.abs(e.clientX - startX) > 4) {
         document.body.style.cursor = "grabbing";
       }
-      targetRotation.current += deltaX * 0.008;
+      targetRotation.current += deltaX * 0.01;
     };
 
     const handlePointerUp = () => {
@@ -416,54 +362,54 @@ export default function SkinnedPlane({
       document.body.style.cursor = "grab";
     };
 
-    domElement.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("pointerdown", handlePointerDown);
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
     window.addEventListener("pointercancel", handlePointerUp);
 
+    document.body.style.cursor = "grab";
+
     return () => {
-      domElement.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
+      document.body.style.cursor = "default";
     };
-  }, [gl]);
+  }, []);
 
-  // Frame loop: smooth scroll-driven rotation, drag damping, and bone flexing physics with ZERO React state thrashing
+  const { size } = useThree();
+  const isMobile = size.width < 640;
+  const isTablet = size.width >= 640 && size.width < 1024;
+  // Adaptive scaling so carousel fits comfortably on mobile screens without covering top/bottom text
+  const responsiveScale = isMobile
+    ? Math.min(Math.max(size.width / 700, 0.46), 0.58)
+    : isTablet
+    ? 0.78
+    : 1.0;
+  const responsiveYShift = isMobile ? -0.22 : 0;
+
+  // Frame loop: smooth intro rise, scroll-driven 360 degree rotation, drag damping, and bone flexing physics
   useFrame((_, delta) => {
-    if (!hasNotifiedReady.current) {
-      hasNotifiedReady.current = true;
-      if (onReady) {
-        onReady();
-      }
-    }
+    // 0. Smoothly damp intro entrance values up to resting pose (y=0, rot=0, scale=1.0)
+    introY.current = THREE.MathUtils.damp(introY.current, 0, 3.2, delta);
+    introRotation.current = THREE.MathUtils.damp(introRotation.current, 0, 2.6, delta);
+    introScale.current = THREE.MathUtils.damp(introScale.current, 1.0, 3.5, delta);
 
-    // 0. Smoothly damp intro values
-    if (Math.abs(introY.current) > 0.001) {
-      introY.current = THREE.MathUtils.damp(introY.current, 0, 3.2, delta);
-    }
-    if (Math.abs(introRotation.current) > 0.001) {
-      introRotation.current = THREE.MathUtils.damp(introRotation.current, 0, 2.6, delta);
-    }
-    if (Math.abs(introScale.current - 1.0) > 0.001) {
-      introScale.current = THREE.MathUtils.damp(introScale.current, 1.0, 3.5, delta);
-    }
-
-    // 1. Scroll-driven 360-degree rotation (snappy responsive tracking synchronized with Lenis)
-    const effectiveScrollProg = scrollProgressRef ? scrollProgressRef.current : scrollProgress;
-    const targetScrollRot = -effectiveScrollProg * Math.PI * 2;
+    // 1. Scroll-driven 360-degree rotation (progress 0..1 maps to 0..2*PI)
+    const targetScrollRot = -scrollProgress * Math.PI * 2;
     scrollRotDamped.current = THREE.MathUtils.damp(
       scrollRotDamped.current,
       targetScrollRot,
-      15,
+      6,
       delta
     );
 
-    // 2. Smoothly damp drag rotation
+    // 2. Smoothly damp user drag rotation towards target
     currentRotation.current = THREE.MathUtils.damp(
       currentRotation.current,
       targetRotation.current,
-      12,
+      6,
       delta
     );
 
@@ -475,34 +421,40 @@ export default function SkinnedPlane({
       groupRef.current.scale.setScalar(introScale.current * responsiveScale);
     }
 
-    // 3. Auto-update active plane index (only when dragging settles or user pauses)
+    // 3. Auto-update active plane preview based on carousel rotation angle
     if (total > 0) {
       const normalizedAngle = ((-totalRotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
       const activeIdx = Math.round((normalizedAngle / (Math.PI * 2)) * total) % total;
       if (activeIdx !== lastActiveIndex.current && activePlanes[activeIdx]) {
         lastActiveIndex.current = activeIdx;
-        // Don't spam React state on high-speed scroll; let user hover or settle
+        if (onSelectPlane && !isDragging.current) {
+          onSelectPlane(activePlanes[activeIdx]);
+        }
       }
     }
 
-    // 4. Calculate rotational velocity
+    // 4. Calculate rotational velocity (speed & direction of drag + scroll + intro spin)
     const rotVelocity = (totalRotation - prevRotation.current) / Math.max(delta, 0.001);
     prevRotation.current = totalRotation;
 
-    // Use ref directly without triggering React re-renders!
-    isRotatingRef.current = Math.abs(rotVelocity) > 0.35 || Math.abs(introY.current) > 0.15;
+    // Detect active rotation motion (drops elevated plane down when spinning or during intro)
+    const isActivelySpinning = Math.abs(rotVelocity) > 0.35 || Math.abs(introY.current) > 0.15;
+    if (isActivelySpinning !== isRotating) {
+      setIsRotating(isActivelySpinning);
+    }
 
-    // 5. Compute target bone curvature from velocity
+    // 5. Compute target bone curvature from velocity (lagging inertia during spin & rise)
     const maxBendPerBone = 0.065;
     const targetBend = THREE.MathUtils.clamp(-rotVelocity * 0.009, -maxBendPerBone, maxBendPerBone);
 
-    // 6. Smoothly damp bone bend
+    // 6. Smoothly damp bone bend; springs back to 0 (flat rest pose) when motion settles
     bendState.current = THREE.MathUtils.damp(bendState.current, targetBend, 7, delta);
   });
 
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
       {activePlanes.map((plane, index) => {
+        // Distribute all planes equally around 360 degrees (2 * PI) based on dynamic total
         const rotationY = (index / total) * Math.PI * 2;
 
         return (
@@ -515,7 +467,7 @@ export default function SkinnedPlane({
             radius={radius}
             showSkeleton={showSkeleton}
             bendState={bendState}
-            isRotatingRef={isRotatingRef}
+            isRotating={isRotating}
             onHoverPlane={onSelectPlane}
           />
         );
@@ -523,4 +475,3 @@ export default function SkinnedPlane({
     </group>
   );
 }
-
