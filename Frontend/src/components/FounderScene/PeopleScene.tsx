@@ -7,6 +7,7 @@ import { FounderCharacter } from './FounderCharacter';
 import StudioEnvironment from './StudioEnvironment';
 import { CameraController } from './CameraController';
 import type { SceneState } from '../../types/scene';
+import { MODEL_URLS } from '../../config/models';
 
 interface PeopleSceneProps {
   sceneState: SceneState;
@@ -24,7 +25,7 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
   isMobile,
 }) => {
   // Load authentic 3D businessman model
-  const gltf = useGLTF('/businessman.glb');
+  const gltf = useGLTF(MODEL_URLS.businessman);
 
   // Prepare normalized base model scene
   const baseScene = useMemo(() => {
@@ -102,7 +103,5 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
 });
 
 PeopleScene.displayName = 'PeopleScene';
-
-useGLTF.preload('/businessman.glb');
 
 export default PeopleScene;

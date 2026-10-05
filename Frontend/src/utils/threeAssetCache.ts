@@ -22,10 +22,6 @@ export function initThreeAssetCache(): void {
   THREE.Cache.enabled = true;
 }
 
-/**
- * Preloads and caches heavy 3D assets (e.g. mac.glb, HDRs)
- * into CacheStorage in the background.
- */
 export async function preload3DAsset(url: string): Promise<void> {
   if (!url || typeof window === "undefined" || !("caches" in window)) return;
   try {

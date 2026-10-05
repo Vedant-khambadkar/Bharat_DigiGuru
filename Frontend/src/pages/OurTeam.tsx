@@ -4,33 +4,19 @@ import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { PeopleScene } from '../components/FounderScene/PeopleScene';
 import { FounderProfileModal } from '../components/FounderScene/FounderProfileModal';
+import ModelLoader from '../components/ModelLoader/ModelLoader';
+import ModelErrorBoundary from '../components/ModelLoader/ModelErrorBoundary';
 import desktopVignette from '../assets/Monochrome Vignette White Space.png';
 import mobileVignette from '../assets/Minimalist Black and White Vignette  mobile.png';
+import { MODEL_URLS } from '../config/models';
 import type { SceneState } from '../types/scene';
 
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
 /**
- * Preload 3D Character model & background vignettes during initial site loading
+ * Preload 3D Character model & background vignettes during site loading
  */
 export const preloadOurTeamAssets = async () => {
   try {
-    useGLTF.preload('/businessman.glb');
-    
-    const loadModel = new Promise((resolve) => {
-      const loader = new GLTFLoader();
-      loader.load(
-        '/businessman.glb',
-        (gltf) => {
-          resolve(gltf);
-        },
-        undefined,
-        (err) => {
-          console.warn("businessman.glb preload warning:", err);
-          resolve(null);
-        }
-      );
-    });
+    useGLTF.preload(MODEL_URLS.businessman);
 
     const preloadImage = (src: string) =>
       new Promise((resolve) => {
@@ -41,7 +27,6 @@ export const preloadOurTeamAssets = async () => {
       });
 
     await Promise.allSettled([
-      loadModel,
       preloadImage(desktopVignette),
       preloadImage(mobileVignette),
     ]);
@@ -184,15 +169,17 @@ export const OurTeam: React.FC = () => {
           camera={cameraProps}
           className="w-full h-full block"
         >
-          <Suspense fallback={null}>
-            <PeopleScene
-              sceneState={sceneState}
-              onSelectFounder={handleSelectFounder}
-              onTransitionComplete={handleTransitionComplete}
-              onReturnComplete={handleReturnComplete}
-              isMobile={isMobile}
-            />
-          </Suspense>
+          <ModelErrorBoundary fallback={null}>
+            <Suspense fallback={<ModelLoader theme="light" label="Loading 3D" />}>
+              <PeopleScene
+                sceneState={sceneState}
+                onSelectFounder={handleSelectFounder}
+                onTransitionComplete={handleTransitionComplete}
+                onReturnComplete={handleReturnComplete}
+                isMobile={isMobile}
+              />
+            </Suspense>
+          </ModelErrorBoundary>
         </Canvas>
       </div>
 

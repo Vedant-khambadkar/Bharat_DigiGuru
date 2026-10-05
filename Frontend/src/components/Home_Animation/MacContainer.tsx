@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import gsap from "gsap";
 
-import macModel from "../../assets/Model/mac.glb";
+import { MODEL_URLS } from "../../config/models";
 import heroImg from "../../assets/Picture/Picture3.webp";
 import keyboardImg from "../../assets/Picture/keyboard Texture2.png";
 import laptopBackImg from "../../assets/Picture/laptop-back.png";
@@ -42,7 +42,7 @@ const PARAMS = {
 const MacContainer = () => {
   const groupRef = useRef<THREE.Group>(null);
   const { camera, gl, size } = useThree();
-  const mac = useGLTF(macModel);
+  const mac = useGLTF(MODEL_URLS.mac);
   const screen = useTexture(heroImg);
   const keyboard = useTexture(keyboardImg);
   const laptopBack = useTexture(laptopBackImg);
@@ -257,7 +257,7 @@ const MacContainer = () => {
   );
 };
 
-useGLTF.preload(macModel);
+useGLTF.preload(MODEL_URLS.mac);
 useTexture.preload(heroImg);
 useTexture.preload(keyboardImg);
 useTexture.preload(laptopBackImg);

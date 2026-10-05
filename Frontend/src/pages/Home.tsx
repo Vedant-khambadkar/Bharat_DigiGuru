@@ -9,6 +9,8 @@ import YoutubeAnimation from '../components/Home_Animation/YoutubeAnimation.tsx'
 import PinterestAnimation from '../components/Home_Animation/PinterestAnimation.tsx'
 import TikTokAnimation from '../components/Home_Animation/TikTokAnimation.tsx'
 import KeyboardEditorialOverlay from '../components/Home_Animation/KeyboardEditorialOverlay.tsx'
+import ModelLoader from '../components/ModelLoader/ModelLoader.tsx'
+import ModelErrorBoundary from '../components/ModelLoader/ModelErrorBoundary.tsx'
 import * as THREE from "three"
 
 gsap.registerPlugin(ScrollTrigger);
@@ -144,21 +146,23 @@ function Home({ on3DReady }: HomeProps) {
             }}
             camera={{ position: [0, 4.3, 38], fov: 40 }}
           >
-            <Suspense fallback={null}>
-              <ResponsiveCamera />
-              <CanvasReadyNotifier onReady={handle3DReady} />
-              <ambientLight intensity={1.8} />
-              <directionalLight position={[10, 15, 10]} intensity={2.2} color="#ffffff" />
-              <directionalLight position={[-10, 8, -5]} intensity={0.9} color="#90b0e0" />
-              <ScrollControls pages={5} damping={0.15}>
-                <ScrollTriggerSync progressRef={progressRef} />
-                <MacContainer />
-                <InstagramAnimation />
-                <YoutubeAnimation />
-                <PinterestAnimation />
-                <TikTokAnimation />
-              </ScrollControls>
-            </Suspense>
+            <ModelErrorBoundary fallback={null}>
+              <Suspense fallback={<ModelLoader />}>
+                <ResponsiveCamera />
+                <CanvasReadyNotifier onReady={handle3DReady} />
+                <ambientLight intensity={1.8} />
+                <directionalLight position={[10, 15, 10]} intensity={2.2} color="#ffffff" />
+                <directionalLight position={[-10, 8, -5]} intensity={0.9} color="#90b0e0" />
+                <ScrollControls pages={5} damping={0.15}>
+                  <ScrollTriggerSync progressRef={progressRef} />
+                  <MacContainer />
+                  <InstagramAnimation />
+                  <YoutubeAnimation />
+                  <PinterestAnimation />
+                  <TikTokAnimation />
+                </ScrollControls>
+              </Suspense>
+            </ModelErrorBoundary>
           </Canvas>
         </div>
       </div>
