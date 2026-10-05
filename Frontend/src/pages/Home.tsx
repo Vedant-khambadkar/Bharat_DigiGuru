@@ -61,8 +61,10 @@ function ResponsiveCamera() {
 
 function CanvasReadyNotifier({ onReady }: { onReady: () => void }) {
   useEffect(() => {
-    // Notify on initial render frame without synchronous gl.compile blocking
     const rafId = requestAnimationFrame(() => {
+      if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+        console.log("[HERO] Canvas initialized");
+      }
       onReady();
     });
     return () => cancelAnimationFrame(rafId);
@@ -75,14 +77,46 @@ interface HomeProps {
   on3DReady?: () => void;
 }
 
+const HERO_TIMEOUT_MS = 10000;
+
 function Home({ on3DReady }: HomeProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const progressRef = useRef<number>(0);
+  const isHeroReadyTriggered = useRef(false);
 
-  const handle3DReady = useCallback(() => {
+  const triggerHeroReady = useCallback((reason: "model" | "timeout" | "error" = "model") => {
+    if (isHeroReadyTriggered.current) return;
+    isHeroReadyTriggered.current = true;
+    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+      console.log(`[HERO] Hero ready signal triggered (${reason})`);
+    }
     on3DReady?.();
     window.dispatchEvent(new CustomEvent("3d-model-ready"));
   }, [on3DReady]);
+
+  const handleCanvasReady = useCallback(() => {
+    // Canvas is ready; waiting for MacContainer model
+    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+      console.log("[HERO] MacBook loading");
+    }
+  }, []);
+
+  const handleMacReady = useCallback(() => {
+    triggerHeroReady("model");
+  }, [triggerHeroReady]);
+
+  const handleModelError = useCallback(() => {
+    console.warn("[HERO] MacBook model loading error, falling back gracefully");
+    triggerHeroReady("error");
+  }, [triggerHeroReady]);
+
+  // Failsafe 10s timeout to never permanently trap user
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      triggerHeroReady("timeout");
+    }, HERO_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [triggerHeroReady]);
 
   // GSAP ScrollTrigger Pinning for smooth 5-stage laptop animation
   useEffect(() => {
@@ -138,15 +172,15 @@ function Home({ on3DReady }: HomeProps) {
             camera={{ position: [0, 4.3, 38], fov: 40 }}
           >
             <ResponsiveCamera />
-            <CanvasReadyNotifier onReady={handle3DReady} />
+            <CanvasReadyNotifier onReady={handleCanvasReady} />
             <ambientLight intensity={1.8} />
             <directionalLight position={[10, 15, 10]} intensity={2.2} color="#ffffff" />
             <directionalLight position={[-10, 8, -5]} intensity={0.9} color="#90b0e0" />
             <ScrollControls pages={5} damping={0.15}>
               <ScrollTriggerSync progressRef={progressRef} />
-              <ModelErrorBoundary fallback={null}>
+              <ModelErrorBoundary fallback={null} onError={handleModelError}>
                 <Suspense fallback={<ModelLoader label="Loading MacBook" />}>
-                  <MacContainer />
+                  <MacContainer onReady={handleMacReady} />
                 </Suspense>
               </ModelErrorBoundary>
               <InstagramAnimation />

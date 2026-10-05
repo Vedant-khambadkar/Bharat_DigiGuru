@@ -44,6 +44,9 @@ const MainLandingPage = () => {
 
   const handleStartPageReveal = useCallback(() => {
     (window as any).lenis?.start();
+    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+      console.log("[LENIS] started");
+    }
     window.dispatchEvent(new CustomEvent("start-hero-letters"));
     const homeSection = document.getElementById("home-section");
     if (homeSection) {
@@ -168,7 +171,10 @@ const MainLandingPage = () => {
     lenis.stop();
     const lenisSafetyUnlock = window.setTimeout(() => {
       lenis.start();
-    }, 2000);
+      if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+        console.log("[LENIS] started (via safety timeout)");
+      }
+    }, 10000);
 
     lenis.on("scroll", () => {
       ScrollTrigger.update();

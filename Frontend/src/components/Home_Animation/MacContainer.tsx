@@ -39,13 +39,18 @@ const PARAMS = {
   scrollEnd: 0.60,
 };
 
-const MacContainer = () => {
+interface MacContainerProps {
+  onReady?: () => void;
+}
+
+const MacContainer = ({ onReady }: MacContainerProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const { camera, gl, size } = useThree();
   const mac = useGLTF(MODEL_URLS.mac);
   const screen = useTexture(heroImg);
   const keyboard = useTexture(keyboardImg);
   const laptopBack = useTexture(laptopBackImg);
+  const isReadySignaled = useRef(false);
 
   // Setup textures and materials cleanly with useMemo to avoid re-creation on every render
   const { meshes } = useMemo(() => {
@@ -162,6 +167,30 @@ const MacContainer = () => {
       (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
     }
   }, [camera]);
+
+  // Signal true 3D Model Readiness only after GLTF scene & materials have mounted to the render tree
+  useEffect(() => {
+    if (!mac.scene || isReadySignaled.current) return;
+
+    let frameId2: number;
+    const frameId1 = requestAnimationFrame(() => {
+      frameId2 = requestAnimationFrame(() => {
+        isReadySignaled.current = true;
+        if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+          console.log("[HERO] MacBook GLB loaded");
+          console.log("[HERO] MacBook scene ready");
+          console.log("[HERO] MacBook first render");
+          console.log("[HERO] Hero ready");
+        }
+        onReady?.();
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId1);
+      cancelAnimationFrame(frameId2);
+    };
+  }, [mac.scene, onReady]);
 
   const data = useScroll();
 
