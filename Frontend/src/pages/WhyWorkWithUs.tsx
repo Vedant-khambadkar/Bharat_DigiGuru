@@ -177,7 +177,7 @@ export const WhyWorkWithUs: React.FC = () => {
 
       <div className="relative z-10 w-full max-w-8xl mx-auto px-4 sm:px-8 md:px-12 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-14 items-center">
-          
+
           {/* =========================================================================
               LEFT COLUMN: Title, Core Values, Review Testimonial
              ========================================================================= */}
@@ -220,7 +220,7 @@ export const WhyWorkWithUs: React.FC = () => {
               RIGHT COLUMN: Main Statement & Horizontal Scroll/Carousel Columns
              ========================================================================= */}
           <div className="lg:col-span-8 flex flex-col gap-6 sm:gap-8 lg:gap-10 overflow-hidden">
-            
+
             {/* Top Mission Statement */}
             <div className="why-us-statement max-w-3xl mt-15">
               <p className="text-base sm:text-xl md:text-2xl font-normal text-neutral-200 leading-relaxed sm:leading-snug">
@@ -289,11 +289,10 @@ export const WhyWorkWithUs: React.FC = () => {
                       type="button"
                       onClick={() => scrollToIndex(i)}
                       aria-label={`Go to pillar ${i + 1}`}
-                      className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                        activeIndex === i
+                      className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${activeIndex === i
                           ? "w-6 sm:w-8 bg-white shadow-[0_0_10px_rgba(255,255,255,0.7)]"
                           : "w-2.5 sm:w-3 bg-neutral-800 hover:bg-neutral-600"
-                      }`}
+                        }`}
                     />
                   ))}
                 </div>
@@ -305,11 +304,10 @@ export const WhyWorkWithUs: React.FC = () => {
                     onClick={handlePrev}
                     disabled={activeIndex === 0}
                     aria-label="Previous Pillar"
-                    className={`w-8 sm:w-10 h-8 sm:h-10 rounded-full border flex items-center justify-center transition-all duration-300 ${
-                      activeIndex > 0
+                    className={`w-8 sm:w-10 h-8 sm:h-10 rounded-full border flex items-center justify-center transition-all duration-300 ${activeIndex > 0
                         ? "border-neutral-700 bg-[#0e0e0e] text-white hover:bg-neutral-800 hover:border-neutral-500 cursor-pointer active:scale-90 shadow-sm"
                         : "border-neutral-900 bg-[#0a0a0a] text-neutral-700 cursor-not-allowed opacity-40"
-                    }`}
+                      }`}
                   >
                     <ArrowLeft className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
                   </button>
@@ -319,11 +317,10 @@ export const WhyWorkWithUs: React.FC = () => {
                     onClick={handleNext}
                     disabled={activeIndex === PILLARS.length - 1}
                     aria-label="Next Pillar"
-                    className={`w-8 sm:w-10 h-8 sm:h-10 rounded-full border flex items-center justify-center transition-all duration-300 ${
-                      activeIndex < PILLARS.length - 1
+                    className={`w-8 sm:w-10 h-8 sm:h-10 rounded-full border flex items-center justify-center transition-all duration-300 ${activeIndex < PILLARS.length - 1
                         ? "border-neutral-700 bg-[#0e0e0e] text-white hover:bg-neutral-800 hover:border-neutral-500 cursor-pointer active:scale-90 shadow-sm"
                         : "border-neutral-900 bg-[#0a0a0a] text-neutral-700 cursor-not-allowed opacity-40"
-                    }`}
+                      }`}
                   >
                     <ArrowRight className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
                   </button>

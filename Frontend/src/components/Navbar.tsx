@@ -12,9 +12,8 @@ import {
   Menu,
   X,
   ChevronDown,
+  ChartLine,
   ChevronUp,
-  Target,
-  FileText,
   Sparkles,
 } from "lucide-react";
 
@@ -34,11 +33,10 @@ const navItems: NavItem[] = [
   { id: "home", label: "Home", href: "#home-section", icon: Home },
   { id: "services", label: "Services", href: "#services-section", icon: Layers },
   { id: "portfolio", label: "Portfolio", href: "#portfolio-section", icon: Briefcase },
-  { id: "mission", label: "Mission", href: "#mission-vision-section", icon: Target },
   { id: "about", label: "About", href: "#about-section", icon: User },
+  { id: "analytics", label: "Analytics", href: "#analytics-section", icon: ChartLine },
   { id: "team", label: "Team", href: "#our-team-section", icon: Users },
   { id: "whyus", label: "Why Us", href: "#work-with-us-section", icon: Sparkles },
-  { id: "proposals", label: "Proposals", href: "#proposals-section", icon: FileText },
   { id: "stories", label: "Stories", href: "#stories-section", icon: BookOpen },
   { id: "contact", label: "Contact", href: "#contact-section", icon: Mail, badge: true },
 ];

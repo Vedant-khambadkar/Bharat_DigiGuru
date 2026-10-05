@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import { useProgress } from "@react-three/drei";
 
@@ -39,68 +39,81 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     }
   };
 
-  const triggerExit = () => {
+  const triggerExit = useCallback(() => {
     if (isExitingRef.current) return;
     isExitingRef.current = true;
 
+    // Immediately trigger page reveal callback
+    onStartExit?.();
+
+    if (!containerRef.current) {
+      onComplete();
+      return;
+    }
+
     const tl = gsap.timeline({
-      onStart: () => {
-        onStartExit?.();
-      },
       onComplete: () => {
         onComplete();
       },
     });
 
     // Fade out internal telemetry text
-    tl.to(contentRef.current, {
-      opacity: 0,
-      y: -25,
-      duration: 0.35,
-      ease: "power2.inOut",
-    });
+    if (contentRef.current) {
+      tl.to(contentRef.current, {
+        opacity: 0,
+        y: -25,
+        duration: 0.25,
+        ease: "power2.inOut",
+      });
+    }
 
     // Smooth curtain slide-up reveal
     tl.to(
       containerRef.current,
       {
         yPercent: -100,
-        duration: 0.9,
+        duration: 0.6,
         ease: "power3.inOut",
       },
-      "-=0.15"
+      contentRef.current ? "-=0.1" : 0
     );
-  };
+  }, [onStartExit, onComplete]);
 
-  // Progress interpolation driven STRICTLY by 3D asset loader and model readiness
+  // Progress interpolation driven by 3D asset loader and model readiness
   useEffect(() => {
     const is3DFinished =
       isReady || (!dreiActive && (dreiProgress >= 99 || (total > 0 && loaded >= total)));
 
-    // Calculate genuine progress percentage
-    let calculatedTarget = 0;
+    let target = 0;
     if (is3DFinished) {
-      calculatedTarget = 100;
+      target = 100;
     } else if (dreiProgress > 0) {
-      // While downloading assets, cap at 98 until 3D scene is fully parsed and ready
-      calculatedTarget = Math.min(98, Math.max(realProgress, Math.round(dreiProgress)));
+      target = Math.min(98, Math.max(realProgress, Math.round(dreiProgress)));
     } else {
-      // Initial subtle pulse so it is not completely static at 0 while initial fetch starts
-      calculatedTarget = Math.max(counterRef.current.value, 15);
+      target = Math.max(counterRef.current.value, 30);
     }
 
-    const target = Math.min(100, Math.max(counterRef.current.value, calculatedTarget));
+    target = Math.min(100, Math.max(counterRef.current.value, target));
+
+    if (target >= 100 && is3DFinished) {
+      updateDisplay(100);
+      const timer = setTimeout(() => {
+        triggerExit();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
 
     const tween = gsap.to(counterRef.current, {
       value: target,
-      duration: target >= 100 ? 0.35 : 0.6,
-      ease: target >= 100 ? "power3.out" : "power2.out",
+      duration: target >= 100 ? 0.3 : 0.5,
+      ease: "power2.out",
       onUpdate: () => {
         const val = Math.round(counterRef.current.value);
         updateDisplay(val);
       },
       onComplete: () => {
-        if (is3DFinished && counterRef.current.value >= 99.5 && !isExitingRef.current) {
+        if (is3DFinished || target >= 99) {
+          updateDisplay(100);
           triggerExit();
         }
       },
@@ -109,24 +122,34 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     return () => {
       tween.kill();
     };
-  }, [realProgress, dreiProgress, dreiActive, isReady, loaded, total]);
+  }, [realProgress, dreiProgress, dreiActive, isReady, loaded, total, triggerExit]);
 
-  // Space key to bypass
+  // Safety hard-limit: Guarantee auto-reveal within 1.8s max so user is NEVER stuck on loading screen
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      updateDisplay(100);
+      triggerExit();
+    }, 1800);
+
+    return () => clearTimeout(safetyTimer);
+  }, [triggerExit]);
+
+  // Keyboard shortcut & Click to bypass
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" && !isExitingRef.current) {
-        isExitingRef.current = true;
+      if ((e.code === "Space" || e.code === "Enter" || e.code === "Escape") && !isExitingRef.current) {
         triggerExit();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [triggerExit]);
 
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[9999] w-screen h-screen bg-[#050505] text-white flex flex-col justify-between p-6 sm:p-10 md:p-14 select-none overflow-hidden will-change-transform"
+      onClick={triggerExit}
+      className="fixed inset-0 z-[9999] w-screen h-screen bg-[#050505] text-white flex flex-col justify-between p-6 sm:p-10 md:p-14 select-none overflow-hidden will-change-transform cursor-pointer"
     >
       {/* Subtle Background Grid Texture (Pure Monochrome) */}
       <div
@@ -146,7 +169,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       </div>
 
       {/* Centerpiece Minimalist Hero */}
-      <div ref={contentRef} className="relative z-10 my-auto flex flex-col items-center justify-center w-full max-w-xl mx-auto text-center">
+      <div ref={contentRef} className="relative z-10 my-auto flex flex-col items-center justify-center w-full max-w-xl mx-auto text-center pointer-events-none">
         {/* Massive Precision Monospace Percentage */}
         <div className="flex items-baseline justify-center gap-2 font-['Syne',sans-serif] font-black text-[22vw] sm:text-[14vw] md:text-[120px] lg:text-[140px] leading-none text-white tracking-tighter select-none">
           <span ref={numberElRef}>000</span>
@@ -181,7 +204,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-neutral-600 hidden sm:inline">[ SPACE TO BYPASS ]</span>
+          <span className="text-neutral-600 hidden sm:inline">[ CLICK OR SPACE TO ENTER ]</span>
           <span className="w-1.5 h-1.5 rounded-full bg-neutral-600" />
           <span className="text-neutral-400">V2.4</span>
         </div>

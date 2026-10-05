@@ -36,28 +36,6 @@ export const LensText: React.FC<LensTextProps> = ({
       }
     };
 
-    // Only activate mask calculation when element is in the viewport
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        isVisible = entry.isIntersecting;
-        if (isVisible) {
-          cachedRect = container.getBoundingClientRect();
-        } else if (wasNear) {
-          const fill = fillRef.current;
-          const stroke = strokeRef.current;
-          if (fill && stroke) {
-            fill.style.webkitMaskImage = "";
-            fill.style.maskImage = "";
-            stroke.style.opacity = "0";
-          }
-          wasNear = false;
-          cachedRect = null;
-        }
-      },
-      { threshold: 0.05 }
-    );
-    observer.observe(container);
-
     const updateMask = () => {
       if (!isVisible) return;
 
@@ -117,16 +95,51 @@ export const LensText: React.FC<LensTextProps> = ({
       }
     };
 
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", updateRect, { passive: true });
+    const bindListeners = () => {
+      window.addEventListener("mousemove", handleMouseMove, { passive: true });
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      window.addEventListener("resize", updateRect, { passive: true });
+    };
 
-    return () => {
-      observer.disconnect();
+    const unbindListeners = () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", updateRect);
-      if (rafId) cancelAnimationFrame(rafId);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    };
+
+    // Only activate mask calculation when element is in the viewport
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible) {
+          cachedRect = container.getBoundingClientRect();
+          bindListeners();
+        } else {
+          unbindListeners();
+          if (wasNear) {
+            const fill = fillRef.current;
+            const stroke = strokeRef.current;
+            if (fill && stroke) {
+              fill.style.webkitMaskImage = "";
+              fill.style.maskImage = "";
+              stroke.style.opacity = "0";
+            }
+            wasNear = false;
+          }
+          cachedRect = null;
+        }
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+      unbindListeners();
     };
   }, [radius]);
 

@@ -10,15 +10,35 @@ export const ToolsAndTechnology: React.FC = () => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Header animation
+      // Headline & Sub-metrics reveal
       gsap.fromTo(
-        ".tech-title-wrap",
-        { opacity: 0, y: -20 },
+        ".reference-text-elem",
+        { opacity: 0, y: 25 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.8,
+          duration: 0.9,
+          stagger: 0.12,
           ease: "power3.out",
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top 75%",
+            toggleActions: "play none none none",
+          },
+        }
+      );
+
+      // Floating App Badges Pop-in with spring physics
+      gsap.fromTo(
+        ".floating-app-node",
+        { opacity: 0, scale: 0.4, y: 25 },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.8,
+          stagger: 0.06,
+          ease: "back.out(1.8)",
           scrollTrigger: {
             trigger: containerRef.current,
             start: "top 80%",
@@ -27,59 +47,24 @@ export const ToolsAndTechnology: React.FC = () => {
         }
       );
 
-      // Center Hub pop-in
+      // Curved Spline Lines Fade & Stroke Draw (Desktop only)
       gsap.fromTo(
-        ".center-hub-card",
-        { opacity: 0, scale: 0.6 },
+        ".curved-spline-path",
+        { opacity: 0, strokeDashoffset: 100 },
         {
-          opacity: 1,
-          scale: 1,
-          duration: 0.8,
-          ease: "back.out(1.7)",
-          scrollTrigger: {
-            trigger: stageRef.current,
-            start: "top 80%",
-            toggleActions: "play none none none",
-          },
-        }
-      );
-
-      // Surrounding badges pop-in
-      gsap.fromTo(
-        ".tech-card-badge",
-        { opacity: 0, scale: 0.6, y: 20 },
-        {
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          duration: 0.7,
-          stagger: 0.06,
-          ease: "back.out(1.5)",
-          scrollTrigger: {
-            trigger: stageRef.current,
-            start: "top 80%",
-            toggleActions: "play none none none",
-          },
-        }
-      );
-
-      // Connection lines fade & glow in
-      gsap.fromTo(
-        ".connection-wire",
-        { opacity: 0 },
-        {
-          opacity: 0.85,
-          duration: 1.0,
-          stagger: 0.04,
+          opacity: 0.6,
+          strokeDashoffset: 0,
+          duration: 1.2,
+          stagger: 0.08,
           ease: "power2.out",
           scrollTrigger: {
-            trigger: stageRef.current,
+            trigger: containerRef.current,
             start: "top 80%",
             toggleActions: "play none none none",
           },
         }
       );
-    }, containerRef);
+    });
 
     return () => ctx.revert();
   }, []);
@@ -87,327 +72,444 @@ export const ToolsAndTechnology: React.FC = () => {
   return (
     <section
       ref={containerRef}
-      id="tools-and-technology-section"
-      className="relative w-full py-16 sm:py-24 flex flex-col justify-center items-center text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none"
+      id="tools-and-technology"
+      className="relative w-full py-16 sm:py-24 md:py-32 bg-[#050505] text-white flex flex-col justify-center items-center overflow-hidden select-none isolate"
     >
       <style>{`
-        @keyframes floatAnim1 {
+        @keyframes floatSlow1 {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-5px) rotate(0.6deg); }
+          50% { transform: translateY(-7px) rotate(0.8deg); }
         }
-        @keyframes floatAnim2 {
+        @keyframes floatSlow2 {
           0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(5px) rotate(-0.6deg); }
+          50% { transform: translateY(7px) rotate(-1deg); }
         }
-        @keyframes floatAnim3 {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-6px); }
+        @keyframes floatSlow3 {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-5px) rotate(-0.8deg); }
         }
-        .anim-badge-1 { animation: floatAnim1 5.5s ease-in-out infinite; }
-        .anim-badge-2 { animation: floatAnim2 6.5s ease-in-out infinite; }
-        .anim-badge-3 { animation: floatAnim3 7s ease-in-out infinite; }
+        @keyframes floatSlow4 {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(6px) rotate(0.8deg); }
+        }
 
-        .wire-pulse {
+        .anim-float-1 { animation: floatSlow1 5.5s ease-in-out infinite; }
+        .anim-float-2 { animation: floatSlow2 6.5s ease-in-out infinite; }
+        .anim-float-3 { animation: floatSlow3 7.2s ease-in-out infinite; }
+        .anim-float-4 { animation: floatSlow4 6s ease-in-out infinite; }
+
+        .curved-spline-path {
           stroke-dasharray: 4 4;
-          animation: wireDash 14s linear infinite;
+          animation: splineFlow 18s linear infinite;
         }
-        @keyframes wireDash {
-          from { stroke-dashoffset: 200; }
+        @keyframes splineFlow {
+          from { stroke-dashoffset: 160; }
           to { stroke-dashoffset: 0; }
         }
       `}</style>
 
-      {/* Ambient Subtle Violet Glow */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] sm:w-[850px] h-[350px] sm:h-[420px]  blur-[130px] rounded-full pointer-events-none" />
+      {/* Ambient Atmospheric Glows */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[950px] h-[350px] sm:h-[500px] bg-white/[0.015] blur-[150px] rounded-full" />
+        <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-purple-500/[0.03] blur-[120px] rounded-full" />
+        <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-blue-500/[0.025] blur-[130px] rounded-full" />
       </div>
 
-      <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 flex flex-col items-center">
-        
-        {/* Section Heading & Modern Eyebrow Badge */}
-        <div className="tech-title-wrap text-center mb-8 sm:mb-12 flex flex-col items-center">
-          <span className="font-['Cormorant_Garamond',serif] italic text-sm text-neutral-400 mb-1 tracking-wide">
-            (Stack & Ecosystem)
-          </span>
-          <h2 className="font-neuropol text-3xl sm:text-4xl md:text-5xl uppercase tracking-wider text-white leading-tight">
-            Tools &{" "}
-            <span className="bg-gradient-to-r from-[#A78BFA] via-[#F472B6] to-[#FB923C] bg-clip-text text-transparent">
-              Technology
-            </span>
-          </h2>
-          <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-400 mt-2 max-w-lg mx-auto font-normal leading-relaxed">
-            Modern tools and industry-standard technologies powering our digital execution.
-          </p>
-        </div>
-
-        {/* 3D Claymorphic Single-Screen Diagram Stage */}
-        <div
-          ref={stageRef}
-          className="relative w-full h-[380px] sm:h-[460px] md:h-[500px] flex items-center justify-center"
-        >
-          {/* SVG Connection Cables */}
-          <svg
-            className="absolute inset-0 w-full h-full pointer-events-none z-0"
-            viewBox="0 0 1000 600"
-            preserveAspectRatio="xMidYMid meet"
-            fill="none"
-          >
-            <defs>
-              <linearGradient id="techWireLeft" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
-                <stop offset="100%" stopColor="#A78BFA" stopOpacity="0.35" />
-              </linearGradient>
-              <linearGradient id="techWireRight" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
-                <stop offset="100%" stopColor="#F472B6" stopOpacity="0.35" />
-              </linearGradient>
-            </defs>
-
-            {/* 1. Wire to Canva (Top-Left Node) */}
-            <path
-              className="connection-wire wire-pulse"
-              d="M 455 245 C 410 210 365 170 320 120"
-              stroke="url(#techWireLeft)"
-              strokeWidth="2.2"
-            />
-
-            {/* 2. Wire to Figma (Top-Right Node) */}
-            <path
-              className="connection-wire wire-pulse"
-              d="M 545 245 C 590 210 635 170 680 130"
-              stroke="url(#techWireRight)"
-              strokeWidth="2.2"
-            />
-
-            {/* 3. Wire to Meta (Left Node) */}
-            <path
-              className="connection-wire wire-pulse"
-              d="M 430 288 C 340 288 250 275 160 265"
-              stroke="url(#techWireLeft)"
-              strokeWidth="2.2"
-            />
-
-            {/* 4. Wire to Schedulers (Right Node) */}
-            <path
-              className="connection-wire wire-pulse"
-              d="M 570 288 C 660 288 750 275 840 265"
-              stroke="url(#techWireRight)"
-              strokeWidth="2.2"
-            />
-
-            {/* 5. Wire to Google Analytics (Bottom-Left Node) */}
-            <path
-              className="connection-wire wire-pulse"
-              d="M 455 335 C 390 375 330 410 270 440"
-              stroke="url(#techWireLeft)"
-              strokeWidth="2.2"
-            />
-
-            {/* 6. Wire to AI Tools (Bottom Node) */}
-            <path
-              className="connection-wire wire-pulse"
-              d="M 500 348 C 480 395 455 435 430 475"
-              stroke="url(#techWireLeft)"
-              strokeWidth="2.2"
-            />
-
-            {/* 7. Wire to Content Calendar Tools (Bottom-Right Node) */}
-            <path
-              className="connection-wire wire-pulse"
-              d="M 545 335 C 610 375 670 410 730 440"
-              stroke="url(#techWireRight)"
-              strokeWidth="2.2"
-            />
-          </svg>
-
-          {/* ---------------- 1. CENTRAL HUB: GOOGLE WORKSPACE / GOOGLE ---------------- */}
-          <div className="center-hub-card absolute top-[48%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-20 group cursor-pointer">
-            <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-[22px] sm:rounded-[26px] md:rounded-[30px] bg-gradient-to-b from-[#2c2d35] via-[#1f2026] to-[#15161a] border border-white/[0.18] shadow-[0_16px_40px_rgba(0,0,0,0.9),inset_0_1.5px_2px_rgba(255,255,255,0.28),inset_0_-2px_4px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-300">
-
-              {/* Official Google 4-Color Logo SVG */}
-              <svg className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
+      {/* =========================================================================
+          1. MOBILE TIERED LAYOUT (< md screens)
+          Flawless spacing without collisions on mobile
+         ========================================================================= */}
+      <div className="flex md:hidden flex-col items-center w-full max-w-lg px-4 sm:px-6 relative z-10 gap-8">
+        {/* Mobile Top Floating App Row */}
+        <div className="flex items-center justify-center gap-5 w-full pt-2">
+          {/* 1. Google Calendar */}
+          <div className="floating-app-node anim-float-2 group cursor-pointer relative">
+            <div className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl bg-[#1a1b20] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] p-2">
+              <svg viewBox="0 0 256 256" className="w-full h-full">
+                <g>
+                  <polygon fill="#FFFFFF" points="195.368421 60.6315789 60.6315789 60.6315789 60.6315789 195.368421 195.368421 195.368421" />
+                  <polygon fill="#EA4335" points="195.368421 256 256 195.368421 225.684211 190.196005 195.368421 195.368421 189.835162 223.098002" />
+                  <path d="M0,195.37 L0,235.79 C0,246.96 9.04,256 20.21,256 L60.63,256 L66.86,225.68 L60.63,195.37 L27.6,190.2 L0,195.37 Z" fill="#188038" />
+                  <path d="M256,60.63 L256,20.21 C256,9.04 246.96,0 235.79,0 L195.37,0 C191.68,15.04 189.84,26.1 189.84,33.2 C189.84,40.29 191.68,49.44 195.37,60.63 C208.78,64.47 218.88,66.39 225.68,66.39 C232.49,66.39 242.59,64.47 256,60.63 Z" fill="#1967D2" />
+                  <polygon fill="#FBBC04" points="256 60.63 195.37 60.63 195.37 195.37 256 195.37" />
+                  <polygon fill="#34A853" points="195.37 195.37 60.63 195.37 60.63 256 195.37 256" />
+                  <path d="M195.37,0 L20.21,0 C9.04,0 0,9.04 0,20.21 L0,195.37 L60.63,195.37 L60.63,60.63 L195.37,60.63 L195.37,0 Z" fill="#4285F4" />
+                  <text x="128" y="160" textAnchor="middle" fill="#4285F4" fontSize="85" fontWeight="bold" fontFamily="sans-serif">31</text>
+                </g>
               </svg>
-            </div>
-            {/* Tooltip */}
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
-              Google
+              <div className="absolute -top-2 -left-1 px-1.5 py-0.5 rounded-full bg-rose-500 text-[8px] font-bold text-white border border-[#050505] shadow-lg">
+                99+
+              </div>
             </div>
           </div>
 
-          {/* ---------------- 2. CANVA (Top Left) ---------------- */}
-          <div className="tech-card-badge anim-badge-1 absolute top-[6%] left-[25%] sm:left-[27%] z-10 group cursor-pointer">
-            <div className="flex items-center justify-center w-13 h-13 sm:w-15 sm:h-15 md:w-17 md:h-17 rounded-[16px] sm:rounded-[18px] md:rounded-[20px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-110 transition-transform duration-300 p-2 sm:p-2.5">
-              <svg className="w-full h-full" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <g clipPath="url(#clip0_905_1790)">
-                  <path d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="#7D2AE7" />
-                  <path d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="url(#paint0_radial_905_1790)" />
-                  <path d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="url(#paint1_radial_905_1790)" />
-                  <path d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="url(#paint2_radial_905_1790)" />
-                  <path d="M40 80C62.0914 80 80 62.0914 80 40C80 17.9086 62.0914 0 40 0C17.9086 0 0 17.9086 0 40C0 62.0914 17.9086 80 40 80Z" fill="url(#paint3_radial_905_1790)" />
-                  <path d="M57.2691 48.2052C56.939 48.2052 56.6485 48.484 56.3462 49.0928C52.9323 56.0153 47.0358 60.9134 40.2125 60.9134C32.3228 60.9134 27.437 53.7913 27.437 43.9522C27.437 27.2855 36.7232 17.6491 44.8796 17.6491C48.691 17.6491 51.0186 20.0443 51.0186 23.8559C51.0186 28.3796 48.4485 30.7748 48.4485 32.3702C48.4485 33.0864 48.8939 33.5201 49.7773 33.5201C53.3264 33.5201 57.4918 29.4419 57.4918 23.6808C57.4918 18.0947 52.63 13.9888 44.4737 13.9888C30.994 13.9888 19.0142 26.4858 19.0142 43.777C19.0142 57.1614 26.6572 66.0061 38.45 66.0061C50.9668 66.0061 58.2043 53.5526 58.2043 49.5105C58.2043 48.6153 57.7466 48.2052 57.2691 48.2052Z" fill="white" />
-                </g>
+          {/* 2. Google Workspace */}
+          <div className="floating-app-node anim-float-3 group cursor-pointer relative">
+            <div className="flex items-center justify-center w-15 h-15 rounded-2xl bg-[#1a1b20] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] p-3">
+              <svg viewBox="0 0 24 24" className="w-full h-full">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC04" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+              </svg>
+              <div className="absolute -top-2 -right-1 px-1.5 py-0.5 rounded-full bg-rose-500 text-[8px] font-bold text-white border border-[#050505] shadow-lg">
+                1M+
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Canva */}
+          <div className="floating-app-node anim-float-1 group cursor-pointer relative">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[#1a1b20] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] p-2">
+              <svg className="w-full h-full" viewBox="0 0 80 80" fill="none">
                 <defs>
-                  <radialGradient id="paint0_radial_905_1790" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15.453 70.9057) rotate(-49.416) scale(61.8733)">
+                  <radialGradient id="canvaGradMobileA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15.5 70.9) rotate(-49.4) scale(61.9)">
                     <stop stopColor="#6420FF" />
                     <stop offset="1" stopColor="#6420FF" stopOpacity="0" />
                   </radialGradient>
-                  <radialGradient id="paint1_radial_905_1790" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(21.1788 9.09457) rotate(54.703) scale(69.7735)">
+                  <radialGradient id="canvaGradMobileB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(21.2 9.1) rotate(54.7) scale(69.8)">
                     <stop stopColor="#00C4CC" />
                     <stop offset="1" stopColor="#00C4CC" stopOpacity="0" />
                   </radialGradient>
-                  <radialGradient id="paint2_radial_905_1790" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15.4526 70.9053) rotate(-45.1954) scale(61.1242 28.1118)">
-                    <stop stopColor="#6420FF" />
-                    <stop offset="1" stopColor="#6420FF" stopOpacity="0" />
-                  </radialGradient>
-                  <radialGradient id="paint3_radial_905_1790" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(32.7158 10.7789) rotate(66.5198) scale(62.9836 105.512)">
-                    <stop stopColor="#00C4CC" stopOpacity="0.725916" />
-                    <stop offset="0.0001" stopColor="#00C4CC" />
-                    <stop offset="1" stopColor="#00C4CC" stopOpacity="0" />
-                  </radialGradient>
-                  <clipPath id="clip0_905_1790">
-                    <rect width="80" height="80" fill="white" />
-                  </clipPath>
                 </defs>
+                <circle cx="40" cy="40" r="40" fill="#7D2AE7" />
+                <circle cx="40" cy="40" r="40" fill="url(#canvaGradMobileA)" />
+                <circle cx="40" cy="40" r="40" fill="url(#canvaGradMobileB)" />
+                <path d="M57.3 48.2c-.3 0-.6.3-.9.9-3.4 6.9-9.3 11.8-16.1 11.8-7.9 0-12.8-7.1-12.8-17 0-16.6 9.3-26.3 17.4-26.3 3.8 0 6.1 2.4 6.1 6.2 0 4.5-2.6 6.9-2.6 8.5 0 .7.4 1.1 1.3 1.1 3.5 0 7.7-4.1 7.7-9.8 0-5.6-4.9-9.7-13-9.7-13.5 0-25.5 12.5-25.5 29.8 0 13.4 7.6 22.2 19.4 22.2 12.5 0 19.8-12.5 19.8-16.5 0-.9-.5-1.2-1-.1.2z" fill="#ffffff" />
               </svg>
-            </div>
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
-              Canva
+              <div className="absolute -bottom-2 -left-1 px-1.5 py-0.5 rounded-full bg-[#7D2AE7] text-[8px] font-bold text-white border border-[#050505] shadow-lg">
+                Pro
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* ---------------- 3. FIGMA (Top Right) ---------------- */}
-          <div className="tech-card-badge anim-badge-2 absolute top-[6%] right-[24%] sm:right-[26%] z-10 group cursor-pointer">
-            <div className="flex items-center justify-center w-17 h-17 sm:w-21 sm:h-21 md:w-24 md:h-24 rounded-[20px] sm:rounded-[24px] md:rounded-[28px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_12px_28px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-108 transition-transform duration-300">
-              <svg className="w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11" viewBox="0 0 38 57" fill="none">
-                <path d="M19 28.5A9.5 9.5 0 1 1 28.5 19 9.5 9.5 0 0 1 19 28.5z" fill="#1ABCFE" />
+        {/* Mobile Central Headline & Subtext */}
+        <div className="flex flex-col items-center text-center w-full">
+          <h2 className="reference-text-elem text-3xl sm:text-4xl font-normal tracking-tight text-white leading-[1.2] font-['Space_Grotesk',sans-serif]">
+            The current way we{" "}
+            <span className="block font-medium">work is seamless.</span>
+          </h2>
+          <p className="reference-text-elem font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-400 mt-3 max-w-sm font-normal leading-relaxed">
+            All your design tools, 3D engines, marketing channels, and AI intelligence unified into a single frictionless pipeline.
+          </p>
+
+          {/* 3 Monospace Metric Columns */}
+          <div className="reference-text-elem flex flex-col gap-4 mt-8 w-full text-left border-t border-neutral-800/60 pt-6">
+            <div className="flex flex-col">
+              <span className="font-mono text-xs text-neutral-300 leading-relaxed font-normal">
+                2x more speed occurs when eliminating manual handoffs.
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-mono text-xs text-neutral-300 leading-relaxed font-normal">
+                Constant AI integration eliminates workflow friction.
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-mono text-xs text-neutral-300 leading-relaxed font-normal">
+                100% unified attribution across every ad channel.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Bottom Floating App Grid */}
+        <div className="flex items-center justify-center gap-5 w-full pb-2">
+          {/* 4. Figma */}
+          <div className="floating-app-node anim-float-1 group cursor-pointer relative">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[#1a1b20] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] p-2.5">
+              <svg className="w-full h-full" viewBox="0 0 38 57" fill="none">
+                <path d="M19 28.5A9.5 9.5 0 1 1 35.5 35 9.5 9.5 0 0 1 19 28.5z" fill="#1ABCFE" />
                 <path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z" fill="#0ACF83" />
                 <path d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z" fill="#FF7262" />
                 <path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z" fill="#F24E1E" />
                 <path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z" fill="#A259FF" />
               </svg>
-            </div>
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
-              Figma
+              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-rose-500 border-2 border-[#050505] shadow-md animate-pulse" />
             </div>
           </div>
 
-          {/* ---------------- 4. META BUSINESS SUITE (Far Left) ---------------- */}
-          <div className="tech-card-badge anim-badge-3 absolute top-[44%] left-[6%] sm:left-[10%] z-10 group cursor-pointer">
-            <div className="flex items-center justify-center w-13 h-13 sm:w-15 sm:h-15 md:w-17 md:h-17 rounded-[16px] sm:rounded-[18px] md:rounded-[20px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-110 transition-transform duration-300 p-2.5">
-              <svg className="w-full h-full" fill="#428bff" viewBox="0 0 32 32">
+          {/* 5. Google Ads */}
+          <div className="floating-app-node anim-float-2 group cursor-pointer relative">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[#1a1b20] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] p-2">
+              <div className="w-full h-full rounded-full  flex items-center justify-center p-1 shadow-md overflow-hidden">
+                <svg viewBox="0 -13 256 256" className="w-full h-full" fill="none">
+                  <g>
+                    <path
+                      d="M5.888,166.405103 L90.88,20.9 C101.676138,27.2558621 156.115862,57.3844138 164.908138,63.1135172 L79.9161379,208.627448 C70.6206897,220.906621 -5.888,185.040138 5.888,166.396276 L5.888,166.405103 Z"
+                      fill="#FBBC04"
+                    />
+                    <path
+                      d="M250.084224,166.401789 L165.092224,20.9055131 C153.210293,1.13172 127.619121,-6.05393517 106.600638,5.62496138 C85.582155,17.3038579 79.182155,42.4624786 91.0640861,63.1190303 L176.056086,208.632961 C187.938017,228.397927 213.52919,235.583582 234.547672,223.904686 C254.648086,212.225789 261.966155,186.175582 250.084224,166.419444 L250.084224,166.401789 Z"
+                      fill="#4285F4"
+                    />
+                    <ellipse
+                      fill="#34A853"
+                      cx="42.6637241"
+                      cy="187.924414"
+                      rx="42.6637241"
+                      ry="41.6044138"
+                    />
+                  </g>
+                </svg>
+              </div>
+              <div className="absolute -bottom-2 -left-1 px-1.5 py-0.5 rounded-full bg-[#4285F4] text-[8px] font-mono font-bold text-white border border-[#050505] shadow-lg">
+                Ads
+              </div>
+            </div>
+          </div>
+
+          {/* 6. Google Analytics */}
+          <div className="floating-app-node anim-float-4 group cursor-pointer relative">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[#1a1b20] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] p-2.5">
+              <svg viewBox="0 0 192 192" className="w-full h-full">
+                <path d="M152 24v144c0 13.255-10.745 24-24 24s-24-10.745-24-24V24c0-13.255 10.745-24 24-24s24 10.745 24 24z" fill="#F9AB00" />
+                <path d="M96 80v88c0 13.255-10.745 24-24 24s-24-10.745-24-24V80c0-13.255 10.745-24 24-24s24 10.745 24 24z" fill="#E37400" />
+                <circle cx="36" cy="168" r="24" fill="#E37400" />
+              </svg>
+              <div className="absolute -bottom-2 -right-1 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-[8px] font-mono text-amber-400 border border-amber-500/30 shadow-lg">
+                GA4
+              </div>
+            </div>
+          </div>
+
+          {/* 7. Meta */}
+          <div className="floating-app-node anim-float-2 group cursor-pointer relative">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[#1a1b20] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] p-2.5">
+              <svg className="w-full h-full" fill="#0081FB" viewBox="0 0 32 32">
                 <path d="M5,19.5c0-4.6,2.3-9.4,5-9.4c1.5,0,2.7,0.9,4.6,3.6c-1.8,2.8-2.9,4.5-2.9,4.5c-2.4,3.8-3.2,4.6-4.5,4.6 C5.9,22.9,5,21.7,5,19.5 M20.7,17.8L19,15c-0.4-0.7-0.9-1.4-1.3-2c1.5-2.3,2.7-3.5,4.2-3.5c3,0,5.4,4.5,5.4,10.1 c0,2.1-0.7,3.3-2.1,3.3S23.3,22,20.7,17.8 M16.4,11c-2.2-2.9-4.1-4-6.3-4C5.5,7,2,13.1,2,19.5c0,4,1.9,6.5,5.1,6.5 c2.3,0,3.9-1.1,6.9-6.3c0,0,1.2-2.2,2.1-3.7c0.3,0.5,0.6,1,0.9,1.6l1.4,2.4c2.7,4.6,4.2,6.1,6.9,6.1c3.1,0,4.8-2.6,4.8-6.7 C30,12.6,26.4,7,22.1,7C19.8,7,18,8.8,16.4,11" />
               </svg>
-            </div>
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
-              Meta Suite
-            </div>
-          </div>
-
-          {/* ---------------- 5. SOCIAL MEDIA SCHEDULERS (Middle Right) ---------------- */}
-          <div className="tech-card-badge anim-badge-1 absolute top-[44%] right-[6%] sm:right-[10%] z-10 group cursor-pointer">
-            <div className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-[17px] sm:rounded-[20px] md:rounded-[22px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-110 transition-transform duration-300">
-              <svg className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9" viewBox="0 0 24 24" fill="none">
-                <defs>
-                  <linearGradient id="schedOfficialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#2563EB" />
-                    <stop offset="100%" stopColor="#06B6D4" />
-                  </linearGradient>
-                </defs>
-                <rect x="3" y="4" width="18" height="17" rx="4" stroke="url(#schedOfficialGrad)" strokeWidth="2.2" />
-                <path d="M16 2v4M8 2v4M3 9h18" stroke="url(#schedOfficialGrad)" strokeWidth="2.2" strokeLinecap="round" />
-                <circle cx="12" cy="14.5" r="2.5" fill="#00F0FF" />
-                <path d="M12 13.5v1.5l1 1" stroke="#000" strokeWidth="1.2" strokeLinecap="round" />
-              </svg>
-            </div>
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
-              Schedulers
+              <div className="absolute -top-2 -right-1 px-1.5 py-0.5 rounded-full bg-rose-500 text-[8px] font-bold text-white border border-[#050505] shadow-lg">
+                420
+              </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* ---------------- 6. GOOGLE ANALYTICS (Lower Left) ---------------- */}
-          <div className="tech-card-badge anim-badge-2 absolute top-[68%] left-[20%] sm:left-[22%] z-10 group cursor-pointer">
-            <div className="flex items-center justify-center w-14 h-14 sm:w-17 sm:h-17 md:w-19 md:h-19 rounded-[17px] sm:rounded-[20px] md:rounded-[22px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_12px_28px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-110 transition-transform duration-300">
-              <svg className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none">
-                <path d="M22 19.5H2" stroke="#E37400" strokeWidth="2.2" strokeLinecap="round" />
-                <rect x="16.5" y="4.5" width="4" height="15" rx="2" fill="#F9AB00" />
-                <rect x="10" y="9.5" width="4" height="10" rx="2" fill="#E37400" />
-                <circle cx="5.5" cy="17" r="2.5" fill="#E37400" />
-              </svg>
-            </div>
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
-              Analytics
+      {/* =========================================================================
+          2. DESKTOP / TABLET ORBITAL CLOUD CANVAS (>= md screens)
+          Spacious constellation with spline connector wires
+         ========================================================================= */}
+      <div
+        ref={stageRef}
+        className="hidden md:flex relative z-10 w-full max-w-5xl lg:max-w-6xl mx-auto px-6 lg:px-12 items-center justify-center min-h-[640px] lg:min-h-[720px]"
+      >
+        {/* SVG Curved Spline Cables */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none z-0"
+          viewBox="0 0 1100 750"
+          preserveAspectRatio="xMidYMid meet"
+          fill="none"
+        >
+          <defs>
+            <linearGradient id="wireGradientDesk1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#94a3b8" stopOpacity="0.1" />
+            </linearGradient>
+            <linearGradient id="wireGradientDesk2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#94a3b8" stopOpacity="0.1" />
+            </linearGradient>
+          </defs>
+
+          {/* Figma (Far Left) -> Top Left Curve */}
+          <path className="curved-spline-path" d="M 120 310 C 200 280 260 220 280 140" stroke="url(#wireGradientDesk1)" strokeWidth="1.6" />
+          {/* Calendar (Top Left) -> Center Heading */}
+          <path className="curved-spline-path" d="M 330 150 C 400 200 440 260 480 320" stroke="url(#wireGradientDesk1)" strokeWidth="1.6" />
+          {/* Workspace (Top Center) -> Center Heading */}
+          <path className="curved-spline-path" d="M 640 160 C 620 220 580 260 550 300" stroke="url(#wireGradientDesk2)" strokeWidth="1.6" />
+          {/* Canva (Top Right) -> Center / Right */}
+          <path className="curved-spline-path" d="M 880 180 C 890 280 940 330 980 390" stroke="url(#wireGradientDesk2)" strokeWidth="1.6" />
+          {/* Google Ads (Right Node) -> Bottom Right */}
+          <path className="curved-spline-path" d="M 970 450 C 930 520 880 570 820 620" stroke="url(#wireGradientDesk2)" strokeWidth="1.6" />
+          {/* Meta (Bottom Center / Right) -> Center */}
+          <path className="curved-spline-path" d="M 580 560 C 680 550 740 580 800 610" stroke="url(#wireGradientDesk2)" strokeWidth="1.6" />
+          {/* Analytics (Bottom Left) -> Center */}
+          <path className="curved-spline-path" d="M 310 570 C 370 520 440 480 500 460" stroke="url(#wireGradientDesk1)" strokeWidth="1.6" />
+          {/* Bottom Center Node */}
+          <path className="curved-spline-path" d="M 520 630 C 520 680 520 710 520 740" stroke="url(#wireGradientDesk1)" strokeWidth="1.6" />
+        </svg>
+
+        {/* 1. FIGMA (Far Left) */}
+        <div className="floating-app-node anim-float-1 absolute top-[36%] left-[1%] lg:left-[3%] z-20 group cursor-pointer">
+          <div className="relative flex items-center justify-center w-16 h-16 lg:w-19 lg:h-19 rounded-[22px] bg-[#1a1b20] border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] group-hover:scale-110 group-hover:border-white/40 transition-all duration-300 p-3.5">
+            <svg className="w-full h-full" viewBox="0 0 38 57" fill="none">
+              <path d="M19 28.5A9.5 9.5 0 1 1 35.5 35 9.5 9.5 0 0 1 19 28.5z" fill="#1ABCFE" />
+              <path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z" fill="#0ACF83" />
+              <path d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z" fill="#FF7262" />
+              <path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z" fill="#F24E1E" />
+              <path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z" fill="#A259FF" />
+            </svg>
+            <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-[#050505] shadow-md animate-pulse" />
+          </div>
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
+            Figma
+          </div>
+        </div>
+
+        {/* 2. GOOGLE CALENDAR (Top Left) */}
+        <div className="floating-app-node anim-float-2 absolute top-[4%] left-[20%] lg:left-[22%] z-20 group cursor-pointer">
+          <div className="relative flex flex-col items-center justify-center w-17 h-17 lg:w-20 lg:h-20 rounded-[24px] bg-[#1a1b20] border border-white/15 shadow-[0_14px_36px_rgba(0,0,0,0.85),inset_0_1px_1.5px_rgba(255,255,255,0.2)] group-hover:scale-110 group-hover:border-white/40 transition-all duration-300 p-3">
+            <svg viewBox="0 0 256 256" className="w-full h-full">
+              <g>
+                <polygon fill="#FFFFFF" points="195.368421 60.6315789 60.6315789 60.6315789 60.6315789 195.368421 195.368421 195.368421" />
+                <polygon fill="#EA4335" points="195.368421 256 256 195.368421 225.684211 190.196005 195.368421 195.368421 189.835162 223.098002" />
+                <path d="M0,195.37 L0,235.79 C0,246.96 9.04,256 20.21,256 L60.63,256 L66.86,225.68 L60.63,195.37 L27.6,190.2 L0,195.37 Z" fill="#188038" />
+                <path d="M256,60.63 L256,20.21 C256,9.04 246.96,0 235.79,0 L195.37,0 C191.68,15.04 189.84,26.1 189.84,33.2 C189.84,40.29 191.68,49.44 195.37,60.63 C208.78,64.47 218.88,66.39 225.68,66.39 C232.49,66.39 242.59,64.47 256,60.63 Z" fill="#1967D2" />
+                <polygon fill="#FBBC04" points="256 60.63 195.37 60.63 195.37 195.37 256 195.37" />
+                <polygon fill="#34A853" points="195.37 195.37 60.63 195.37 60.63 256 195.37 256" />
+                <path d="M195.37,0 L20.21,0 C9.04,0 0,9.04 0,20.21 L0,195.37 L60.63,195.37 L60.63,60.63 L195.37,60.63 L195.37,0 Z" fill="#4285F4" />
+                <text x="128" y="160" textAnchor="middle" fill="#4285F4" fontSize="85" fontWeight="bold" fontFamily="sans-serif">31</text>
+              </g>
+            </svg>
+            <div className="absolute -top-2 -left-2 px-2 py-0.5 rounded-full bg-rose-500 text-[10px] font-bold text-white border border-[#050505] shadow-lg">
+              99+
             </div>
           </div>
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
+            Google Calendar
+          </div>
+        </div>
 
-          {/* ---------------- 7. AI / ARTIFICIAL INTELLIGENCE (Bottom Inner Left) ---------------- */}
-          <div className="tech-card-badge anim-badge-3 absolute top-[76%] left-[36%] sm:left-[38%] z-10 group cursor-pointer">
-            <div className="flex items-center justify-center w-14 h-14 sm:w-17 sm:h-17 md:w-19 md:h-19 rounded-[17px] sm:rounded-[20px] md:rounded-[22px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_12px_28px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-110 transition-transform duration-300">
-              <svg className="w-7 h-7 sm:w-9 sm:h-9 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none">
-                <defs>
-                  <linearGradient id="aiSparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#C084FC" />
-                    <stop offset="50%" stopColor="#E879F9" />
-                    <stop offset="100%" stopColor="#60A5FA" />
-                  </linearGradient>
-                </defs>
-                {/* Primary AI Sparkle Star */}
-                <path
-                  d="M12 2C12 7.2 7.2 12 2 12C7.2 12 12 16.8 12 22C12 16.8 16.8 12 22 12C16.8 12 12 7.2 12 2Z"
-                  fill="url(#aiSparkleGrad)"
-                />
-                {/* Top-Right Secondary Sparkle */}
-                <path
-                  d="M19 1.5C19 3.5 17.5 5 15.5 5C17.5 5 19 6.5 19 8.5C19 6.5 20.5 5 22.5 5C20.5 5 19 3.5 19 1.5Z"
-                  fill="#FFFFFF"
-                />
-                {/* Bottom-Left Micro Sparkle */}
-                <path
-                  d="M5.5 16.5C5.5 18 4.2 19 3 19C4.2 19 5.5 20 5.5 21.5C5.5 20 6.8 19 8 19C6.8 19 5.5 18 5.5 16.5Z"
-                  fill="#A78BFA"
-                />
-              </svg>
-            </div>
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
-              AI
+        {/* 3. GOOGLE WORKSPACE (Top Center-Right) */}
+        <div className="floating-app-node anim-float-3 absolute top-[5%] left-[54%] lg:left-[56%] z-20 group cursor-pointer">
+          <div className="relative flex items-center justify-center w-16 h-16 lg:w-19 lg:h-19 rounded-[22px] bg-[#1a1b20] border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] group-hover:scale-110 group-hover:border-white/40 transition-all duration-300 p-3.5">
+            <svg viewBox="0 0 24 24" className="w-full h-full">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC04" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+            </svg>
+            <div className="absolute -top-2.5 -right-2 px-2 py-0.5 rounded-full bg-rose-500 text-[10px] font-bold text-white border border-[#050505] shadow-lg">
+              1M+
             </div>
           </div>
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
+            Google Workspace
+          </div>
+        </div>
 
-          {/* ---------------- 8. CONTENT CALENDAR TOOLS (Bottom Right) ---------------- */}
-          <div className="tech-card-badge anim-badge-1 absolute top-[70%] right-[20%] sm:right-[22%] z-10 group cursor-pointer">
-            <div className="flex items-center justify-center w-16 h-16 sm:w-19 sm:h-19 md:w-21 md:h-21 rounded-[18px] sm:rounded-[22px] md:rounded-[24px] bg-gradient-to-b from-[#2a2b32] via-[#1e1f24] to-[#141518] border border-white/[0.14] shadow-[0_12px_28px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.22)] group-hover:scale-108 transition-transform duration-300">
-              <svg className="w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11" viewBox="0 0 24 24" fill="none">
-                <defs>
-                  <linearGradient id="calOfficialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#FCB400" />
-                    <stop offset="50%" stopColor="#18BFFF" />
-                    <stop offset="100%" stopColor="#2D7FF9" />
-                  </linearGradient>
-                </defs>
-                <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" fill="#1C1C1F" stroke="url(#calOfficialGrad)" strokeWidth="2" />
-                <path d="M3 8.5h18M8.5 3v18" stroke="white" strokeOpacity="0.25" strokeWidth="1.5" />
-                <circle cx="14" cy="14" r="2" fill="#FCB400" />
-                <circle cx="14" cy="6" r="1.2" fill="#18BFFF" />
-                <circle cx="6" cy="14" r="1.2" fill="#2D7FF9" />
+        {/* 4. CANVA (Top Right) */}
+        <div className="floating-app-node anim-float-1 absolute top-[9%] right-[14%] lg:right-[16%] z-20 group cursor-pointer">
+          <div className="relative flex items-center justify-center w-16 h-16 lg:w-19 lg:h-19 rounded-[22px] bg-[#1a1b20] border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] group-hover:scale-110 group-hover:border-white/40 transition-all duration-300 p-2.5">
+            <svg className="w-full h-full" viewBox="0 0 80 80" fill="none">
+              <defs>
+                <radialGradient id="canvaGradDeskA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(15.5 70.9) rotate(-49.4) scale(61.9)">
+                  <stop stopColor="#6420FF" />
+                  <stop offset="1" stopColor="#6420FF" stopOpacity="0" />
+                </radialGradient>
+                <radialGradient id="canvaGradDeskB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(21.2 9.1) rotate(54.7) scale(69.8)">
+                  <stop stopColor="#00C4CC" />
+                  <stop offset="1" stopColor="#00C4CC" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              <circle cx="40" cy="40" r="40" fill="#7D2AE7" />
+              <circle cx="40" cy="40" r="40" fill="url(#canvaGradDeskA)" />
+              <circle cx="40" cy="40" r="40" fill="url(#canvaGradDeskB)" />
+              <path d="M57.3 48.2c-.3 0-.6.3-.9.9-3.4 6.9-9.3 11.8-16.1 11.8-7.9 0-12.8-7.1-12.8-17 0-16.6 9.3-26.3 17.4-26.3 3.8 0 6.1 2.4 6.1 6.2 0 4.5-2.6 6.9-2.6 8.5 0 .7.4 1.1 1.3 1.1 3.5 0 7.7-4.1 7.7-9.8 0-5.6-4.9-9.7-13-9.7-13.5 0-25.5 12.5-25.5 29.8 0 13.4 7.6 22.2 19.4 22.2 12.5 0 19.8-12.5 19.8-16.5 0-.9-.5-1.2-1-.1.2z" fill="#ffffff" />
+            </svg>
+            <div className="absolute -bottom-2.5 -left-1 px-2.5 py-0.5 rounded-full bg-[#7D2AE7] text-[10px] font-bold text-white border border-[#050505] shadow-lg">
+              Pro
+            </div>
+          </div>
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
+            Canva
+          </div>
+        </div>
+
+        {/* 5. GOOGLE ADS (Far Right) */}
+        <div className="floating-app-node anim-float-2 absolute top-[40%] right-[1%] lg:right-[3%] z-20 group cursor-pointer">
+          <div className="relative flex items-center justify-center w-16 h-16 lg:w-19 lg:h-19 rounded-[22px] bg-[#1a1b20] border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] group-hover:scale-110 group-hover:border-white/40 transition-all duration-300 p-2.5">
+            <div className="w-full h-full rounded-full flex items-center justify-center p-1.5 shadow-md overflow-hidden">
+              <svg viewBox="0 -13 256 256" className="w-full h-full" fill="none">
+                <g>
+                  <path
+                    d="M5.888,166.405103 L90.88,20.9 C101.676138,27.2558621 156.115862,57.3844138 164.908138,63.1135172 L79.9161379,208.627448 C70.6206897,220.906621 -5.888,185.040138 5.888,166.396276 L5.888,166.405103 Z"
+                    fill="#FBBC04"
+                  />
+                  <path
+                    d="M250.084224,166.401789 L165.092224,20.9055131 C153.210293,1.13172 127.619121,-6.05393517 106.600638,5.62496138 C85.582155,17.3038579 79.182155,42.4624786 91.0640861,63.1190303 L176.056086,208.632961 C187.938017,228.397927 213.52919,235.583582 234.547672,223.904686 C254.648086,212.225789 261.966155,186.175582 250.084224,166.419444 L250.084224,166.401789 Z"
+                    fill="#4285F4"
+                  />
+                  <ellipse
+                    fill="#34A853"
+                    cx="42.6637241"
+                    cy="187.924414"
+                    rx="42.6637241"
+                    ry="41.6044138"
+                  />
+                </g>
               </svg>
             </div>
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
-              Calendar Tools
+            <div className="absolute -bottom-2 -left-2 px-2 py-0.5 rounded-full bg-[#4285F4] text-[9px] font-mono font-bold text-white border border-[#050505] shadow-lg">
+              Ads
+            </div>
+          </div>
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
+            Google Ads
+          </div>
+        </div>
+
+        {/* 6. GOOGLE ANALYTICS (Bottom Left) */}
+        <div className="floating-app-node anim-float-4 absolute bottom-[10%] left-[18%] lg:left-[20%] z-20 group cursor-pointer">
+          <div className="relative flex items-center justify-center w-16 h-16 lg:w-19 lg:h-19 rounded-[22px] bg-[#1a1b20] border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] group-hover:scale-110 group-hover:border-white/40 transition-all duration-300 p-3.5">
+            <svg viewBox="0 0 192 192" className="w-full h-full">
+              <path d="M152 24v144c0 13.255-10.745 24-24 24s-24-10.745-24-24V24c0-13.255 10.745-24 24-24s24 10.745 24 24z" fill="#F9AB00" />
+              <path d="M96 80v88c0 13.255-10.745 24-24 24s-24-10.745-24-24V80c0-13.255 10.745-24 24-24s24 10.745 24 24z" fill="#E37400" />
+              <circle cx="36" cy="168" r="24" fill="#E37400" />
+            </svg>
+            <div className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-amber-500/20 text-[9px] font-mono text-amber-400 border border-amber-500/30 shadow-lg">
+              GA4
+            </div>
+          </div>
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
+            Google Analytics
+          </div>
+        </div>
+
+        {/* 7. META (Bottom Center / Right) */}
+        <div className="floating-app-node anim-float-2 absolute bottom-[8%] right-[22%] lg:right-[24%] z-20 group cursor-pointer">
+          <div className="relative flex items-center justify-center w-16 h-16 lg:w-19 lg:h-19 rounded-[22px] bg-[#1a1b20] border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] group-hover:scale-110 group-hover:border-white/40 transition-all duration-300 p-3.5">
+            <svg className="w-full h-full" fill="#0081FB" viewBox="0 0 32 32">
+              <path d="M5,19.5c0-4.6,2.3-9.4,5-9.4c1.5,0,2.7,0.9,4.6,3.6c-1.8,2.8-2.9,4.5-2.9,4.5c-2.4,3.8-3.2,4.6-4.5,4.6 C5.9,22.9,5,21.7,5,19.5 M20.7,17.8L19,15c-0.4-0.7-0.9-1.4-1.3-2c1.5-2.3,2.7-3.5,4.2-3.5c3,0,5.4,4.5,5.4,10.1 c0,2.1-0.7,3.3-2.1,3.3S23.3,22,20.7,17.8 M16.4,11c-2.2-2.9-4.1-4-6.3-4C5.5,7,2,13.1,2,19.5c0,4,1.9,6.5,5.1,6.5 c2.3,0,3.9-1.1,6.9-6.3c0,0,1.2-2.2,2.1-3.7c0.3,0.5,0.6,1,0.9,1.6l1.4,2.4c2.7,4.6,4.2,6.1,6.9,6.1c3.1,0,4.8-2.6,4.8-6.7 C30,12.6,26.4,7,22.1,7C19.8,7,18,8.8,16.4,11" />
+            </svg>
+            <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-rose-500 text-[10px] font-bold text-white border border-[#050505] shadow-lg">
+              420
+            </div>
+          </div>
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
+            Meta
+          </div>
+        </div>
+
+        {/* Centerpiece Desktop Headline & 3 Monospace Metric Columns */}
+        <div className="relative z-10 flex flex-col items-center text-center max-w-xl lg:max-w-2xl px-4 py-8">
+          <h2 className="reference-text-elem text-4xl lg:text-5xl xl:text-6xl font-normal tracking-tight text-white leading-[1.15] font-['Space_Grotesk',sans-serif]">
+            The current way we{" "}
+            <span className="block font-medium">work is seamless.</span>
+          </h2>
+
+          <p className="reference-text-elem font-['Space_Grotesk',sans-serif] text-sm lg:text-base text-neutral-400 mt-3 max-w-md font-normal leading-relaxed">
+            All your design tools, 3D engines, marketing channels, and AI intelligence unified into a single frictionless pipeline.
+          </p>
+
+          <div className="reference-text-elem grid grid-cols-3 gap-6 lg:gap-8 mt-10 lg:mt-14 w-full text-left border-t border-neutral-800/60 pt-6 lg:pt-8">
+            <div className="flex flex-col">
+              <span className="font-mono text-xs lg:text-[13px] text-neutral-300 leading-relaxed font-normal">
+                2x more speed occurs when eliminating manual handoffs.
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-mono text-xs lg:text-[13px] text-neutral-300 leading-relaxed font-normal">
+                Constant AI integration eliminates workflow friction.
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-mono text-xs lg:text-[13px] text-neutral-300 leading-relaxed font-normal">
+                100% unified attribution across every ad channel.
+              </span>
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability */
 import { useGLTF, useScroll, useTexture, ContactShadows } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
@@ -39,7 +40,7 @@ const PARAMS = {
 
 const MacContainer = () => {
   const groupRef = useRef<THREE.Group>(null);
-  const { camera, gl } = useThree();
+  const { camera, gl, size } = useThree();
   const mac = useGLTF(macModel);
   const screen = useTexture(heroImg);
   const keyboard = useTexture(keyboardImg);
@@ -112,6 +113,9 @@ const MacContainer = () => {
 
   const data = useScroll();
 
+  // Pre-cached easing function
+  const easeSineOut = useMemo(() => (t: number) => Math.sin((t * Math.PI) / 2), []);
+
   // GSAP-driven Scroll Animation Frame Loop
   useFrame(() => {
     const p = data ? data.offset : 0;
@@ -119,7 +123,7 @@ const MacContainer = () => {
     // Progress across scroll window with silky smooth sine.out easing
     const span = Math.max(PARAMS.scrollEnd - PARAMS.scrollStart, 0.01);
     const rawProgress = Math.min(Math.max((p - PARAMS.scrollStart) / span, 0), 1);
-    const laptopProgress = gsap.parseEase("sine.out")(rawProgress);
+    const laptopProgress = easeSineOut(rawProgress);
 
     // 1. Screen Lid Opening Animation
     if (meshes.screen) {
@@ -127,10 +131,15 @@ const MacContainer = () => {
       meshes.screen.rotation.x = THREE.MathUtils.degToRad(lidAngle);
     }
 
-    // 2. Base/Chassis Position & Rotation & Scale
+    // 2. Base/Chassis Position & Rotation & Scale (Responsive across mobile, tablet, desktop)
     if (groupRef.current) {
-      const curX = gsap.utils.interpolate(PARAMS.startX, PARAMS.targetX, laptopProgress);
-      const curY = gsap.utils.interpolate(PARAMS.startY, PARAMS.targetY, laptopProgress);
+      const aspect = size.width / Math.max(size.height, 1);
+      const responsiveTargetX = aspect < 0.75 ? -0.7 : aspect < 1.2 ? -1.5 : PARAMS.targetX;
+      const responsiveTargetY = aspect < 0.75 ? -1.8 : aspect < 1.2 ? -2.2 : PARAMS.targetY;
+      const responsiveScale = aspect < 0.75 ? 0.62 : aspect < 1.2 ? 0.67 : PARAMS.scale;
+
+      const curX = gsap.utils.interpolate(PARAMS.startX, responsiveTargetX, laptopProgress);
+      const curY = gsap.utils.interpolate(PARAMS.startY, responsiveTargetY, laptopProgress);
       const curZ = gsap.utils.interpolate(PARAMS.startZ, PARAMS.targetZ, laptopProgress);
 
       const curRotX = gsap.utils.interpolate(
@@ -149,7 +158,7 @@ const MacContainer = () => {
         laptopProgress
       );
 
-      const curScale = gsap.utils.interpolate(PARAMS.startScale, PARAMS.scale, laptopProgress);
+      const curScale = gsap.utils.interpolate(PARAMS.startScale, responsiveScale, laptopProgress);
 
       groupRef.current.position.set(curX, curY, curZ);
       groupRef.current.rotation.set(curRotX, curRotY, curRotZ);
@@ -179,8 +188,9 @@ const MacContainer = () => {
         />
       </mesh>
 
-      {/* Tight, realistic contact shadow directly beneath the laptop chassis */}
+      {/* Baked contact shadow directly beneath the laptop chassis with frames={1} to save massive GPU cycles */}
       <ContactShadows
+        frames={1}
         position={[0, -0.65, 0]}
         opacity={0.85}
         scale={36}

@@ -133,15 +133,6 @@ export const Footer: React.FC = () => {
               <li>
                 <button
                   type="button"
-                  onClick={() => scrollToSection("proposals-section")}
-                  className="hover:text-white transition-colors cursor-pointer text-left hover:translate-x-1 duration-200 inline-block"
-                >
-                  Client Proposals & Strategy
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
                   onClick={() => scrollToSection("stories-section")}
                   className="hover:text-white transition-colors cursor-pointer text-left hover:translate-x-1 duration-200 inline-block"
                 >

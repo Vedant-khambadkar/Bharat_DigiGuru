@@ -1,321 +1,323 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-interface CardItem {
-  id: "vision" | "mission" | "values";
-  number: string;
-  title: string;
-  subtitle: string;
-  tag: string;
-  description: string;
-  highlights: string[];
-  metrics: string;
-  iconType: "sphere" | "globe" | "cylinder";
+interface SlideItem {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly bgImage: string;
 }
 
-const CARDS: CardItem[] = [
+const SLIDES: readonly SlideItem[] = [
   {
     id: "vision",
-    number: "01",
-    title: "OUR VISION",
-    subtitle: "AI-DRIVEN TRANSFORMATION",
-    tag: "FUTURE HORIZON",
+    name: "VISION",
     description:
-      "To redefine the frontiers of digital commerce and brand storytelling by fusing next-generation AI intelligence, immersive cinematic design, and hyper-scalable cloud infrastructure.",
-    highlights: ["Cognitive AI Marketing", "Omnichannel Leadership", "Predictive Analytics"],
-    metrics: "2026-2030 Horizon // 100% Native AI",
-    iconType: "sphere",
+      "To pioneer the future of digital commerce and brand storytelling by fusing next-generation AI intelligence, immersive 3D architectures, and hyper-scalable technologies that elevate businesses worldwide.",
+    bgImage:
+      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop",
   },
   {
     id: "mission",
-    number: "02",
-    title: "OUR MISSION",
-    subtitle: "HIGH-VELOCITY EXECUTION",
-    tag: "SOP FLYWHEEL",
+    name: "MISSION",
     description:
-      "Empower visionary founders and enterprise leaders through disciplined agile sprints, data-backed conversion engineering, and relentlessly creative craftsmanship that compounds enterprise value.",
-    highlights: ["7-14 Day Sprint Delivery", "Performance Funnels", "Continuous Optimization"],
-    metrics: "99.4% Execution Accuracy // Rapid Deploy",
-    iconType: "globe",
+      "To empower visionary founders and enterprises through high-velocity creative engineering, data-backed growth systems, and robust digital ecosystems that consistently compound real enterprise value.",
+    bgImage:
+      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=2000&auto=format&fit=crop",
   },
   {
     id: "values",
-    number: "03",
-    title: "CORE VALUES",
-    subtitle: "TRANSPARENCY & ROI",
-    tag: "FOUNDATIONAL ETHOS",
+    name: "VALUES",
     description:
       "We anchor every client partnership on unyielding transparency, creative mastery, agile sprint velocity, and measurable financial return on investment. If it doesn't move the business needle, we don't build it.",
-    highlights: ["Radical Transparency", "Engineering Craft", "Measurable ROI"],
-    metrics: "4.8X Avg ROAS // 96.8% Client Retention",
-    iconType: "cylinder",
+    bgImage:
+      "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2000&auto=format&fit=crop",
   },
-];
+] as const;
 
 export const MissionVision: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
-  const [activeCard, setActiveCard] = useState<"vision" | "mission" | "values">("vision");
 
-  // GSAP scroll entrance animation
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
 
+    // Refresh and sort ScrollTriggers so pins above this section (Home, Portfolio) are accounted for
+    ScrollTrigger.sort();
+
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        ".mv-header-elem",
-        { opacity: 0, y: 25 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          stagger: 0.1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: el,
-            start: "top 75%",
-          },
-        }
+      const slideCount = SLIDES.length;
+      const totalUnits = 100;
+      const phaseDuration = totalUnits / slideCount; // ~33.33 units per slide
+      const fillPortion = phaseDuration * 0.6; // 60% of phase time on letter wipe
+      const transitionPortion = phaseDuration * 0.4; // 40% shifting to next slide
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: el,
+          start: "top top",
+          end: `+=${slideCount * 1200}`,
+          pin: true,
+          pinSpacing: true,
+          scrub: 0.8,
+          anticipatePin: 1,
+          fastScrollEnd: true,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      // Horizontal Middle Progress Line (fills continuously along scroll)
+      tl.fromTo(
+        ".middle-progress-line",
+        { scaleX: 0 },
+        { scaleX: 1, duration: totalUnits, ease: "none" },
+        0
       );
 
-      gsap.fromTo(
-        ".mv-grid-card",
-        { opacity: 0, y: 35 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.85,
-          stagger: 0.15,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: el,
-            start: "top 70%",
+      // Set initial states for each title item
+      SLIDES.forEach((_, idx) => {
+        // Backgrounds
+        gsap.set(`.bg-slide-${idx}`, {
+          opacity: idx === 0 ? 1 : 0,
+          scale: idx === 0 ? 1 : 1.05,
+        });
+
+        // Single Unified Title: idx 0 starts at active y: 0, others wait below
+        gsap.set(`.title-item-${idx}`, {
+          y: idx === 0 ? 0 : 120 * idx,
+          opacity: idx === 0 ? 1 : 0,
+        });
+
+        // Letter wipe clipPath
+        gsap.set(`.fill-layer-${idx}`, { clipPath: "inset(0 100% 0 0)" });
+
+        // Descriptions & Subtitles
+        gsap.set(`.desc-item-${idx}`, {
+          opacity: idx === 0 ? 1 : 0,
+          y: idx === 0 ? 0 : 25,
+        });
+      });
+
+      // Build Scroll Progression
+      SLIDES.forEach((_, idx) => {
+        const phaseStart = idx * phaseDuration;
+
+        // A. Letter-by-letter White Wipe Animation
+        tl.fromTo(
+          `.fill-layer-${idx}`,
+          { clipPath: "inset(0 100% 0 0)" },
+          {
+            clipPath: "inset(0 0% 0 0)",
+            duration: fillPortion,
+            ease: "none",
           },
+          phaseStart
+        );
+
+        // B. Transition to Next Slide
+        if (idx < slideCount - 1) {
+          const transStart = phaseStart + fillPortion;
+          const nextIdx = idx + 1;
+
+          // Background crossfade
+          tl.to(
+            `.bg-slide-${idx}`,
+            {
+              opacity: 0,
+              scale: 1.04,
+              duration: transitionPortion,
+              ease: "power2.inOut",
+            },
+            transStart
+          );
+          tl.to(
+            `.bg-slide-${nextIdx}`,
+            {
+              opacity: 1,
+              scale: 1,
+              duration: transitionPortion,
+              ease: "power2.inOut",
+            },
+            transStart
+          );
+
+          // 1. Move ALL past titles UP above the line into the ghost stack with clean gaps
+          for (let past = 0; past <= idx; past++) {
+            const stepsAbove = idx - past + 1;
+            const targetY = -125 - (stepsAbove - 1) * 105;
+            const targetOpacity = Math.max(0.18, 0.35 - (stepsAbove - 1) * 0.12);
+
+            tl.to(
+              `.title-item-${past}`,
+              {
+                y: targetY,
+                opacity: targetOpacity,
+                duration: transitionPortion,
+                ease: "power2.inOut",
+              },
+              transStart
+            );
+          }
+
+          // 2. Slide the NEXT title into the active position (y: 0, opacity: 1)
+          tl.to(
+            `.title-item-${nextIdx}`,
+            {
+              y: 0,
+              opacity: 1,
+              duration: transitionPortion,
+              ease: "power2.inOut",
+            },
+            transStart
+          );
+
+          // 3. Switch descriptions (Right side)
+          tl.to(
+            `.desc-item-${idx}`,
+            {
+              opacity: 0,
+              y: -20,
+              duration: transitionPortion * 0.45,
+              ease: "power2.inOut",
+            },
+            transStart
+          );
+          tl.to(
+            `.desc-item-${nextIdx}`,
+            {
+              opacity: 1,
+              y: 0,
+              duration: transitionPortion * 0.65,
+              ease: "power2.inOut",
+            },
+            transStart + transitionPortion * 0.35
+          );
         }
-      );
+      });
+
+      // Final trailing hold
+      tl.to({}, { duration: 15 }, totalUnits);
     }, el);
 
-    return () => ctx.revert();
+    // Refresh ScrollTrigger after DOM has fully settled
+    const timer = setTimeout(() => {
+      ScrollTrigger.sort();
+      ScrollTrigger.refresh();
+    }, 300);
+
+    const handleRefresh = () => {
+      ScrollTrigger.sort();
+      ScrollTrigger.refresh();
+    };
+
+    window.addEventListener("start-hero-letters", handleRefresh);
+    window.addEventListener("resize", handleRefresh);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("start-hero-letters", handleRefresh);
+      window.removeEventListener("resize", handleRefresh);
+      ctx.revert();
+    };
   }, []);
 
   return (
     <section
-      id="mission-vision"
+      id="analytics-section"
       ref={sectionRef}
-      className="relative w-full min-h-[90vh] text-white py-20 sm:py-28 px-6 sm:px-10 lg:px-16 overflow-hidden select-none "
+      aria-label="Corporate Vision, Mission, and Strategy Showcase"
+      className="relative z-20 w-full h-screen min-h-[600px] overflow-hidden bg-[#050505] text-white select-none isolate font-['Outfit',sans-serif]"
     >
-      {/* Background Falling Meteor Streaks (Pure White/Monochrome) */}
-      <div className="absolute top-0 right-0 w-96 h-96 pointer-events-none opacity-40 overflow-hidden z-0">
-        <div className="absolute top-6 right-16 w-24 h-[1px] bg-gradient-to-l from-white to-transparent rotate-[-35deg] opacity-70 animate-pulse" />
-        <div className="absolute top-16 right-36 w-32 h-[1px] bg-gradient-to-l from-white to-transparent rotate-[-35deg] opacity-40" />
-        <div className="absolute top-28 right-8 w-20 h-[1.5px] bg-gradient-to-l from-white to-transparent rotate-[-35deg] opacity-80 animate-pulse" />
-        <div className="absolute top-44 right-28 w-40 h-[1px] bg-gradient-to-l from-white to-transparent rotate-[-35deg] opacity-50" />
-      </div>
-
-      {/* Subtle Monochrome Ambient Radial Glow */}
-      <div className="absolute top-1/3 left-1/3 w-[600px] h-[400px] bg-white/[0.02] blur-[160px] rounded-full pointer-events-none" />
-
-      {/* Main Container */}
-      <div className="relative z-10 max-w-8xl mx-auto flex flex-col justify-between h-full">
-        
-        {/* =========================================================================
-            1. SECTION HEADER (Clean Monochrome Typography)
-           ========================================================================= */}
-        <div className="mb-14 sm:mb-18 text-left mv-header-elem">
-          <h2 className="font-neuropol text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider text-white font-semibold leading-tight">
-            THIS IS WHAT DRIVES US
-          </h2>
-          <p className="font-neuropol text-xs sm:text-sm md:text-[15px] text-neutral-400 mt-2 font-normal tracking-wide">
-            Our strategic purpose, operational mission, and foundational values
-          </p>
+      {/* Background Layers with High-Contrast Vignette Overlays */}
+      {SLIDES.map((slide, idx) => (
+        <div
+          key={slide.id}
+          className={`bg-slide-${idx} absolute inset-0 w-full h-full pointer-events-none will-change-[opacity,transform]`}
+          style={{
+            backgroundImage: `url('${slide.bgImage}')`,
+            backgroundSize: "cover",
+            backgroundPosition:
+              idx === 1
+                ? "center 40%"
+                : idx === 2
+                ? "center 60%"
+                : "center center",
+          }}
+        >
+          {/* Deep Cinematic Vignette Overlays ensuring pure black base & high text contrast */}
+          <div className="absolute inset-0 bg-[#050505]/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-[#050505]/90" />
+          <div className="absolute inset-0 bg-radial from-transparent via-[#050505]/50 to-[#050505]/95" />
         </div>
+      ))}
 
-        {/* =========================================================================
-            2. THREE-CARD MINIMALIST ROW (Pure Black & White Theme)
-           ========================================================================= */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 w-full">
-          {CARDS.map((card) => {
-            const isActive = activeCard === card.id;
+      {/* Ambient Geometric Grid Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100px_100px] pointer-events-none opacity-40" />
 
-            return (
-              <div
-                key={card.id}
-                onClick={() => setActiveCard(card.id)}
-                onMouseEnter={() => setActiveCard(card.id)}
-                className={`mv-grid-card group relative cursor-pointer rounded-3xl p-7 sm:p-8 md:p-9 lg:p-10 flex flex-col justify-between min-h-[460px] sm:min-h-[500px] transition-all duration-500 ease-out  ${
-                  isActive
-                    ? "bg-gradient-to-b from-[#1c1c22]/95 via-[#121216]/95 to-[#09090b]  shadow-[0_0_35px_rgba(255,255,255,0.06)] scale-[1.01]"
-                    : "bg-[#0b0b0e]/80  hover:bg-[#111116]/90"
-                }`}
-              >
-                {/* Subtle Card Inner Top Rim Glow (Monochrome White) */}
-                {isActive && (
-                  <div className="absolute top-0 inset-x-8 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-                )}
-
-                {/* Top Geometric Minimalist Wireframe Icon */}
-                <div className="w-full flex items-start justify-between">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 relative flex items-center justify-center">
-                    
-                    {/* Icon 1: 3D Sphere Wireframe */}
-                    {card.iconType === "sphere" && (
-                      <svg viewBox="0 0 64 64" className="w-full h-full stroke-current" fill="none">
-                        <circle
-                          cx="32"
-                          cy="32"
-                          r="26"
-                          stroke={isActive ? "#ffffff" : "rgba(255, 255, 255, 0.4)"}
-                          strokeWidth="1.25"
-                        />
-                        <ellipse
-                          cx="32"
-                          cy="32"
-                          rx="26"
-                          ry="10"
-                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
-                          strokeWidth="1.25"
-                        />
-                        <ellipse
-                          cx="32"
-                          cy="32"
-                          rx="10"
-                          ry="26"
-                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
-                          strokeWidth="1.25"
-                        />
-                      </svg>
-                    )}
-
-                    {/* Icon 2: 3D Wireframe Globe with Lat/Long lines */}
-                    {card.iconType === "globe" && (
-                      <svg viewBox="0 0 64 64" className="w-full h-full stroke-current" fill="none">
-                        <circle
-                          cx="32"
-                          cy="32"
-                          r="26"
-                          stroke={isActive ? "#ffffff" : "rgba(255, 255, 255, 0.4)"}
-                          strokeWidth="1.25"
-                        />
-                        <line
-                          x1="6"
-                          y1="32"
-                          x2="58"
-                          y2="32"
-                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
-                          strokeWidth="1.25"
-                        />
-                        <line
-                          x1="32"
-                          y1="6"
-                          x2="32"
-                          y2="58"
-                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
-                          strokeWidth="1.25"
-                        />
-                        <ellipse
-                          cx="32"
-                          cy="32"
-                          rx="16"
-                          ry="26"
-                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
-                          strokeWidth="1.25"
-                        />
-                      </svg>
-                    )}
-
-                    {/* Icon 3: Stacked 3D Ellipses / Cylinder Wireframe */}
-                    {card.iconType === "cylinder" && (
-                      <svg viewBox="0 0 64 64" className="w-full h-full stroke-current" fill="none">
-                        <ellipse
-                          cx="32"
-                          cy="18"
-                          rx="24"
-                          ry="8"
-                          stroke={isActive ? "#ffffff" : "rgba(255, 255, 255, 0.4)"}
-                          strokeWidth="1.25"
-                        />
-                        <ellipse
-                          cx="32"
-                          cy="32"
-                          rx="24"
-                          ry="8"
-                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
-                          strokeWidth="1.25"
-                        />
-                        <ellipse
-                          cx="32"
-                          cy="46"
-                          rx="24"
-                          ry="8"
-                          stroke={isActive ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.3)"}
-                          strokeWidth="1.25"
-                        />
-                      </svg>
-                    )}
-                  </div>
-
-                  {/* Card Number Badge */}
-                  <span className="font-mono text-xs text-neutral-500 font-semibold">
-                    {card.number}
-                  </span>
-                </div>
-
-                {/* Bottom Content Area */}
-                <div className="mt-auto pt-10">
-                  
-                  {/* Title */}
-                  <h3 className="font-neuropol text-xl sm:text-2xl font-bold uppercase tracking-wide text-white leading-tight">
-                    {card.title}
-                  </h3>
-                  <div className="font-mono text-[10px] sm:text-[11px] text-neutral-400 tracking-wider uppercase mt-1">
-                    {card.subtitle}
-                  </div>
-
-                  {/* Thin Divider Line (Matching Image) */}
-                  <div className="w-full h-[1px] bg-white/15 my-4 group-hover:bg-white/30 transition-colors" />
-
-                  {/* Description */}
-                  <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-[13px] text-neutral-300 leading-relaxed font-normal min-h-[72px]">
-                    {card.description}
-                  </p>
-
-                  {/* Highlights Pills (Monochrome) */}
-                  <div className="flex flex-wrap gap-1.5 mt-4">
-                    {card.highlights.map((h, hIdx) => (
-                      <span
-                        key={hIdx}
-                        className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono bg-white/[0.04]  text-neutral-300"
-                      >
-                        ✦ {h}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Bottom Footer: Metric and Downward-Diagonal Arrow ↘ */}
-                  <div className="flex items-center justify-between mt-6 pt-3 ">
-                    <span className="font-mono text-[9px] sm:text-[10px] text-neutral-400 uppercase tracking-wider">
-                      {card.metrics}
-                    </span>
-
-                    <svg
-                      viewBox="0 0 24 24"
-                      className={`w-6 h-6 stroke-current transition-transform duration-300 group-hover:translate-x-0.5 group-hover:translate-y-0.5 ${
-                        isActive ? "text-white" : "text-neutral-500"
-                      }`}
-                      fill="none"
-                      strokeWidth="1.5"
-                    >
-                      <path d="M7 7L17 17" />
-                      <path d="M7 17h10V7" />
-                    </svg>
-                  </div>
-                </div>
+      {/* Core Showcase Centered Wrapper */}
+      <div className="relative z-20 w-full h-full max-w-8xl mx-auto px-6 sm:px-10 lg:px-16 flex flex-col justify-center">
+        {/* Main Grid Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start relative">
+          {/* Left Column: "OUR" + Single Title Stack */}
+          <div className="lg:col-span-7 flex items-start gap-4 sm:gap-6 md:gap-8 relative">
+            {/* 100% Edge-to-Edge Full Viewport Width Progress Line */}
+            <div className="absolute top-[180px] left-1/2 -translate-x-1/2 w-screen z-10 pointer-events-none">
+              <div className="relative w-full h-[1px] bg-white/20">
+                <div className="middle-progress-line absolute top-0 left-0 h-full w-full bg-gradient-to-r from-white via-white to-white/70 origin-left will-change-transform" />
               </div>
-            );
-          })}
+            </div>
+
+            {/* "OUR" Label positioned aligned with the active word */}
+            <span className="text-[11px] md:text-xs tracking-[0.25em] font-extrabold uppercase text-white/90 select-none shrink-0 font-['Chakra_Petch',sans-serif] mt-[215px]">
+              OUR
+            </span>
+
+            {/* Single Title Stack Container */}
+            <div className="relative w-full h-[380px] overflow-visible">
+              {/* SINGLE set of titles: each word translates up cleanly with spacing */}
+              {SLIDES.map((slide, idx) => (
+                <div
+                  key={slide.id}
+                  className={`title-item-${idx} absolute top-[200px] left-0 select-none will-change-[transform,opacity]`}
+                >
+                  <div className="relative inline-block">
+                    {/* Base Muted Layer */}
+                    <h2 className="text-[52px] sm:text-[70px] md:text-[84px] lg:text-[96px] leading-none font-black tracking-wider uppercase font-['Chakra_Petch',sans-serif] text-[#334155] select-none">
+                      {slide.name}
+                    </h2>
+
+                    {/* Top White Fill Layer (Wipes across letters on scroll) */}
+                    <div
+                      aria-hidden="true"
+                      className={`fill-layer-${idx} absolute inset-0 overflow-hidden will-change-[clip-path] pointer-events-none`}
+                    >
+                      <span className="text-[52px] sm:text-[70px] md:text-[84px] lg:text-[96px] leading-none font-black tracking-wider uppercase font-['Chakra_Petch',sans-serif] text-white select-none whitespace-nowrap">
+                        {slide.name}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column: Descriptions Stack (Anchored with proper spacing) */}
+          <div className="lg:col-span-5 relative min-h-[220px] flex items-start lg:pl-8 mt-6 lg:mt-[200px]">
+            {SLIDES.map((slide, idx) => (
+              <div
+                key={slide.id}
+                className={`desc-item-${idx} absolute left-0 right-0 will-change-[transform,opacity] space-y-4`}
+              >
+
+                <p className="text-base sm:text-lg md:text-xl lg:text-[22px] font-normal leading-relaxed text-zinc-100 drop-shadow-md">
+                  {slide.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

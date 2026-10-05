@@ -1,6 +1,6 @@
-import React, { Suspense, useEffect, useRef, useCallback } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Environment, ScrollControls, useScroll } from '@react-three/drei'
+import { Suspense, useEffect, useRef, useCallback, useState } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { ScrollControls, useScroll } from '@react-three/drei'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import MacContainer from '../components/Home_Animation/MacContainer.tsx'
@@ -8,6 +8,7 @@ import InstagramAnimation from '../components/Home_Animation/InstagramAnimation.
 import YoutubeAnimation from '../components/Home_Animation/YoutubeAnimation.tsx'
 import PinterestAnimation from '../components/Home_Animation/PinterestAnimation.tsx'
 import TikTokAnimation from '../components/Home_Animation/TikTokAnimation.tsx'
+import * as THREE from "three"
 
 // Clean Vector Icons for Luxury Social Links
 const InstagramIcon = () => (
@@ -54,6 +55,38 @@ function ScrollTriggerSync({ progressRef }: { progressRef: React.MutableRefObjec
   return null;
 }
 
+function ResponsiveCamera() {
+  const { camera, size } = useThree();
+
+  useEffect(() => {
+    if (!camera || !(camera as THREE.PerspectiveCamera).isPerspectiveCamera) return;
+    const pCam = camera as THREE.PerspectiveCamera;
+    const aspect = size.width / Math.max(size.height, 1);
+
+    if (aspect < 0.75) {
+      // Mobile Portrait
+      pCam.fov = 54;
+      pCam.position.set(0, 4.8, 42);
+    } else if (aspect < 1.2) {
+      // Tablet / iPad / Square
+      pCam.fov = 46;
+      pCam.position.set(0, 4.5, 40);
+    } else {
+      // Desktop & Widescreen
+      pCam.fov = 40;
+      pCam.position.set(0, 4.3, 38);
+    }
+    pCam.rotation.set(
+      THREE.MathUtils.degToRad(-2),
+      THREE.MathUtils.degToRad(6),
+      0
+    );
+    pCam.updateProjectionMatrix();
+  }, [camera, size.width, size.height]);
+
+  return null;
+}
+
 function CanvasReadyNotifier({ onReady }: { onReady: () => void }) {
   useEffect(() => {
     onReady();
@@ -71,6 +104,23 @@ function Home({ on3DReady }: HomeProps) {
   const bgTextRef = useRef<HTMLDivElement>(null);
   const fgUiRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<number>(0);
+  const [isInView, setIsInView] = useState(true);
+
+  // Monitor visibility to pause Three.js rendering when off-screen to save 100% GPU
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { rootMargin: "300px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handle3DReady = useCallback(() => {
     on3DReady?.();
@@ -191,13 +241,23 @@ function Home({ on3DReady }: HomeProps) {
       <div className="absolute inset-0 z-10 w-full h-full">
         <div className="w-full h-full">
           <Canvas
-            dpr={[1, 2]}
-            gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+            frameloop={isInView ? "always" : "never"}
+            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.5)]}
+            gl={{
+              antialias: true,
+              alpha: true,
+              powerPreference: "high-performance",
+              stencil: false,
+              depth: true,
+            }}
             camera={{ position: [0, 4.3, 38], fov: 40 }}
           >
             <Suspense fallback={null}>
+              <ResponsiveCamera />
               <CanvasReadyNotifier onReady={handle3DReady} />
-              <Environment preset="city" />
+              <ambientLight intensity={1.8} />
+              <directionalLight position={[10, 15, 10]} intensity={2.2} color="#ffffff" />
+              <directionalLight position={[-10, 8, -5]} intensity={0.9} color="#90b0e0" />
               <ScrollControls pages={5} damping={0.15}>
                 <ScrollTriggerSync progressRef={progressRef} />
                 <MacContainer />

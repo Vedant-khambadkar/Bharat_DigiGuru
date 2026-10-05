@@ -104,8 +104,25 @@ export const Portfolio: React.FC = () => {
     return !(cached && cached.length > 0);
   });
   const [is3DReady, setIs3DReady] = useState<boolean>(false);
+  const [isInView, setIsInView] = useState<boolean>(false);
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+
+  // Pause WebGL rendering when section is offscreen to save GPU
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { rootMargin: "300px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleReady = React.useCallback(() => {
     setIs3DReady(true);
@@ -287,8 +304,8 @@ export const Portfolio: React.FC = () => {
       </div>
 
       {/* 2. Upper Right Section */}
-      <div className="hidden lg:block absolute top-12 sm:top-16 md:top-20 right-12 max-w-[360px] text-right z-10 pointer-events-none">
-        <h2 className="font-neuropol text-xl lg:text-[22px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
+      <div className="hidden lg:block absolute top-8 sm:top-12 md:top-40 right-12 max-w-[360px] text-right z-10 pointer-events-none">
+        <h2 className="font-neuropol text-xl lg:text-[18px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
           Shaping Your Vision
           <br />
           Into Immersive Reality.
@@ -296,7 +313,7 @@ export const Portfolio: React.FC = () => {
       </div>
 
       {/* 3. Bottom Left Section: Descriptive Data */}
-      <div className="absolute bottom-6 sm:bottom-8 md:bottom-12 left-4 sm:left-8 md:left-12 max-w-[280px] sm:max-w-[340px] md:max-w-[400px] z-10 pointer-events-none flex flex-col gap-1.5 sm:gap-2.5">
+      <div className="absolute bottom-3 sm:bottom-4 md:bottom-2 left-4 sm:left-8 md:left-12 max-w-[280px] sm:max-w-[340px] md:max-w-[400px] z-10 pointer-events-none flex flex-col gap-1.5 sm:gap-2.5">
         <h2 className="font-neuropol text-base sm:text-xl md:text-2xl font-normal leading-[1.2] tracking-wide text-white uppercase m-0">
           Crafting Digital
           <br />
@@ -319,6 +336,14 @@ export const Portfolio: React.FC = () => {
 
         {planes.length > 0 ? (
           <Canvas
+            frameloop={isInView ? "always" : "never"}
+            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.5)]}
+            gl={{
+              antialias: true,
+              powerPreference: "high-performance",
+              stencil: false,
+              depth: true,
+            }}
             camera={{
               position: [0, 0.4, 8.8],
               fov: 46,

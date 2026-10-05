@@ -14,7 +14,6 @@ import ThreeDProjects from "./pages/ThreeDProjects";
 import WorkWithUs from "./pages/WhyWorkWithUs";
 import OurTeam from "./pages/OurTeam";
 import Blogs from "./pages/Blogs";
-import ClientProposals from "./pages/ClientProposals";
 import Contact from "./pages/Contact";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
@@ -159,12 +158,12 @@ const MainLandingPage = () => {
     const isMobile = window.innerWidth < 768;
 
     const lenis = new Lenis({
-      duration: isMobile ? 1.0 : 1.25,
+      duration: isMobile ? 0.9 : 1.15,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 0.92,
+      wheelMultiplier: 0.95,
       touchMultiplier: 1.0,
       infinite: false,
       autoRaf: false,
@@ -174,7 +173,9 @@ const MainLandingPage = () => {
 
     lenis.scrollTo(0, { immediate: true });
     window.scrollTo(0, 0);
-    lenis.start();
+    
+    // Stop scrolling while preloader is active; started on completion
+    lenis.stop();
 
     lenis.on("scroll", () => {
       ScrollTrigger.update();
@@ -184,6 +185,7 @@ const MainLandingPage = () => {
       lenis.raf(time * 1000);
     };
     gsap.ticker.add(tickerCallback);
+    // Allow GSAP lag smoothing to smoothly recover from frame drops instead of locking up the UI
     gsap.ticker.lagSmoothing(500, 33);
 
     const handleBeforeUnload = () => {
@@ -251,10 +253,10 @@ const MainLandingPage = () => {
     };
   }, []);
 
-  // Custom Cursor Box with Lens interaction
+  // Custom Cursor Box with Lens interaction (Desktop pointer only)
   useEffect(() => {
     const box = boxRef.current;
-    if (!box) return;
+    if (!box || !window.matchMedia("(pointer: fine)").matches) return;
 
     gsap.set(box, {
       xPercent: -50,
@@ -262,14 +264,18 @@ const MainLandingPage = () => {
       opacity: 0,
     });
 
-    const xTo = gsap.quickTo(box, "x", { duration: 0.18, ease: "power3.out" });
-    const yTo = gsap.quickTo(box, "y", { duration: 0.18, ease: "power3.out" });
+    const xTo = gsap.quickTo(box, "x", { duration: 0.15, ease: "power3.out" });
+    const yTo = gsap.quickTo(box, "y", { duration: 0.15, ease: "power3.out" });
 
     let isOverText = false;
     let isInitialized = false;
-    let scrollTimer: number | null = null;
+    let hoverThrottle = 0;
 
     const updateHoverState = (target: HTMLElement | null) => {
+      const now = Date.now();
+      if (now - hoverThrottle < 50) return;
+      hoverThrottle = now;
+
       const lensCandidate = target?.closest(
         "[data-lens-text='true'], h1, h2, h3, a, button"
       ) as HTMLElement | null;
@@ -284,8 +290,8 @@ const MainLandingPage = () => {
             borderWidth: "2px",
             boxShadow:
               "0 0 35px rgba(255, 255, 255, 0.85), inset 0 0 15px rgba(255, 255, 255, 0.4)",
-            duration: 0.25,
-            ease: "back.out(1.7)",
+            duration: 0.2,
+            ease: "power2.out",
           });
         }
       } else {
@@ -299,7 +305,7 @@ const MainLandingPage = () => {
             borderColor: "rgba(248, 248, 248, 0.6)",
             borderWidth: "1px",
             boxShadow: "0 0 14px rgba(255, 255, 255, 0.8)",
-            duration: 0.25,
+            duration: 0.2,
             ease: "power2.out",
           });
         }
@@ -317,45 +323,17 @@ const MainLandingPage = () => {
       updateHoverState(e.target as HTMLElement);
     };
 
-    const handleScroll = () => {
-      if (!isInitialized) return;
-
-      if (!isOverText) {
-        gsap.to(box, {
-          scaleY: 1.25,
-          scaleX: 0.85,
-          duration: 0.1,
-          overwrite: "auto",
-        });
-      }
-
-      if (scrollTimer) window.clearTimeout(scrollTimer);
-      scrollTimer = window.setTimeout(() => {
-        if (!isOverText) {
-          gsap.to(box, {
-            scaleY: 1,
-            scaleX: 1,
-            duration: 0.2,
-            ease: "power2.out",
-          });
-        }
-      }, 80);
-    };
-
     const handleMouseLeave = () => {
       gsap.to(box, { opacity: 0, duration: 0.2 });
       isOverText = false;
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    window.addEventListener("scroll", handleScroll, { passive: true });
     document.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("scroll", handleScroll);
       document.removeEventListener("mouseleave", handleMouseLeave);
-      if (scrollTimer) window.clearTimeout(scrollTimer);
     };
   }, []);
 
@@ -390,12 +368,11 @@ const MainLandingPage = () => {
         <Portfolio />
         <ThreeDProjects />
         <ToolsAndTechnology />
-        <MissionVision />
         <Process />
         <About />
+        <MissionVision />
         <OurTeam />
         <WorkWithUs />
-        <ClientProposals />
         <Blogs />
         <Contact />
         <Footer />
