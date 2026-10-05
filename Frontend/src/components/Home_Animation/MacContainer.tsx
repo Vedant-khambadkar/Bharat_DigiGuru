@@ -3,7 +3,6 @@ import { useGLTF, useScroll, useTexture, ContactShadows } from "@react-three/dre
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import gsap from "gsap";
 
 import { MODEL_URLS } from "../../config/models";
 import heroImg from "../../assets/Picture/Picture3.webp";
@@ -39,6 +38,21 @@ const PARAMS = {
   scrollEnd: 0.60,
 };
 
+// Precompute static radians & values once
+const RAD_START_ROT_X = THREE.MathUtils.degToRad(PARAMS.startRotXDeg);
+const RAD_START_ROT_Y = THREE.MathUtils.degToRad(PARAMS.startRotYDeg);
+const RAD_START_ROT_Z = THREE.MathUtils.degToRad(PARAMS.startRotZDeg);
+const RAD_TARGET_ROT_X = THREE.MathUtils.degToRad(PARAMS.rotXDeg);
+const RAD_TARGET_ROT_Y = THREE.MathUtils.degToRad(PARAMS.rotYDeg);
+const RAD_TARGET_ROT_Z = THREE.MathUtils.degToRad(PARAMS.rotZDeg);
+const RAD_INITIAL_SCREEN_X = THREE.MathUtils.degToRad(182);
+
+const SCROLL_SPAN = Math.max(PARAMS.scrollEnd - PARAMS.scrollStart, 0.01);
+const HALF_PI = Math.PI / 2;
+
+// Ultra-fast inline linear interpolation
+const inlineLerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+
 interface MacContainerProps {
   onReady?: () => void;
 }
@@ -63,17 +77,18 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
 
   // Setup textures and materials cleanly with useMemo to avoid re-creation on every render
   const { meshes } = useMemo(() => {
-    const maxAnisotropy = gl.capabilities.getMaxAnisotropy();
+    // Sensibly cap anisotropy to 4 to reduce texture memory bandwidth while preserving crisp visuals
+    const cappedAnisotropy = Math.min(gl.capabilities.getMaxAnisotropy(), 4);
 
     keyboard.colorSpace = THREE.SRGBColorSpace;
-    keyboard.anisotropy = maxAnisotropy;
+    keyboard.anisotropy = cappedAnisotropy;
     keyboard.minFilter = THREE.LinearMipmapLinearFilter;
     keyboard.magFilter = THREE.LinearFilter;
     keyboard.generateMipmaps = true;
     keyboard.needsUpdate = true;
 
     laptopBack.colorSpace = THREE.SRGBColorSpace;
-    laptopBack.anisotropy = maxAnisotropy;
+    laptopBack.anisotropy = cappedAnisotropy;
     laptopBack.minFilter = THREE.LinearMipmapLinearFilter;
     laptopBack.magFilter = THREE.LinearFilter;
     laptopBack.generateMipmaps = true;
@@ -81,7 +96,7 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
     laptopBack.needsUpdate = true;
 
     screen.colorSpace = THREE.SRGBColorSpace;
-    screen.anisotropy = maxAnisotropy;
+    screen.anisotropy = cappedAnisotropy;
     screen.minFilter = THREE.LinearMipmapLinearFilter;
     screen.magFilter = THREE.LinearFilter;
     screen.generateMipmaps = true;
@@ -145,7 +160,7 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
     });
 
     if (meshMap.screen) {
-      meshMap.screen.rotation.x = THREE.MathUtils.degToRad(182);
+      meshMap.screen.rotation.x = RAD_INITIAL_SCREEN_X;
 
       // Attach high-res unfragmented back lid plane directly to the screen hinge
       const existingLid = meshMap.screen.getObjectByName("laptop_lid_plane");
@@ -186,6 +201,15 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
       (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
     }
   }, [camera]);
+
+  // Pre-calculate responsive targets when viewport size changes (NOT every frame)
+  const responsiveConfig = useMemo(() => {
+    const aspect = size.width / Math.max(size.height, 1);
+    const targetX = aspect < 0.75 ? -0.7 : aspect < 1.2 ? -1.5 : PARAMS.targetX;
+    const targetY = aspect < 0.75 ? -1.8 : aspect < 1.2 ? -2.2 : PARAMS.targetY;
+    const scale = aspect < 0.75 ? 0.62 : aspect < 1.2 ? 0.67 : PARAMS.scale;
+    return { targetX, targetY, scale };
+  }, [size.width, size.height]);
 
   // Signal true 3D Model Readiness only after GLTF scene & materials have mounted to the render tree
   useEffect(() => {
@@ -239,52 +263,33 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
 
   const data = useScroll();
 
-  // Pre-cached easing function
-  const easeSineOut = useMemo(() => (t: number) => Math.sin((t * Math.PI) / 2), []);
-
-  // GSAP-driven Scroll Animation Frame Loop
+  // Optimized Scroll Animation Frame Loop without GSAP overhead or redundant per-frame calculations
   useFrame(() => {
     const p = data ? data.offset : 0;
 
-    // Progress across scroll window with silky smooth sine.out easing
-    const span = Math.max(PARAMS.scrollEnd - PARAMS.scrollStart, 0.01);
-    const rawProgress = Math.min(Math.max((p - PARAMS.scrollStart) / span, 0), 1);
-    const laptopProgress = easeSineOut(rawProgress);
+    // Fast bounds calculation and sine easing
+    const rawProgress = p <= 0 ? 0 : p >= PARAMS.scrollEnd ? 1 : p / SCROLL_SPAN;
+    const laptopProgress = Math.sin(rawProgress * HALF_PI);
 
     // 1. Screen Lid Opening Animation
     if (meshes.screen) {
-      const lidAngle = gsap.utils.interpolate(PARAMS.lidClosedAngle, PARAMS.lidOpenAngle, laptopProgress);
-      meshes.screen.rotation.x = THREE.MathUtils.degToRad(lidAngle);
+      const lidAngleDeg = inlineLerp(PARAMS.lidClosedAngle, PARAMS.lidOpenAngle, laptopProgress);
+      meshes.screen.rotation.x = lidAngleDeg * (Math.PI / 180);
     }
 
-    // 2. Base/Chassis Position & Rotation & Scale (Responsive across mobile, tablet, desktop)
+    // 2. Base/Chassis Position & Rotation & Scale
     if (groupRef.current) {
-      const aspect = size.width / Math.max(size.height, 1);
-      const responsiveTargetX = aspect < 0.75 ? -0.7 : aspect < 1.2 ? -1.5 : PARAMS.targetX;
-      const responsiveTargetY = aspect < 0.75 ? -1.8 : aspect < 1.2 ? -2.2 : PARAMS.targetY;
-      const responsiveScale = aspect < 0.75 ? 0.62 : aspect < 1.2 ? 0.67 : PARAMS.scale;
+      const { targetX, targetY, scale } = responsiveConfig;
 
-      const curX = gsap.utils.interpolate(PARAMS.startX, responsiveTargetX, laptopProgress);
-      const curY = gsap.utils.interpolate(PARAMS.startY, responsiveTargetY, laptopProgress);
-      const curZ = gsap.utils.interpolate(PARAMS.startZ, PARAMS.targetZ, laptopProgress);
+      const curX = inlineLerp(PARAMS.startX, targetX, laptopProgress);
+      const curY = inlineLerp(PARAMS.startY, targetY, laptopProgress);
+      const curZ = inlineLerp(PARAMS.startZ, PARAMS.targetZ, laptopProgress);
 
-      const curRotX = gsap.utils.interpolate(
-        THREE.MathUtils.degToRad(PARAMS.startRotXDeg),
-        THREE.MathUtils.degToRad(PARAMS.rotXDeg),
-        laptopProgress
-      );
-      const curRotY = gsap.utils.interpolate(
-        THREE.MathUtils.degToRad(PARAMS.startRotYDeg),
-        THREE.MathUtils.degToRad(PARAMS.rotYDeg),
-        laptopProgress
-      );
-      const curRotZ = gsap.utils.interpolate(
-        THREE.MathUtils.degToRad(PARAMS.startRotZDeg),
-        THREE.MathUtils.degToRad(PARAMS.rotZDeg),
-        laptopProgress
-      );
+      const curRotX = inlineLerp(RAD_START_ROT_X, RAD_TARGET_ROT_X, laptopProgress);
+      const curRotY = inlineLerp(RAD_START_ROT_Y, RAD_TARGET_ROT_Y, laptopProgress);
+      const curRotZ = inlineLerp(RAD_START_ROT_Z, RAD_TARGET_ROT_Z, laptopProgress);
 
-      const curScale = gsap.utils.interpolate(PARAMS.startScale, responsiveScale, laptopProgress);
+      const curScale = inlineLerp(PARAMS.startScale, scale, laptopProgress);
 
       groupRef.current.position.set(curX, curY, curZ);
       groupRef.current.rotation.set(curRotX, curRotY, curRotZ);
@@ -296,11 +301,7 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
     <group
       ref={groupRef}
       position={[PARAMS.startX, PARAMS.startY, PARAMS.startZ]}
-      rotation={[
-        THREE.MathUtils.degToRad(PARAMS.startRotXDeg),
-        THREE.MathUtils.degToRad(PARAMS.startRotYDeg),
-        THREE.MathUtils.degToRad(PARAMS.startRotZDeg),
-      ]}
+      rotation={[RAD_START_ROT_X, RAD_START_ROT_Y, RAD_START_ROT_Z]}
     >
       <primitive object={mac.scene} />
 
@@ -331,10 +332,4 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
   );
 };
 
-useGLTF.preload(MODEL_URLS.mac);
-useTexture.preload(heroImg);
-useTexture.preload(keyboardImg);
-useTexture.preload(laptopBackImg);
-
 export default MacContainer;
-

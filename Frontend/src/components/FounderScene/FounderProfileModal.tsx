@@ -12,9 +12,12 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  // Escape key listener attached only while modal is open
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
@@ -65,7 +68,6 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
         aria-label="Founders Profile"
         className="relative z-10 w-full max-w-5xl lg:max-h-[96vh] bg-transparent text-white flex flex-col justify-between animate-scaleIn my-auto py-2 sm:py-0"
       >
-
         {/* Top Header Row with Monumental "FOUNDERS" Title & Close Button */}
         <div className="w-full flex items-center justify-between pb-2 sm:pb-2">
           <h1
@@ -120,7 +122,6 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
 
         {/* Bottom Two-Column Profiles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-10 pt-3 sm:pt-4 border-t border-white/10 mt-1 sm:mt-2">
-
           {/* Column 1: Oliver Muñoz */}
           <div className="flex flex-col items-start text-left space-y-1.5 sm:space-y-2">
             {/* Name with Orange Arrow */}
@@ -131,10 +132,9 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
               </h3>
             </div>
 
-
             {/* Bio Paragraphs */}
             <div className="space-y-1 sm:space-y-1.5 text-[11px] sm:text-xs text-neutral-300 font-[sans-serif] leading-relaxed">
-              <p>Born in India and raised in a city of artists ‘VARANASI’ , Shubham has  been taking pictures for as long as he can remember.
+              <p>Born in India and raised in a city of artists ‘VARANASI’ , Shubham has been taking pictures for as long as he can remember.
               </p>
               <p className="text-neutral-400">
                 As a digital content creator,he has worked with leading mobile companies.His body of work includes street photography still,short films and music videos..
@@ -165,10 +165,7 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
               </a>
             </div>
           </div>
-
-
         </div>
-
       </div>
 
       {/* Smooth Animations */}

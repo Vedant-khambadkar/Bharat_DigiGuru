@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
@@ -37,17 +37,19 @@ const SOCIAL_PLATFORMS = {
 export const PlatformsWeManage: React.FC = () => {
   const containerRef = useRef<HTMLElement>(null);
   const chaosRef = useRef<HTMLDivElement>(null);
-  const [activePlatform, setActivePlatform] = useState<string | null>(null);
-  const [isInView, setIsInView] = useState(false);
 
-  // IntersectionObserver to pause all CSS animations when section is offscreen
+  // IntersectionObserver to pause all CSS animations when section is offscreen (zero React re-renders)
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsInView(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          el.classList.add("is-in-view");
+        } else {
+          el.classList.remove("is-in-view");
+        }
       },
       { rootMargin: "200px 0px" }
     );
@@ -56,9 +58,9 @@ export const PlatformsWeManage: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
+  // GSAP entrance animation with scoped context cleanup
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Intro animations
       gsap.fromTo(
         ".chaos-header",
         { opacity: 0, y: 35 },
@@ -97,6 +99,15 @@ export const PlatformsWeManage: React.FC = () => {
     return () => ctx.revert();
   }, []);
 
+  const setHoverPlatform = (platform: string | null) => {
+    if (!containerRef.current) return;
+    if (platform) {
+      containerRef.current.setAttribute("data-active-platform", platform);
+    } else {
+      containerRef.current.removeAttribute("data-active-platform");
+    }
+  };
+
   return (
     <section
       ref={containerRef}
@@ -104,28 +115,10 @@ export const PlatformsWeManage: React.FC = () => {
       className="relative w-full bg-transparent text-white font-neuropol overflow-hidden select-none py-16 sm:py-24 md:py-32"
     >
       {/* =========================================================================
-          1. HIGH-PERFORMANCE AMBIENT BACKDROP (Single layer GPU gradient)
+          1. HIGH-PERFORMANCE AMBIENT BACKDROP (Single layer GPU gradient via CSS)
          ========================================================================= */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Hardware-accelerated radial ambient lighting */}
-        <div
-          className="absolute inset-0 opacity-40 transition-opacity duration-700 pointer-events-none"
-          style={{
-            background:
-              activePlatform === "instagram"
-                ? "radial-gradient(circle at 35% 30%, rgba(225, 48, 108, 0.15) 0%, transparent 60%)"
-                : activePlatform === "linkedin"
-                ? "radial-gradient(circle at 65% 30%, rgba(10, 102, 194, 0.15) 0%, transparent 60%)"
-                : activePlatform === "youtube"
-                ? "radial-gradient(circle at 75% 40%, rgba(255, 0, 0, 0.15) 0%, transparent 60%)"
-                : activePlatform === "tiktok"
-                ? "radial-gradient(circle at 80% 50%, rgba(37, 244, 238, 0.15) 0%, transparent 60%)"
-                : activePlatform === "facebook"
-                ? "radial-gradient(circle at 30% 70%, rgba(24, 119, 242, 0.15) 0%, transparent 60%)"
-                : "radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, rgba(4, 106, 56, 0.06) 45%, transparent 70%)",
-            willChange: "opacity",
-          }}
-        />
+        <div className="platform-ambient-glow absolute inset-0 opacity-40 transition-all duration-700 pointer-events-none" />
       </div>
 
       {/* Subtle Dot-Matrix Texture Grid */}
@@ -151,24 +144,58 @@ export const PlatformsWeManage: React.FC = () => {
           0%, 100% { opacity: 0.25; transform: translate3d(0,0,0) scale(1); }
           50% { opacity: 0.5; transform: translate3d(0,0,0) scale(1.02); }
         }
-        .animate-float-1 {
-          animation: ${isInView ? "floatOrbital1 4.8s ease-in-out infinite" : "none"};
-          will-change: transform;
-          transform: translateZ(0);
+
+        /* Default ambient background */
+        #platforms-we-manage-section .platform-ambient-glow {
+          background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, rgba(4, 106, 56, 0.06) 45%, transparent 70%);
         }
-        .animate-float-2 {
-          animation: ${isInView ? "floatOrbital2 5.6s ease-in-out infinite" : "none"};
-          will-change: transform;
-          transform: translateZ(0);
+        #platforms-we-manage-section[data-active-platform="instagram"] .platform-ambient-glow {
+          background: radial-gradient(circle at 35% 30%, rgba(225, 48, 108, 0.15) 0%, transparent 60%);
         }
+        #platforms-we-manage-section[data-active-platform="linkedin"] .platform-ambient-glow {
+          background: radial-gradient(circle at 65% 30%, rgba(10, 102, 194, 0.15) 0%, transparent 60%);
+        }
+        #platforms-we-manage-section[data-active-platform="youtube"] .platform-ambient-glow {
+          background: radial-gradient(circle at 75% 40%, rgba(255, 0, 0, 0.15) 0%, transparent 60%);
+        }
+        #platforms-we-manage-section[data-active-platform="tiktok"] .platform-ambient-glow {
+          background: radial-gradient(circle at 80% 50%, rgba(37, 244, 238, 0.15) 0%, transparent 60%);
+        }
+        #platforms-we-manage-section[data-active-platform="facebook"] .platform-ambient-glow {
+          background: radial-gradient(circle at 30% 70%, rgba(24, 119, 242, 0.15) 0%, transparent 60%);
+        }
+
+        .animate-float-1,
+        .animate-float-2,
         .animate-pulse-ring {
-          animation: ${isInView ? "pulseGlowRing 6s ease-in-out infinite" : "none"};
-          will-change: transform, opacity;
+          animation-play-state: paused;
           transform: translateZ(0);
         }
+
+        #platforms-we-manage-section.is-in-view .animate-float-1 {
+          animation: floatOrbital1 4.8s ease-in-out infinite;
+          animation-play-state: running;
+        }
+        #platforms-we-manage-section.is-in-view .animate-float-2 {
+          animation: floatOrbital2 5.6s ease-in-out infinite;
+          animation-play-state: running;
+        }
+        #platforms-we-manage-section.is-in-view .animate-pulse-ring {
+          animation: pulseGlowRing 6s ease-in-out infinite;
+          animation-play-state: running;
+        }
+
         .floating-3d-node {
           contain: layout style;
           backface-visibility: hidden;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .animate-float-1,
+          .animate-float-2,
+          .animate-pulse-ring {
+            animation: none !important;
+          }
         }
       `}</style>
 
@@ -434,8 +461,8 @@ export const PlatformsWeManage: React.FC = () => {
             rel="noreferrer"
             title={`Visit Bharat DigiGuru on ${SOCIAL_PLATFORMS.instagram.name}`}
             aria-label={SOCIAL_PLATFORMS.instagram.name}
-            onMouseEnter={() => setActivePlatform("instagram")}
-            onMouseLeave={() => setActivePlatform(null)}
+            onMouseEnter={() => setHoverPlatform("instagram")}
+            onMouseLeave={() => setHoverPlatform(null)}
             className="floating-3d-node animate-float-1 absolute top-[5%] left-[22%] lg:left-[26%] z-10 group cursor-pointer"
           >
             <div className="relative flex items-center justify-center w-16 h-16 p-3.5 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_15px_35px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] group-hover:scale-115 group-hover:border-pink-500/60 group-hover:shadow-[0_0_30px_rgba(225,48,108,0.4)] transition-all duration-300">
@@ -467,8 +494,8 @@ export const PlatformsWeManage: React.FC = () => {
             rel="noreferrer"
             title={`Connect on ${SOCIAL_PLATFORMS.linkedin.name}`}
             aria-label={SOCIAL_PLATFORMS.linkedin.name}
-            onMouseEnter={() => setActivePlatform("linkedin")}
-            onMouseLeave={() => setActivePlatform(null)}
+            onMouseEnter={() => setHoverPlatform("linkedin")}
+            onMouseLeave={() => setHoverPlatform(null)}
             className="floating-3d-node animate-float-2 absolute top-[3%] right-[24%] lg:right-[28%] z-10 group cursor-pointer"
           >
             <div className="relative flex items-center justify-center w-16 h-16 p-3.5 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_15px_35px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] group-hover:scale-115 group-hover:border-blue-500/60 group-hover:shadow-[0_0_30px_rgba(10,102,194,0.4)] transition-all duration-300">
@@ -488,8 +515,8 @@ export const PlatformsWeManage: React.FC = () => {
             rel="noreferrer"
             title={`Visit Bharat DigiGuru on ${SOCIAL_PLATFORMS.youtube.name}`}
             aria-label={SOCIAL_PLATFORMS.youtube.name}
-            onMouseEnter={() => setActivePlatform("youtube")}
-            onMouseLeave={() => setActivePlatform(null)}
+            onMouseEnter={() => setHoverPlatform("youtube")}
+            onMouseLeave={() => setHoverPlatform(null)}
             className="floating-3d-node animate-float-1 absolute top-[16%] right-[5%] lg:right-[9%] z-10 group cursor-pointer"
           >
             <div className="relative flex items-center justify-center w-15 h-15 p-3.5 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_15px_35px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] group-hover:scale-115 group-hover:border-red-500/60 group-hover:shadow-[0_0_30px_rgba(255,0,0,0.4)] transition-all duration-300">
@@ -509,8 +536,8 @@ export const PlatformsWeManage: React.FC = () => {
             rel="noreferrer"
             title={`Visit Bharat DigiGuru on ${SOCIAL_PLATFORMS.x.name}`}
             aria-label={SOCIAL_PLATFORMS.x.name}
-            onMouseEnter={() => setActivePlatform("x")}
-            onMouseLeave={() => setActivePlatform(null)}
+            onMouseEnter={() => setHoverPlatform("x")}
+            onMouseLeave={() => setHoverPlatform(null)}
             className="floating-3d-node animate-float-2 absolute top-[36%] left-[3%] lg:left-[6%] z-10 group cursor-pointer"
           >
             <div className="relative flex items-center justify-center w-15 h-15 p-3 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_15px_35px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] group-hover:scale-115 group-hover:border-white/50 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all duration-300">
@@ -530,8 +557,8 @@ export const PlatformsWeManage: React.FC = () => {
             rel="noreferrer"
             title={`Visit Bharat DigiGuru on ${SOCIAL_PLATFORMS.tiktok.name}`}
             aria-label={SOCIAL_PLATFORMS.tiktok.name}
-            onMouseEnter={() => setActivePlatform("tiktok")}
-            onMouseLeave={() => setActivePlatform(null)}
+            onMouseEnter={() => setHoverPlatform("tiktok")}
+            onMouseLeave={() => setHoverPlatform(null)}
             className="floating-3d-node animate-float-1 absolute top-[44%] right-[2%] lg:left-auto lg:right-[5%] z-10 group cursor-pointer"
           >
             <div className="relative flex items-center justify-center w-15 h-15 p-3 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_15px_35px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] group-hover:scale-115 group-hover:border-cyan-400/60 group-hover:shadow-[0_0_30px_rgba(37,244,238,0.4)] transition-all duration-300">
@@ -551,8 +578,8 @@ export const PlatformsWeManage: React.FC = () => {
             rel="noreferrer"
             title={`Visit Bharat DigiGuru on ${SOCIAL_PLATFORMS.pinterest.name}`}
             aria-label={SOCIAL_PLATFORMS.pinterest.name}
-            onMouseEnter={() => setActivePlatform("pinterest")}
-            onMouseLeave={() => setActivePlatform(null)}
+            onMouseEnter={() => setHoverPlatform("pinterest")}
+            onMouseLeave={() => setHoverPlatform(null)}
             className="floating-3d-node animate-float-2 absolute bottom-[8%] right-[18%] lg:right-[22%] z-10 group cursor-pointer"
           >
             <div className="relative flex items-center justify-center w-15 h-15 p-3 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_15px_35px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] group-hover:scale-115 group-hover:border-red-500/60 group-hover:shadow-[0_0_30px_rgba(230,0,35,0.4)] transition-all duration-300">
@@ -572,8 +599,8 @@ export const PlatformsWeManage: React.FC = () => {
             rel="noreferrer"
             title={`Visit Bharat DigiGuru on ${SOCIAL_PLATFORMS.facebook.name}`}
             aria-label={SOCIAL_PLATFORMS.facebook.name}
-            onMouseEnter={() => setActivePlatform("facebook")}
-            onMouseLeave={() => setActivePlatform(null)}
+            onMouseEnter={() => setHoverPlatform("facebook")}
+            onMouseLeave={() => setHoverPlatform(null)}
             className="floating-3d-node animate-float-1 absolute bottom-[6%] left-[20%] lg:left-[24%] z-10 group cursor-pointer"
           >
             <div className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_15px_35px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] group-hover:scale-115 group-hover:border-blue-500/60 group-hover:shadow-[0_0_30px_rgba(24,119,242,0.4)] transition-all duration-300">

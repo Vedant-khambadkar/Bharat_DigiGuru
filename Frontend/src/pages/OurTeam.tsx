@@ -10,22 +10,15 @@ import mobileVignette from '../assets/Minimalist Black and White Vignette  mobil
 import type { SceneState } from '../types/scene';
 
 /**
- * Preload 2D vignette background assets for OurTeam section without preloading 3D model
+ * Preload appropriate 2D vignette background asset based on viewport without preloading both
  */
 export const preloadOurTeamAssets = async () => {
   try {
-    const preloadImage = (src: string) =>
-      new Promise((resolve) => {
-        const img = new Image();
-        img.src = src;
-        img.onload = resolve;
-        img.onerror = resolve;
-      });
+    const isMobileViewport = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+    const targetSrc = isMobileViewport ? mobileVignette : desktopVignette;
 
-    await Promise.allSettled([
-      preloadImage(desktopVignette),
-      preloadImage(mobileVignette),
-    ]);
+    const img = new Image();
+    img.src = targetSrc;
   } catch (err) {
     console.warn("OurTeam asset preload notice:", err);
   }
@@ -42,6 +35,7 @@ export const OurTeam: React.FC<OurTeamProps> = ({
 }) => {
   const [sceneState, setSceneState] = useState<SceneState>('overview');
   const sectionRef = useRef<HTMLElement>(null);
+  const [isSectionVisible, setIsSectionVisible] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth < 768;
@@ -49,7 +43,23 @@ export const OurTeam: React.FC<OurTeamProps> = ({
     return false;
   });
 
-  // Optimized window resize listener
+  // IntersectionObserver to pause all WebGL execution when OurTeam section is offscreen
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsSectionVisible(entry.isIntersecting);
+      },
+      { rootMargin: "200px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Optimized window resize listener with debounce
   useEffect(() => {
     let timeoutId: number;
     const handleResize = () => {
@@ -161,7 +171,7 @@ export const OurTeam: React.FC<OurTeamProps> = ({
       {/* 3D WebGL Canvas with Transparent Alpha Background */}
       <div className="relative z-10 w-full h-full">
         <Canvas
-          frameloop="always"
+          frameloop={isSectionVisible ? "always" : "never"}
           shadows={{ type: THREE.PCFShadowMap }}
           dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 1.5)]}
           gl={{
@@ -181,6 +191,7 @@ export const OurTeam: React.FC<OurTeamProps> = ({
                 onTransitionComplete={handleTransitionComplete}
                 onReturnComplete={handleReturnComplete}
                 isMobile={isMobile}
+                isVisible={isSectionVisible}
                 onReady={onBusinessmanReady}
               />
             </Suspense>

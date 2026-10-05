@@ -15,8 +15,14 @@ interface PeopleSceneProps {
   onTransitionComplete: () => void;
   onReturnComplete: () => void;
   isMobile: boolean;
+  isVisible?: boolean;
   onReady?: () => void;
 }
+
+// Single shared matte black silhouette material instance across all characters
+const SHARED_MATTE_BLACK_MATERIAL = new THREE.MeshBasicMaterial({
+  color: 0x000000,
+});
 
 export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
   sceneState,
@@ -24,6 +30,7 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
   onTransitionComplete,
   onReturnComplete,
   isMobile,
+  isVisible = true,
   onReady,
 }) => {
   if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
@@ -34,7 +41,7 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
     }
   }
 
-  // Load authentic 3D businessman model
+  // Load authentic 3D businessman model (single GLTF source)
   const gltf = useGLTF(MODEL_URLS.businessman);
   const isReadySignaled = useRef(false);
 
@@ -58,13 +65,9 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
     const scaledBox = new THREE.Box3().setFromObject(scene);
     scene.position.y = -scaledBox.min.y;
 
-    const matteBlackMaterial = new THREE.MeshBasicMaterial({
-      color: 0x000000,
-    });
-
     scene.traverse((child: any) => {
       if (child.isMesh) {
-        child.material = matteBlackMaterial;
+        child.material = SHARED_MATTE_BLACK_MATERIAL;
         child.castShadow = true;
         child.receiveShadow = false;
       }
@@ -134,6 +137,7 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
         onReturnComplete={onReturnComplete}
         isMobile={isMobile}
         founderConfig={founderConfig}
+        isVisible={isVisible}
       />
 
       <group
@@ -147,6 +151,7 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
             config={person}
             modelScene={baseScene}
             sceneState={sceneState}
+            isVisible={isVisible}
           />
         ))}
       </group>
@@ -157,6 +162,7 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
         sceneState={sceneState}
         onSelect={onSelectFounder}
         isMobile={isMobile}
+        isVisible={isVisible}
       />
     </>
   );

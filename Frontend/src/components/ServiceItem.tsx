@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, memo } from "react";
 import {
   ArrowUpRight,
   Play,
@@ -59,7 +59,7 @@ interface ServiceItemProps {
   onLeave?: () => void;
 }
 
-export const ServiceItem: React.FC<ServiceItemProps> = ({
+export const ServiceItem: React.FC<ServiceItemProps> = memo(({
   service,
   index: _index,
   isOpen,
@@ -500,7 +500,7 @@ export const ServiceItem: React.FC<ServiceItemProps> = ({
       )}
     </>
   );
-};
+});
 
 // =========================================================================
 // SUB-COMPONENT: WorkCard (Animated interactive showcase card)
@@ -511,7 +511,7 @@ interface WorkCardProps {
   onOpenModal: () => void;
 }
 
-const WorkCard: React.FC<WorkCardProps> = ({ work, index, onOpenModal }) => {
+const WorkCard: React.FC<WorkCardProps> = memo(({ work, index, onOpenModal }) => {
   const [isHovered, setIsHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -577,7 +577,7 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, index, onOpenModal }) => {
               muted
               loop
               playsInline
-              preload="metadata"
+              preload="none"
               className="w-full h-full object-cover transition-transform duration-700 group-hover/work:scale-105"
             />
             {/* Live Animated Play Overlay */}
@@ -663,6 +663,6 @@ const WorkCard: React.FC<WorkCardProps> = ({ work, index, onOpenModal }) => {
       </div>
     </div>
   );
-};
+});
 
 export default ServiceItem;

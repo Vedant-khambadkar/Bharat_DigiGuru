@@ -10,7 +10,53 @@ interface FounderCharacterProps {
   sceneState: SceneState;
   onSelect: () => void;
   isMobile: boolean;
+  isVisible?: boolean;
 }
+
+// Static reusable reticle materials
+const RETICLE_INNER_MATERIAL = new THREE.MeshBasicMaterial({
+  color: "#000000",
+  transparent: true,
+  opacity: 0.25,
+  side: THREE.DoubleSide,
+});
+
+const RETICLE_MID_MATERIAL = new THREE.MeshBasicMaterial({
+  color: "#000000",
+  transparent: true,
+  opacity: 0.35,
+  side: THREE.DoubleSide,
+});
+
+const RETICLE_OUTER_MATERIAL = new THREE.MeshBasicMaterial({
+  color: "#000000",
+  transparent: true,
+  opacity: 0.2,
+  side: THREE.DoubleSide,
+});
+
+const RETICLE_ORANGE_ARC_1 = new THREE.MeshBasicMaterial({
+  color: "#ff5500",
+  transparent: true,
+  opacity: 0.9,
+  side: THREE.DoubleSide,
+});
+
+const RETICLE_ORANGE_ARC_2 = new THREE.MeshBasicMaterial({
+  color: "#ff5500",
+  transparent: true,
+  opacity: 0.85,
+  side: THREE.DoubleSide,
+});
+
+const RETICLE_ORANGE_DOT_MATERIAL = new THREE.MeshBasicMaterial({
+  color: "#ff5500",
+  transparent: true,
+  opacity: 0.95,
+  side: THREE.DoubleSide,
+});
+
+const CARDINAL_ANGLES = [0, Math.PI * 0.5, Math.PI, Math.PI * 1.5];
 
 export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
   config,
@@ -18,6 +64,7 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
   sceneState,
   onSelect,
   isMobile,
+  isVisible = true,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
@@ -26,16 +73,9 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
   const hoverProgressRef = useRef(0);
   const focusProgressRef = useRef(0);
 
-  // Clone authentic 3D businessman model for the Founder
+  // Clone authentic 3D businessman model for the Founder while sharing geometry & materials
   const clonedScene = useMemo(() => {
-    const clone = modelScene.clone(true);
-    clone.traverse((child: any) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = false;
-      }
-    });
-    return clone;
+    return modelScene.clone(true);
   }, [modelScene]);
 
   const [baseX, baseY, baseZ] = config.position;
@@ -57,6 +97,8 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
   }, [hovered, sceneState, isMobile]);
 
   useFrame((state, delta) => {
+    if (!isVisible) return;
+
     const group = groupRef.current;
     if (!group) return;
 
@@ -145,47 +187,41 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
           scale={isMobile ? 0.78 : 1.0}
         >
           {/* 1. Inner Fine Orbit Ring */}
-          <mesh>
+          <mesh material={RETICLE_INNER_MATERIAL}>
             <ringGeometry args={[0.78, 0.795, 64]} />
-            <meshBasicMaterial color="#000000" transparent opacity={0.25} side={THREE.DoubleSide} />
           </mesh>
 
           {/* 2. Middle Segmented Ring Base */}
-          <mesh>
+          <mesh material={RETICLE_MID_MATERIAL}>
             <ringGeometry args={[0.98, 0.995, 64]} />
-            <meshBasicMaterial color="#000000" transparent opacity={0.35} side={THREE.DoubleSide} />
           </mesh>
 
           {/* 3. Outer Perimeter Ring */}
-          <mesh>
+          <mesh material={RETICLE_OUTER_MATERIAL}>
             <ringGeometry args={[1.22, 1.235, 64]} />
-            <meshBasicMaterial color="#000000" transparent opacity={0.2} side={THREE.DoubleSide} />
           </mesh>
 
           {/* 4. Glowing Orange Accent Arcs */}
-          <mesh rotation={[0, 0, 0.35]}>
+          <mesh rotation={[0, 0, 0.35]} material={RETICLE_ORANGE_ARC_1}>
             <ringGeometry args={[0.96, 1.015, 32, 1, 0, Math.PI * 0.35]} />
-            <meshBasicMaterial color="#ff5500" transparent opacity={0.9} side={THREE.DoubleSide} />
           </mesh>
 
-          <mesh rotation={[0, 0, Math.PI + 0.5]}>
+          <mesh rotation={[0, 0, Math.PI + 0.5]} material={RETICLE_ORANGE_ARC_1}>
             <ringGeometry args={[0.96, 1.015, 32, 1, 0, Math.PI * 0.28]} />
-            <meshBasicMaterial color="#ff5500" transparent opacity={0.9} side={THREE.DoubleSide} />
           </mesh>
 
-          <mesh rotation={[0, 0, -Math.PI * 0.4]}>
+          <mesh rotation={[0, 0, -Math.PI * 0.4]} material={RETICLE_ORANGE_ARC_2}>
             <ringGeometry args={[1.20, 1.25, 32, 1, 0, Math.PI * 0.18]} />
-            <meshBasicMaterial color="#ff5500" transparent opacity={0.85} side={THREE.DoubleSide} />
           </mesh>
 
           {/* 5. Four Cardinal Orange Accent Dots */}
-          {[0, Math.PI * 0.5, Math.PI, Math.PI * 1.5].map((angle, i) => (
+          {CARDINAL_ANGLES.map((angle, i) => (
             <mesh
               key={i}
               position={[Math.cos(angle) * 1.23, Math.sin(angle) * 1.23, 0.001]}
+              material={RETICLE_ORANGE_DOT_MATERIAL}
             >
               <circleGeometry args={[0.022, 16]} />
-              <meshBasicMaterial color="#ff5500" transparent opacity={0.95} side={THREE.DoubleSide} />
             </mesh>
           ))}
         </group>

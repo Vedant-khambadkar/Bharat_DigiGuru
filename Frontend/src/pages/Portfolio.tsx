@@ -86,7 +86,7 @@ export const formatPortfolioItem = (item: any, index: number): PlaneItem => {
 };
 
 /**
- * Preload Portfolio textures directly into browser cache during initial site loading
+ * Preload initial Portfolio metadata and only the active texture without saturating bandwidth
  */
 export const preloadPortfolioAssets = async (): Promise<PlaneItem[]> => {
   try {
@@ -116,11 +116,48 @@ export const preloadPortfolioAssets = async (): Promise<PlaneItem[]> => {
     if (items.length === 0) {
       items = DEFAULT_PORTFOLIO_ITEMS;
     }
-    await preloadMediaList(items.map((p) => p.textureUrl));
+    // Only pre-warm the primary active texture, deferring remaining textures
+    if (items[0]?.textureUrl) {
+      preloadMediaList([items[0].textureUrl], { priority: "low", concurrency: 1 });
+    }
     return items;
   } catch (err) {
     console.warn("Portfolio preload notice:", err);
     return DEFAULT_PORTFOLIO_ITEMS;
+  }
+};
+
+/**
+ * Progressive texture loading strategy:
+ * Priority 1: Current active texture
+ * Priority 2: Immediately adjacent neighbor textures
+ * Priority 3: Remaining textures loaded during browser idle time
+ */
+const preloadProgressivePortfolio = (items: PlaneItem[], activeIndex = 0) => {
+  if (!items || items.length === 0) return;
+  const len = items.length;
+
+  // Priority 1: Active texture
+  const activeUrl = items[activeIndex]?.textureUrl;
+  if (activeUrl) {
+    preloadMediaList([activeUrl], { priority: "high", concurrency: 1 });
+  }
+
+  // Priority 2: Immediate carousel neighbors
+  const prevIdx = (activeIndex - 1 + len) % len;
+  const nextIdx = (activeIndex + 1) % len;
+  const neighbors = [items[prevIdx]?.textureUrl, items[nextIdx]?.textureUrl].filter(Boolean);
+  if (neighbors.length > 0) {
+    preloadMediaList(neighbors, { priority: "low", concurrency: 2 });
+  }
+
+  // Priority 3: Remaining textures during browser idle time
+  const remaining = items
+    .filter((_, idx) => idx !== activeIndex && idx !== prevIdx && idx !== nextIdx)
+    .map((p) => p.textureUrl)
+    .filter(Boolean);
+  if (remaining.length > 0) {
+    preloadMediaList(remaining, { priority: "idle", concurrency: 2 });
   }
 };
 
@@ -139,9 +176,9 @@ export const Portfolio: React.FC = () => {
 
   // 1. Fetch Dynamic Portfolio directly from API / Database (with Cache Sync)
   useEffect(() => {
-    // Pre-cache textures from initial list immediately
+    // Progressively pre-cache starting with active item and neighbors
     if (planes.length > 0) {
-      preloadMediaList(planes.map((p) => p.textureUrl));
+      preloadProgressivePortfolio(planes, 0);
     }
 
     const fetchPortfolioData = async () => {
@@ -159,7 +196,7 @@ export const Portfolio: React.FC = () => {
           const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
           setPlanes(formatted);
           setApiCache("portfolio_items", formatted);
-          preloadMediaList(formatted.map((p: PlaneItem) => p.textureUrl));
+          preloadProgressivePortfolio(formatted, 0);
 
           setSelectedPlane((current) => {
             if (current) {
@@ -185,7 +222,7 @@ export const Portfolio: React.FC = () => {
         if (exists) return prev;
         const updated = [formatted, ...prev];
         setApiCache("portfolio_items", updated);
-        preloadMediaList([formatted.textureUrl]);
+        preloadMediaList([formatted.textureUrl], { priority: "low" });
         if (!selectedPlane) setSelectedPlane(formatted);
         return updated;
       });
@@ -201,7 +238,7 @@ export const Portfolio: React.FC = () => {
         );
         setApiCache("portfolio_items", updated);
         const updatedItem = formatPortfolioItem(updatedCard, 0);
-        preloadMediaList([updatedItem.textureUrl]);
+        preloadMediaList([updatedItem.textureUrl], { priority: "low" });
         return updated;
       });
       setSelectedPlane((current) =>

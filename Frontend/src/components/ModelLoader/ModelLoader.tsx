@@ -22,11 +22,10 @@ export const ModelLoader: React.FC<ModelLoaderProps> = ({
   return (
     <Html center zIndexRange={[50, 0]}>
       <div
-        className={`pointer-events-none flex flex-col items-center justify-center gap-2 rounded-2xl px-5 py-3 select-none backdrop-blur-xl transition-opacity duration-300 shadow-2xl ${
-          theme === "light"
+        className={`pointer-events-none flex flex-col items-center justify-center gap-2 rounded-2xl px-5 py-3 select-none backdrop-blur-xl transition-opacity duration-300 shadow-2xl ${theme === "light"
             ? "bg-white/80 border border-black/10 text-black"
             : "bg-[#0c0c0c]/85 border border-white/15 text-white"
-        }`}
+          }`}
         style={{ minWidth: "160px" }}
       >
         <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider">
@@ -38,13 +37,12 @@ export const ModelLoader: React.FC<ModelLoaderProps> = ({
 
         {/* 1px Hairline Precision Progress Bar */}
         <div
-          className={`w-28 h-[2px] rounded-full overflow-hidden ${
-            theme === "light" ? "bg-neutral-200" : "bg-neutral-800"
-          }`}
+          className={`w-28 h-[2px] rounded-full overflow-hidden ${theme === "light" ? "bg-neutral-200" : "bg-neutral-800"
+            }`}
         >
           <div
-            className="h-full bg-gradient-to-r from-[#ff3b30] to-[#ff6b00] transition-[width] duration-150 ease-out"
-            style={{ width: `${Math.max(displayProgress, 5)}%` }}
+            className="h-full w-full bg-gradient-to-r from-[#ff3b30] to-[#ff6b00] transition-transform duration-150 ease-out origin-left"
+            style={{ transform: `scaleX(${Math.max(displayProgress, 5) / 100})` }}
           />
         </div>
       </div>

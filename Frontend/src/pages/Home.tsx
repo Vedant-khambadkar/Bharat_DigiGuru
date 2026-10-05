@@ -27,6 +27,9 @@ function ScrollTriggerSync({ progressRef }: { progressRef: React.MutableRefObjec
   return null;
 }
 
+const RAD_CAM_ROT_X = THREE.MathUtils.degToRad(-2);
+const RAD_CAM_ROT_Y = THREE.MathUtils.degToRad(6);
+
 function ResponsiveCamera() {
   const { camera, size } = useThree();
 
@@ -48,11 +51,7 @@ function ResponsiveCamera() {
       pCam.fov = 40;
       pCam.position.set(0, 4.3, 38);
     }
-    pCam.rotation.set(
-      THREE.MathUtils.degToRad(-2),
-      THREE.MathUtils.degToRad(6),
-      0
-    );
+    pCam.rotation.set(RAD_CAM_ROT_X, RAD_CAM_ROT_Y, 0);
     pCam.updateProjectionMatrix();
   }, [camera, size.width, size.height]);
 

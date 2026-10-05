@@ -193,7 +193,7 @@ export const ThreeDProjects: React.FC = () => {
       setProjects((prev) => {
         const updated = prev.map((p) => (String(p.id) === String(updatedProject.id || updatedProject._id) ? { ...p, ...updatedProject } : p));
         setApiCache("threed_projects", updated);
-        if (updatedProject.posterUrl) preloadMediaList([updatedProject.posterUrl]);
+        if (updatedProject.posterUrl) preloadMediaList([updatedProject.posterUrl], { priority: "low" });
         return updated;
       });
     });
@@ -205,7 +205,7 @@ export const ThreeDProjects: React.FC = () => {
         if (exists) return prev;
         const updated = [newProject, ...prev];
         setApiCache("threed_projects", updated);
-        if (newProject.posterUrl) preloadMediaList([newProject.posterUrl]);
+        if (newProject.posterUrl) preloadMediaList([newProject.posterUrl], { priority: "low" });
         return updated;
       });
     });

@@ -438,27 +438,28 @@ const Services: React.FC = () => {
     const [openServiceId, setOpenServiceId] = useState<string | null>(null);
     const previewRef = useRef<HTMLDivElement>(null);
 
+    const servicesListRef = useRef<HTMLElement>(null);
     const hoveredRef = useRef<boolean>(false);
 
-    // Fetch dynamic services from API (cached for single network hit)
+    // Fetch dynamic services with true Stale-While-Revalidate (SWR)
     const fetchServices = useCallback(async (forceRefresh = false) => {
-        if (!forceRefresh) {
-            const cached = getApiCache<ServiceData[]>("services_items");
-            if (cached && cached.length > 0) {
-                setServices(cached);
-                return;
-            }
-        }
-
         try {
             const data = await userService.getServices(forceRefresh);
             const items = Array.isArray(data) ? data : (data as any)?.items || [];
             if (items.length > 0) {
-                setServices(items);
-                setApiCache("services_items", items);
+                setServices((prev) => {
+                    // Only trigger React state update if data actually changed
+                    if (JSON.stringify(prev) === JSON.stringify(items)) {
+                        return prev;
+                    }
+                    setApiCache("services_items", items);
+                    return items;
+                });
             }
         } catch (err) {
-            console.warn("Using fallback local services data:", err);
+            if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+                console.warn("Using fallback local services data:", err);
+            }
         }
     }, []);
 
@@ -466,25 +467,44 @@ const Services: React.FC = () => {
         fetchServices();
 
         const unsubCreated = onSocketEvent("service:created", (newService: any) => {
+            if (!newService || (!newService.id && !newService._id)) return;
             setServices((prev) => {
-                const updated = [newService, ...prev.filter((s) => s.id !== newService.id && (s as any)._id !== newService._id)];
+                const id = newService.id || newService._id;
+                if (prev.some((s) => s.id === id || (s as any)._id === id)) {
+                    return prev;
+                }
+                const updated = [newService, ...prev];
                 setApiCache("services_items", updated);
                 return updated;
             });
         });
 
         const unsubUpdated = onSocketEvent("service:updated", (updatedService: any) => {
+            if (!updatedService || (!updatedService.id && !updatedService._id)) return;
             setServices((prev) => {
-                const updated = prev.map((s) =>
-                    s.id === updatedService.id || (s as any)._id === updatedService._id ? updatedService : s
-                );
+                const id = updatedService.id || updatedService._id;
+                let hasChanged = false;
+                const updated = prev.map((s) => {
+                    if (s.id === id || (s as any)._id === id) {
+                        if (JSON.stringify(s) !== JSON.stringify(updatedService)) {
+                            hasChanged = true;
+                            return updatedService;
+                        }
+                    }
+                    return s;
+                });
+                if (!hasChanged) return prev;
                 setApiCache("services_items", updated);
                 return updated;
             });
         });
 
         const unsubDeleted = onSocketEvent("service:deleted", (deletedId: string) => {
+            if (!deletedId) return;
             setServices((prev) => {
+                if (!prev.some((s) => s.id === deletedId || (s as any)._id === deletedId)) {
+                    return prev;
+                }
                 const updated = prev.filter((s) => s.id !== deletedId && (s as any)._id !== deletedId);
                 setApiCache("services_items", updated);
                 return updated;
@@ -510,26 +530,14 @@ const Services: React.FC = () => {
         setHoveredService(null);
     }, []);
 
-    // Refresh ScrollTrigger & Lenis when service accordion is expanded/collapsed
+    // Single settled refresh for ScrollTrigger & Lenis when service accordion finishes expanding
     useEffect(() => {
-        const timers = [
-            setTimeout(() => {
-                (window as any).lenis?.resize();
-                ScrollTrigger.refresh();
-            }, 100),
-            setTimeout(() => {
-                (window as any).lenis?.resize();
-                ScrollTrigger.refresh();
-            }, 300),
-            setTimeout(() => {
-                (window as any).lenis?.resize();
-                ScrollTrigger.refresh();
-            }, 550),
-        ];
+        const timer = setTimeout(() => {
+            (window as any).lenis?.resize();
+            ScrollTrigger.refresh();
+        }, 320);
 
-        return () => {
-            timers.forEach(clearTimeout);
-        };
+        return () => clearTimeout(timer);
     }, [openServiceId]);
 
     useEffect(() => {
@@ -594,9 +602,10 @@ const Services: React.FC = () => {
     }, [hoveredService]);
 
     useEffect(() => {
-        // Automatically dismiss the preview when scrolling outside the services section
+        // Automatically dismiss the preview only when active and scrolled outside the section
         const handleScroll = () => {
-            const listEl = document.getElementById("services-list");
+            if (!hoveredRef.current) return;
+            const listEl = servicesListRef.current;
             if (!listEl) return;
             const rect = listEl.getBoundingClientRect();
             if (rect.bottom < 0 || rect.top > window.innerHeight) {
@@ -679,6 +688,7 @@ const Services: React.FC = () => {
                    ========================================================================= */}
                 <section
                     id="services-list"
+                    ref={servicesListRef}
                     onMouseLeave={handleLeaveService}
                     className="relative px-6 sm:px-10 md:px-12 lg:px-16 py-16 sm:py-24 max-w-8xl mx-auto w-full"
                 >

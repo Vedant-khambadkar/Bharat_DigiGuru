@@ -10,6 +10,7 @@ interface CameraControllerProps {
   onReturnComplete: () => void;
   isMobile: boolean;
   founderConfig: PersonConfig;
+  isVisible?: boolean;
 }
 
 export const CameraController: React.FC<CameraControllerProps> = ({
@@ -18,10 +19,12 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   onReturnComplete,
   isMobile,
   founderConfig,
+  isVisible = true,
 }) => {
   const { camera } = useThree();
   const targetLookAt = useRef(new THREE.Vector3());
   const currentLookAt = useRef(new THREE.Vector3());
+  const activeTlRef = useRef<gsap.core.Timeline | null>(null);
 
   // Default camera setups (Matching the exact elevated perspective of the reference image)
   const defaultCam = isMobile
@@ -64,9 +67,14 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     }
   }, [isMobile]);
 
-  // GSAP Transitions
+  // GSAP Transitions with timeline cleanup & overwrite safety
   useEffect(() => {
     const perspCamera = camera as THREE.PerspectiveCamera;
+
+    if (activeTlRef.current) {
+      activeTlRef.current.kill();
+      activeTlRef.current = null;
+    }
 
     if (sceneState === 'focusing') {
       const tl = gsap.timeline({
@@ -74,6 +82,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
           onTransitionComplete();
         },
       });
+      activeTlRef.current = tl;
 
       tl.to(camera.position, {
         x: focusCam.pos[0],
@@ -100,6 +109,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
       return () => {
         tl.kill();
+        activeTlRef.current = null;
       };
     } else if (sceneState === 'returning') {
       const tl = gsap.timeline({
@@ -107,6 +117,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
           onReturnComplete();
         },
       });
+      activeTlRef.current = tl;
 
       tl.to(camera.position, {
         x: defaultCam.pos[0],
@@ -133,14 +144,23 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
       return () => {
         tl.kill();
+        activeTlRef.current = null;
       };
     }
   }, [sceneState, isMobile, founderConfig]);
 
   useFrame(() => {
-    currentLookAt.current.lerp(targetLookAt.current, 0.12);
-    camera.lookAt(currentLookAt.current);
+    if (!isVisible) return;
+
+    // Check if interpolation is needed or if lookAt has already settled
+    const distSq = currentLookAt.current.distanceToSquared(targetLookAt.current);
+    if (distSq > 0.000001) {
+      currentLookAt.current.lerp(targetLookAt.current, 0.12);
+      camera.lookAt(currentLookAt.current);
+    }
   });
 
   return null;
 };
+
+export default CameraController;

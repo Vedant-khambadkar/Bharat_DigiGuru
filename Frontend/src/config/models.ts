@@ -11,15 +11,21 @@ export const MODEL_URLS = {
 
 export type ModelKey = keyof typeof MODEL_URLS;
 
-// Initiate early parallel preload via Drei GLTF cache
+// Initiate early parallel preload via Drei GLTF / THREE.Cache
 if (typeof window !== "undefined") {
-  (window as any).__bdgMacStartTime = performance.now();
-  (window as any).__bdgBusinessmanStartTime = performance.now();
+  if (!(window as any).__bdgMacStartTime) {
+    (window as any).__bdgMacStartTime = performance.now();
+  }
+  if (!(window as any).__bdgBusinessmanStartTime) {
+    (window as any).__bdgBusinessmanStartTime = performance.now();
+  }
   try {
     useGLTF.preload(MODEL_URLS.mac);
     useGLTF.preload(MODEL_URLS.businessman);
   } catch (e) {
-    console.debug("[3D] Preload notice:", e);
+    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+      console.debug("[3D] Preload notice:", e);
+    }
   }
 }
 

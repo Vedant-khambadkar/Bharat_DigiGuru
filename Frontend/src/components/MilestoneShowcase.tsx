@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import {
   ChevronLeft,
@@ -142,6 +142,7 @@ export const MilestoneShowcase: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const isFirstMount = useRef(true);
 
   const activeMilestone = MILESTONES[activeIndex];
 
@@ -163,8 +164,9 @@ export const MilestoneShowcase: React.FC = () => {
 
   // Keyboard navigation for modal
   useEffect(() => {
+    if (!selectedMilestone) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!selectedMilestone) return;
       if (e.key === "Escape") {
         setSelectedMilestone(null);
       } else if (e.key === "ArrowRight") {
@@ -181,28 +183,81 @@ export const MilestoneShowcase: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedMilestone]);
 
-  // GSAP image & text transition on active index change
+  // Progressive background pre-warming of the adjacent milestone image during idle time
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nextIndex = (activeIndex + 1) % MILESTONES.length;
+    const nextImgUrl = MILESTONES[nextIndex]?.image;
+    if (!nextImgUrl) return;
+
+    const prewarm = () => {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = nextImgUrl;
+    };
+
+    if ("requestIdleCallback" in window) {
+      const id = (window as any).requestIdleCallback(prewarm, { timeout: 2000 });
+      return () => (window as any).cancelIdleCallback?.(id);
+    } else {
+      const timer = setTimeout(prewarm, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [activeIndex]);
+
+  // GSAP image & text transition on active index change with overwrite protection
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
     if (previewRef.current) {
       gsap.fromTo(
         previewRef.current,
         { opacity: 0.5, y: 10, scale: 0.98 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "power2.out" }
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.4,
+          ease: "power2.out",
+          overwrite: "auto",
+        }
       );
     }
     if (contentRef.current) {
       gsap.fromTo(
         contentRef.current,
         { opacity: 0.6, x: -8 },
-        { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" }
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.35,
+          ease: "power2.out",
+          overwrite: "auto",
+        }
       );
     }
+
+    return () => {
+      if (previewRef.current) gsap.killTweensOf(previewRef.current);
+      if (contentRef.current) gsap.killTweensOf(contentRef.current);
+    };
   }, [activeIndex]);
+
+  const handlePrev = useCallback(() => {
+    setActiveIndex((prev) => (prev === 0 ? MILESTONES.length - 1 : prev - 1));
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setActiveIndex((prev) => (prev + 1) % MILESTONES.length);
+  }, []);
 
   return (
     <div
       ref={containerRef}
-      className="relative  p-20 w-full pt-12 sm:pt-16 mt-10 sm:mt-14 font-['Space_Grotesk',sans-serif] text-white"
+      className="relative p-20 w-full pt-12 sm:pt-16 mt-10 sm:mt-14 font-['Space_Grotesk',sans-serif] text-white"
     >
       <div className="w-full flex flex-col gap-6 sm:gap-8">
         {/* =========================================================================
@@ -237,9 +292,7 @@ export const MilestoneShowcase: React.FC = () => {
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() =>
-                  setActiveIndex((prev) => (prev === 0 ? MILESTONES.length - 1 : prev - 1))
-                }
+                onClick={handlePrev}
                 aria-label="Previous Milestone"
                 className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-800 hover:border-neutral-700 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
               >
@@ -247,7 +300,7 @@ export const MilestoneShowcase: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveIndex((prev) => (prev + 1) % MILESTONES.length)}
+                onClick={handleNext}
                 aria-label="Next Milestone"
                 className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-800 hover:border-neutral-700 flex items-center justify-center transition-all cursor-pointer shadow-sm active:scale-95"
               >
@@ -417,9 +470,7 @@ export const MilestoneShowcase: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() =>
-                  setActiveIndex((prev) => (prev + 1) % MILESTONES.length)
-                }
+                onClick={handleNext}
                 className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider bg-neutral-900 text-neutral-300 hover:text-white hover:bg-neutral-800 border border-neutral-800 transition-all cursor-pointer font-['Space_Grotesk',sans-serif]"
               >
                 <span>Next Case</span>
@@ -463,7 +514,7 @@ export const MilestoneShowcase: React.FC = () => {
                 <img
                   src={activeMilestone.image}
                   alt={activeMilestone.title}
-                  loading="lazy"
+                  loading={activeIndex === 0 ? "eager" : "lazy"}
                   decoding="async"
                   className="w-full h-auto block select-none transition-transform duration-500 ease-out group-hover:scale-[1.01]"
                 />

@@ -1,177 +1,138 @@
 /**
- * High-Performance Client-Side Media & Image Cache
+ * High-Performance Client-Side Media & Texture Pipeline
  * 
- * Uses the browser's CacheStorage API (caches) and in-memory Blob URLs
- * to cache images, 3D textures, and media assets locally.
+ * Leverages native Browser HTTP Cache + CloudFront CDN directly,
+ * eliminating the expensive CacheStorage -> Blob -> Object URL duplication.
  * 
- * When a page reloads, assets are retrieved directly from the local browser
- * cache (0ms latency), completely avoiding repeated network requests to CloudFront CDN.
+ * Key Features:
+ * 1. Direct, instant URL resolution (0ms overhead)
+ * 2. In-flight request deduplication
+ * 3. Controlled concurrency for background preloading (never saturates network)
+ * 4. Progressive idle loading via requestIdleCallback
+ * 5. Clean cache invalidation for Admin mutations
  */
 
-const CACHE_NAME = "us-media-cache-v1";
-const memoryBlobMap = new Map<string, string>();
-const inFlightRequests = new Map<string, Promise<string>>();
+const inFlightPreloads = new Set<string>();
+const preloadedUrls = new Set<string>();
 
 /**
- * Checks if the browser supports the CacheStorage API
- */
-const isCacheStorageSupported = (): boolean => {
-  return typeof window !== "undefined" && "caches" in window;
-};
-
-/**
- * Retrieves a locally cached Object URL (Blob) for any media or image URL.
- * If not already cached, it fetches the asset from CloudFront/CDN once,
- * stores it in CacheStorage for future reloads, and returns the local Blob URL.
+ * Returns clean, resolved media URL.
+ * Bypasses redundant manual fetch + Blob creation, allowing the browser's
+ * highly-optimized HTTP network cache and Three.js ImageLoader to work directly.
  */
 export async function getCachedMediaUrl(url?: string): Promise<string> {
   if (!url || typeof url !== "string") return "";
   const cleanUrl = url.trim();
   if (!cleanUrl) return "";
 
-  // Data URLs and existing Blob URLs don't need caching
-  if (cleanUrl.startsWith("data:") || cleanUrl.startsWith("blob:")) {
-    return cleanUrl;
-  }
-
-  // 1. Check Fast In-Memory Blob URL Cache (Instant 0ms)
-  if (memoryBlobMap.has(cleanUrl)) {
-    return memoryBlobMap.get(cleanUrl)!;
-  }
-
-  // 2. Prevent Duplicate In-Flight Network Requests for the same asset
-  if (inFlightRequests.has(cleanUrl)) {
-    return inFlightRequests.get(cleanUrl)!;
-  }
-
-  const fetchAndCachePromise = (async (): Promise<string> => {
-    try {
-      if (isCacheStorageSupported()) {
-        const cache = await window.caches.open(CACHE_NAME);
-        const cachedResponse = await cache.match(cleanUrl);
-
-        // 3. Cache Hit in Browser CacheStorage!
-        if (cachedResponse && cachedResponse.ok) {
-          const blob = await cachedResponse.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          memoryBlobMap.set(cleanUrl, blobUrl);
-          return blobUrl;
-        }
-
-        // 4. Cache Miss: Fetch from CloudFront CDN once and persist to CacheStorage
-        try {
-          const response = await fetch(cleanUrl, {
-            mode: "cors",
-            credentials: "omit",
-          });
-
-          if (response.ok) {
-            // Clone response before consuming it for CacheStorage
-            await cache.put(cleanUrl, response.clone());
-            const blob = await response.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            memoryBlobMap.set(cleanUrl, blobUrl);
-            return blobUrl;
-          }
-        } catch (fetchErr) {
-          // If CORS or network prevents fetch, fallback to normal direct URL
-          console.debug("[MediaCache] Direct fetch notice for:", cleanUrl, fetchErr);
-        }
-      }
-    } catch (err) {
-      console.warn("[MediaCache] CacheStorage read error:", err);
-    }
-
-    // Fallback: return original URL if caching could not be completed
-    return cleanUrl;
-  })();
-
-  inFlightRequests.set(cleanUrl, fetchAndCachePromise);
-
-  try {
-    const finalUrl = await fetchAndCachePromise;
-    return finalUrl;
-  } finally {
-    inFlightRequests.delete(cleanUrl);
-  }
+  // Data URLs, Blob URLs, or standard HTTP/HTTPS URLs resolve immediately
+  return cleanUrl;
 }
 
 /**
- * Pre-caches a list of media or image URLs in the background
- * without blocking UI rendering.
+ * Preload an image using the browser's native Image() preloader with CORS.
+ * Uses browser HTTP cache directly without creating intermediate JS Blobs in memory.
  */
-export async function preloadMediaList(urls: (string | undefined)[]): Promise<void> {
-  const validUrls = urls.filter((u): u is string => typeof u === "string" && Boolean(u.trim()));
+function preloadSingleImage(url: string): Promise<void> {
+  if (!url || preloadedUrls.has(url)) return Promise.resolve();
+  if (url.startsWith("data:") || url.startsWith("blob:")) return Promise.resolve();
+
+  if (inFlightPreloads.has(url)) {
+    return Promise.resolve();
+  }
+
+  inFlightPreloads.add(url);
+
+  return new Promise<void>((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.decoding = "async";
+
+    img.onload = () => {
+      preloadedUrls.add(url);
+      inFlightPreloads.delete(url);
+      resolve();
+    };
+
+    img.onerror = () => {
+      inFlightPreloads.delete(url);
+      resolve(); // Non-blocking failure
+    };
+
+    img.src = url;
+  });
+}
+
+export interface PreloadOptions {
+  priority?: "high" | "low" | "idle";
+  concurrency?: number;
+}
+
+/**
+ * Preloads a list of media URLs with controlled concurrency (max 2 at a time by default)
+ * and idle scheduling so initial rendering and 3D hero loading are never blocked.
+ */
+export async function preloadMediaList(
+  urls: (string | undefined)[],
+  options: PreloadOptions = {}
+): Promise<void> {
+  const { priority = "low", concurrency = 2 } = options;
+  const validUrls = Array.from(
+    new Set(
+      urls
+        .filter((u): u is string => typeof u === "string" && Boolean(u.trim()))
+        .map((u) => u.trim())
+    )
+  ).filter((u) => !preloadedUrls.has(u));
+
   if (validUrls.length === 0) return;
 
-  // Process preloads in parallel
-  await Promise.allSettled(validUrls.map((url) => getCachedMediaUrl(url)));
+  const runQueue = async () => {
+    let index = 0;
+    const workers = Array.from({ length: Math.min(concurrency, validUrls.length) }, async () => {
+      while (index < validUrls.length) {
+        const currentUrl = validUrls[index++];
+        if (currentUrl) {
+          await preloadSingleImage(currentUrl);
+        }
+      }
+    });
+    await Promise.all(workers);
+  };
+
+  if (priority === "idle" && typeof window !== "undefined" && "requestIdleCallback" in window) {
+    (window as any).requestIdleCallback(
+      () => {
+        runQueue();
+      },
+      { timeout: 3000 }
+    );
+  } else if (priority === "low") {
+    setTimeout(() => {
+      runQueue();
+    }, 120);
+  } else {
+    await runQueue();
+  }
 }
 
 /**
- * Invalidates and removes a specific URL or the entire media cache
+ * Invalidates cached URLs in memory and tracking sets
  * (e.g. when an admin uploads a new version of an image).
  */
 export async function invalidateMediaCache(targetUrl?: string): Promise<void> {
-  try {
-    if (targetUrl) {
-      if (memoryBlobMap.has(targetUrl)) {
-        const oldBlob = memoryBlobMap.get(targetUrl);
-        if (oldBlob && oldBlob.startsWith("blob:")) {
-          URL.revokeObjectURL(oldBlob);
-        }
-        memoryBlobMap.delete(targetUrl);
-      }
-      if (isCacheStorageSupported()) {
-        const cache = await window.caches.open(CACHE_NAME);
-        await cache.delete(targetUrl);
-      }
-    } else {
-      // Revoke all in-memory blob URLs
-      memoryBlobMap.forEach((blobUrl) => {
-        if (blobUrl.startsWith("blob:")) URL.revokeObjectURL(blobUrl);
-      });
-      memoryBlobMap.clear();
-
-      if (isCacheStorageSupported()) {
-        await window.caches.delete(CACHE_NAME);
-      }
-    }
-  } catch (err) {
-    console.error("[MediaCache] Invalidation error:", err);
+  if (targetUrl) {
+    preloadedUrls.delete(targetUrl);
+    inFlightPreloads.delete(targetUrl);
+  } else {
+    preloadedUrls.clear();
+    inFlightPreloads.clear();
   }
 }
 
 /**
- * React hook to automatically resolve and cache any media/image/poster URL.
- * Returns local Blob URL from CacheStorage when cached.
+ * React hook to resolve media/image/poster URL directly.
  */
-import { useState, useEffect } from "react";
-
 export function useCachedMedia(url?: string): string {
-  const [cachedUrl, setCachedUrl] = useState<string>(() => {
-    if (!url) return "";
-    if (url.startsWith("data:") || url.startsWith("blob:")) return url;
-    return memoryBlobMap.get(url) || url;
-  });
-
-  useEffect(() => {
-    if (!url) return;
-    let isMounted = true;
-    getCachedMediaUrl(url)
-      .then((res) => {
-        if (isMounted && res) {
-          setCachedUrl(res);
-        }
-      })
-      .catch(() => {
-        if (isMounted) setCachedUrl(url);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [url]);
-
-  return url ? cachedUrl : "";
+  return url ? url.trim() : "";
 }

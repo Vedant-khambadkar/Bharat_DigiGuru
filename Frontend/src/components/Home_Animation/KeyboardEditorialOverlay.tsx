@@ -58,6 +58,8 @@ export const KeyboardEditorialOverlay: React.FC<KeyboardEditorialOverlayProps> =
     let lastProgress = -1;
     let lastMx = -999;
     let lastMy = -999;
+    let areCharsFullyOpaque = true;
+    let areCharsFullyHidden = false;
 
     const tick = () => {
       const progress = scrollProgressRef.current || 0;
@@ -86,48 +88,86 @@ export const KeyboardEditorialOverlay: React.FC<KeyboardEditorialOverlayProps> =
       const charElements = charRefs.current;
       const totalChars = charElements.length;
 
-      for (let i = 0; i < totalChars; i++) {
-        const el = charElements[i];
-        if (!el) continue;
-
-        const randOffset = CHAR_RANDOM_OFFSETS[i % CHAR_RANDOM_OFFSETS.length];
-        const charStart = fadeStartFrame + randOffset * (fadeWindow - 6);
-        const charEnd = charStart + 6; // 6-frame smooth letter transition
-
-        let charOpacity = 1;
-        if (currentFrame <= charStart) {
-          charOpacity = 1;
-        } else if (currentFrame >= charEnd) {
-          charOpacity = 0;
-        } else {
-          charOpacity = 1 - (currentFrame - charStart) / (charEnd - charStart);
+      if (currentFrame <= fadeStartFrame) {
+        if (!areCharsFullyOpaque) {
+          areCharsFullyOpaque = true;
+          areCharsFullyHidden = false;
+          for (let i = 0; i < totalChars; i++) {
+            const el = charElements[i];
+            if (el) el.style.opacity = "1";
+          }
         }
+      } else if (currentFrame >= fadeEndFrame + 6) {
+        if (!areCharsFullyHidden) {
+          areCharsFullyHidden = true;
+          areCharsFullyOpaque = false;
+          for (let i = 0; i < totalChars; i++) {
+            const el = charElements[i];
+            if (el) el.style.opacity = "0";
+          }
+        }
+      } else {
+        areCharsFullyOpaque = false;
+        areCharsFullyHidden = false;
+        for (let i = 0; i < totalChars; i++) {
+          const el = charElements[i];
+          if (!el) continue;
 
-        el.style.opacity = charOpacity.toFixed(3);
+          const randOffset = CHAR_RANDOM_OFFSETS[i % CHAR_RANDOM_OFFSETS.length];
+          const charStart = fadeStartFrame + randOffset * (fadeWindow - 6);
+          const charEnd = charStart + 6; // 6-frame smooth letter transition
+
+          let charOpacity = 1;
+          if (currentFrame <= charStart) {
+            charOpacity = 1;
+          } else if (currentFrame >= charEnd) {
+            charOpacity = 0;
+          } else {
+            charOpacity = 1 - (currentFrame - charStart) / (charEnd - charStart);
+          }
+
+          el.style.opacity = charOpacity.toFixed(3);
+        }
       }
 
       // Update Narrative Paragraph Words Opacity (Stochastic Dissolve on Scroll)
       const narrativeWords = narrativeWordRefs.current;
       const totalNarrativeWords = narrativeWords.length;
 
-      for (let i = 0; i < totalNarrativeWords; i++) {
-        const el = narrativeWords[i];
-        if (!el) continue;
-
-        const randOffset = CHAR_RANDOM_OFFSETS[(i * 3 + 7) % CHAR_RANDOM_OFFSETS.length];
-        const wordStart = fadeStartFrame + randOffset * (fadeWindow - 6);
-        const wordEnd = wordStart + 6;
-
-        let wordOpacity = 1;
-        if (currentFrame <= wordStart) {
-          wordOpacity = 1;
-        } else if (currentFrame >= wordEnd) {
-          wordOpacity = 0;
-        } else {
-          wordOpacity = 1 - (currentFrame - wordStart) / (wordEnd - wordStart);
+      if (currentFrame <= fadeStartFrame) {
+        if (areCharsFullyOpaque) {
+          for (let i = 0; i < totalNarrativeWords; i++) {
+            const el = narrativeWords[i];
+            if (el && el.style.opacity !== "1") el.style.opacity = "1";
+          }
         }
+      } else if (currentFrame >= fadeEndFrame + 6) {
+        if (areCharsFullyHidden) {
+          for (let i = 0; i < totalNarrativeWords; i++) {
+            const el = narrativeWords[i];
+            if (el && el.style.opacity !== "0") el.style.opacity = "0";
+          }
+        }
+      } else {
+        for (let i = 0; i < totalNarrativeWords; i++) {
+          const el = narrativeWords[i];
+          if (!el) continue;
 
-        el.style.opacity = wordOpacity.toFixed(3);
+          const randOffset = CHAR_RANDOM_OFFSETS[(i * 3 + 7) % CHAR_RANDOM_OFFSETS.length];
+          const wordStart = fadeStartFrame + randOffset * (fadeWindow - 6);
+          const wordEnd = wordStart + 6;
+
+          let wordOpacity = 1;
+          if (currentFrame <= wordStart) {
+            wordOpacity = 1;
+          } else if (currentFrame >= wordEnd) {
+            wordOpacity = 0;
+          } else {
+            wordOpacity = 1 - (currentFrame - wordStart) / (wordEnd - wordStart);
+          }
+
+          el.style.opacity = wordOpacity.toFixed(3);
+        }
       }
 
       // Compute general overlay elements fade

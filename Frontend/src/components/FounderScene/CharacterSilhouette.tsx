@@ -7,26 +7,21 @@ interface CharacterSilhouetteProps {
   config: PersonConfig;
   modelScene: THREE.Group;
   sceneState: SceneState;
+  isVisible?: boolean;
 }
 
 export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
   config,
   modelScene,
   sceneState,
+  isVisible = true,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const stateProgressRef = useRef(0);
 
-  // Clone authentic 3D businessman model for each person in the crowd
+  // Clone authentic 3D businessman model hierarchy while reusing shared geometry & material
   const clonedScene = useMemo(() => {
-    const clone = modelScene.clone(true);
-    clone.traverse((child: any) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = false;
-      }
-    });
-    return clone;
+    return modelScene.clone(true);
   }, [modelScene]);
 
   // Cached base values
@@ -39,13 +34,15 @@ export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
   const speed = config.idleSpeed;
 
   useFrame((state, delta) => {
+    if (!isVisible) return;
+
     const group = groupRef.current;
     if (!group) return;
 
     // Smooth transition between overview and focused states
     const isFocused = sceneState === 'focusing' || sceneState === 'focused';
     const targetProgress = isFocused ? 1 : 0;
-    
+
     // Fast damp calculation
     stateProgressRef.current = THREE.MathUtils.damp(
       stateProgressRef.current,
@@ -56,7 +53,7 @@ export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
 
     const progress = stateProgressRef.current;
 
-    // Subtle idle animation (tiny micro-rotation)
+    // Subtle idle animation (micro-rotation)
     const time = state.clock.getElapsedTime() * speed + phase;
     const idleRot = Math.sin(time * 0.8) * 0.015;
 
