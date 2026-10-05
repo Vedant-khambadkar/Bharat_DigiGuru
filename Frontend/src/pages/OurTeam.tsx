@@ -12,12 +12,10 @@ import { MODEL_URLS } from '../config/models';
 import type { SceneState } from '../types/scene';
 
 /**
- * Preload 3D Character model & background vignettes during site loading
+ * Preload 2D vignette background assets for OurTeam section without preloading 3D model
  */
 export const preloadOurTeamAssets = async () => {
   try {
-    useGLTF.preload(MODEL_URLS.businessman);
-
     const preloadImage = (src: string) =>
       new Promise((resolve) => {
         const img = new Image();

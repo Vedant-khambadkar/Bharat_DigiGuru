@@ -107,6 +107,7 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
       roughness: 0.42,
     });
 
+    const tSceneStart = performance.now();
     const meshMap: Record<string, THREE.Object3D> = {};
     mac.scene.traverse((child: THREE.Object3D) => {
       meshMap[child.name] = child;
@@ -149,8 +150,17 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
       lidMesh.rotation.set(Math.PI / 2, 0, Math.PI);
       meshMap.screen.add(lidMesh);
     }
+    const tSceneEnd = performance.now();
 
-    return { meshes: meshMap, screenMaterial, backMaterial, aluminumMaterial, keycapMaterial };
+    return {
+      meshes: meshMap,
+      screenMaterial,
+      backMaterial,
+      aluminumMaterial,
+      keycapMaterial,
+      tSceneStart,
+      tSceneEnd,
+    };
   }, [mac.scene, screen, keyboard, laptopBack, gl]);
 
   // Setup exact camera parameters
@@ -172,15 +182,45 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
   useEffect(() => {
     if (!mac.scene || isReadySignaled.current) return;
 
+    const tMount = performance.now();
     let frameId2: number;
     const frameId1 = requestAnimationFrame(() => {
       frameId2 = requestAnimationFrame(() => {
+        if (isReadySignaled.current) return;
         isReadySignaled.current = true;
+        const tFirstFrame = performance.now();
+
         if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-          console.log("[HERO] MacBook GLB loaded");
-          console.log("[HERO] MacBook scene ready");
-          console.log("[HERO] MacBook first render");
+          console.log("[HERO] Mac GLB loaded");
+          console.log("[HERO] Mac scene ready");
+          console.log("[HERO] Mac first frame");
           console.log("[HERO] Hero ready");
+
+          // Calculate timing stages
+          const startTime = Number((window as any).__bdgMacStartTime) || tMount;
+          const resourceEntries = performance.getEntriesByName(MODEL_URLS.mac) as PerformanceResourceTiming[];
+          const glbEntry = resourceEntries.length > 0 ? resourceEntries[resourceEntries.length - 1] : undefined;
+
+          const sceneStart = Number(meshes.tSceneStart) || tMount;
+          const sceneEnd = Number(meshes.tSceneEnd) || tMount;
+
+          const networkDownload = glbEntry && glbEntry.responseEnd > glbEntry.requestStart && glbEntry.requestStart > 0
+            ? glbEntry.responseEnd - glbEntry.requestStart
+            : glbEntry ? glbEntry.duration : Math.max(0, sceneStart - startTime);
+
+          const parsingDecompression = glbEntry && glbEntry.responseEnd > 0
+            ? Math.max(0, sceneStart - glbEntry.responseEnd)
+            : 0;
+
+          const sceneSetup = Math.max(0, sceneEnd - sceneStart);
+          const firstRender = Math.max(0, tFirstFrame - sceneEnd);
+
+          console.groupCollapsed("[HERO] 3D Performance Breakdown");
+          console.log(`1. Network Download: ${networkDownload.toFixed(1)}ms`);
+          console.log(`2. GLB Parse/Decompress: ${parsingDecompression.toFixed(1)}ms`);
+          console.log(`3. Scene Setup: ${sceneSetup.toFixed(1)}ms`);
+          console.log(`4. First Render: ${firstRender.toFixed(1)}ms`);
+          console.groupEnd();
         }
         onReady?.();
       });
@@ -190,7 +230,7 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
       cancelAnimationFrame(frameId1);
       cancelAnimationFrame(frameId2);
     };
-  }, [mac.scene, onReady]);
+  }, [mac.scene, meshes, onReady]);
 
   const data = useScroll();
 

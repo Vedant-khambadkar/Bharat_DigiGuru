@@ -51,6 +51,9 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
 
     const tl = gsap.timeline({
       onComplete: () => {
+        if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+          console.log("[PRELOADER] hidden");
+        }
         onComplete();
       },
     });
@@ -89,7 +92,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       target = Math.max(counterRef.current.value, 40);
     }
 
-    if (isReady || target >= 100) {
+    if (isReady) {
       const tween = gsap.to(counterRef.current, {
         value: 100,
         duration: 0.35,
@@ -101,8 +104,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
         onComplete: () => {
           updateDisplay(100);
           if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-            console.log("[PRELOADER] progress 100%");
-            console.log("[PRELOADER] hiding");
+            console.log("[PRELOADER] 100%");
           }
           const timer = setTimeout(() => {
             triggerExit();
@@ -130,10 +132,9 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     };
   }, [dreiProgress, isReady, triggerExit]);
 
-  // Safety fallback: Auto-reveal in 10s maximum guaranteeing zero infinite stall
+  // Safety fallback: Auto-reveal in 10s maximum to release the user without blocking
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
-      updateDisplay(100);
       triggerExit();
     }, 10000);
 

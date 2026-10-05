@@ -62,8 +62,10 @@ function ResponsiveCamera() {
 function CanvasReadyNotifier({ onReady }: { onReady: () => void }) {
   useEffect(() => {
     const rafId = requestAnimationFrame(() => {
+      (window as any).__bdgMacStartTime = performance.now();
       if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-        console.log("[HERO] Canvas initialized");
+        console.log("[HERO] Canvas ready");
+        console.log("[HERO] Mac loading");
       }
       onReady();
     });
@@ -84,21 +86,15 @@ function Home({ on3DReady }: HomeProps) {
   const progressRef = useRef<number>(0);
   const isHeroReadyTriggered = useRef(false);
 
-  const triggerHeroReady = useCallback((reason: "model" | "timeout" | "error" = "model") => {
+  const triggerHeroReady = useCallback((_reason: "model" | "timeout" | "error" = "model") => {
     if (isHeroReadyTriggered.current) return;
     isHeroReadyTriggered.current = true;
-    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-      console.log(`[HERO] Hero ready signal triggered (${reason})`);
-    }
     on3DReady?.();
     window.dispatchEvent(new CustomEvent("3d-model-ready"));
   }, [on3DReady]);
 
   const handleCanvasReady = useCallback(() => {
-    // Canvas is ready; waiting for MacContainer model
-    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-      console.log("[HERO] MacBook loading");
-    }
+    // Canvas WebGL context is initialized; MacContainer is loading within Suspense
   }, []);
 
   const handleMacReady = useCallback(() => {
@@ -106,7 +102,7 @@ function Home({ on3DReady }: HomeProps) {
   }, [triggerHeroReady]);
 
   const handleModelError = useCallback(() => {
-    console.warn("[HERO] MacBook model loading error, falling back gracefully");
+    console.warn("[HERO] MacBook model loading error, falling back to 2D poster");
     triggerHeroReady("error");
   }, [triggerHeroReady]);
 
