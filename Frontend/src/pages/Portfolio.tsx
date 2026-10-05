@@ -10,63 +10,136 @@ import { preloadMediaList } from "../utils/mediaCache";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Helper to resolve full image URLs
+export const getFullUrl = (url?: string): string => {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:")
+  ) {
+    return trimmed;
+  }
+  const cdnBase = import.meta.env.VITE_CLOUDFRONT_URL;
+  if (cdnBase && (trimmed.startsWith("uploads/") || trimmed.startsWith("/uploads/"))) {
+    const cleanKey = trimmed.replace(/^\/+/, "");
+    return `${cdnBase.replace(/\/+$/, "")}/${cleanKey}`;
+  }
+  const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const cleanUrl = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return `${base}${cleanUrl}`;
+};
+
+export const DEFAULT_PORTFOLIO_ITEMS: PlaneItem[] = [
+  {
+    id: "def-1",
+    title: "Cybernetic Architecture",
+    category: "3D CGI & ArchViz",
+    textureUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+    color: "#6c8ebb",
+  },
+  {
+    id: "def-2",
+    title: "Hyper-Real Automotive",
+    category: "CGI Automotive",
+    textureUrl: "https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80",
+    color: "#bb6c8e",
+  },
+  {
+    id: "def-3",
+    title: "Spatial Environment",
+    category: "Virtual Reality",
+    textureUrl: "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=1200&q=80",
+    color: "#8ebb6c",
+  },
+  {
+    id: "def-4",
+    title: "Industrial Innovation",
+    category: "Product Visualization",
+    textureUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80",
+    color: "#e09050",
+  },
+  {
+    id: "def-5",
+    title: "Ethereal Worlds",
+    category: "Immersive Experiences",
+    textureUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    color: "#5080e0",
+  },
+];
+
+// Helper to format backend portfolio records to PlaneItem structure
+export const formatPortfolioItem = (item: any, index: number): PlaneItem => {
+  const rawImg = item.image || item.imageUrl || item.textureUrl || item.posterUrl || "";
+  const imgUrl = getFullUrl(rawImg);
+
+  return {
+    id: item.id || item._id || index + 1,
+    title: item.title || `Project 0${index + 1}`,
+    category: item.category || item.subtitle || "3D CGI & ArchViz",
+    textureUrl: imgUrl,
+    color: item.color || "#6c8ebb",
+  };
+};
+
+/**
+ * Preload Portfolio textures directly into browser cache during initial site loading
+ */
+export const preloadPortfolioAssets = async (): Promise<PlaneItem[]> => {
+  try {
+    let items: PlaneItem[] = [];
+    const cached = getApiCache<PlaneItem[]>("portfolio_items");
+    if (cached && cached.length > 0) {
+      items = cached;
+    } else {
+      try {
+        const res = await userService.getPortfolio();
+        const rawItems = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.items)
+            ? res.items
+            : Array.isArray(res?.data)
+              ? res.data
+              : [];
+        const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
+        if (formatted.length > 0) {
+          setApiCache("portfolio_items", formatted);
+          items = formatted;
+        }
+      } catch (err) {
+        console.warn("Portfolio API fetch notice during preload:", err);
+      }
+    }
+    if (items.length === 0) {
+      items = DEFAULT_PORTFOLIO_ITEMS;
+    }
+    await preloadMediaList(items.map((p) => p.textureUrl));
+    return items;
+  } catch (err) {
+    console.warn("Portfolio preload notice:", err);
+    return DEFAULT_PORTFOLIO_ITEMS;
+  }
+};
+
 export const Portfolio: React.FC = () => {
   const [planes, setPlanes] = useState<PlaneItem[]>(() => {
     const cached = getApiCache<PlaneItem[]>("portfolio_items");
-    return cached && cached.length > 0 ? cached : [];
+    return cached && cached.length > 0 ? cached : DEFAULT_PORTFOLIO_ITEMS;
   });
   const [selectedPlane, setSelectedPlane] = useState<PlaneItem | null>(() => {
     const cached = getApiCache<PlaneItem[]>("portfolio_items");
-    return cached && cached.length > 0 ? cached[0] : null;
+    return cached && cached.length > 0 ? cached[0] : DEFAULT_PORTFOLIO_ITEMS[0];
   });
   const [scrollProgress, setScrollProgress] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(() => {
-    const cached = getApiCache<PlaneItem[]>("portfolio_items");
-    return !(cached && cached.length > 0);
-  });
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
-  // Helper to resolve full image URLs
-  const getFullUrl = (url?: string): string => {
-    if (!url || typeof url !== "string") return "";
-    const trimmed = url.trim();
-    if (!trimmed) return "";
-    if (
-      trimmed.startsWith("http://") ||
-      trimmed.startsWith("https://") ||
-      trimmed.startsWith("data:") ||
-      trimmed.startsWith("blob:")
-    ) {
-      return trimmed;
-    }
-    const cdnBase = import.meta.env.VITE_CLOUDFRONT_URL;
-    if (cdnBase && (trimmed.startsWith("uploads/") || trimmed.startsWith("/uploads/"))) {
-      const cleanKey = trimmed.replace(/^\/+/, "");
-      return `${cdnBase.replace(/\/+$/, "")}/${cleanKey}`;
-    }
-    const base = import.meta.env.VITE_API_URL || "http://localhost:5000";
-    const cleanUrl = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-    return `${base}${cleanUrl}`;
-  };
-
-  // Helper to format backend portfolio records to PlaneItem structure
-  const formatPortfolioItem = (item: any, index: number): PlaneItem => {
-    const rawImg = item.image || item.imageUrl || item.textureUrl || item.posterUrl || "";
-    const imgUrl = getFullUrl(rawImg);
-
-    return {
-      id: item.id || item._id || index + 1,
-      title: item.title || `Project 0${index + 1}`,
-      category: item.category || item.subtitle || "3D CGI & ArchViz",
-      textureUrl: imgUrl,
-      color: item.color || "#6c8ebb",
-    };
-  };
-
   // 1. Fetch Dynamic Portfolio directly from API / Database (with Cache Sync)
   useEffect(() => {
-    // Pre-cache textures from initial cache immediately
+    // Pre-cache textures from initial list immediately
     if (planes.length > 0) {
       preloadMediaList(planes.map((p) => p.textureUrl));
     }
@@ -82,12 +155,12 @@ export const Portfolio: React.FC = () => {
           ? res.data
           : [];
 
-        const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
-        setPlanes(formatted);
-        setApiCache("portfolio_items", formatted);
-        preloadMediaList(formatted.map((p: PlaneItem) => p.textureUrl));
+        if (rawItems.length > 0) {
+          const formatted: PlaneItem[] = rawItems.map(formatPortfolioItem);
+          setPlanes(formatted);
+          setApiCache("portfolio_items", formatted);
+          preloadMediaList(formatted.map((p: PlaneItem) => p.textureUrl));
 
-        if (formatted.length > 0) {
           setSelectedPlane((current) => {
             if (current) {
               const matched = formatted.find((f: PlaneItem) => String(f.id) === String(current.id));
@@ -95,13 +168,9 @@ export const Portfolio: React.FC = () => {
             }
             return formatted[0];
           });
-        } else {
-          setSelectedPlane(null);
         }
       } catch (err) {
         console.error("Error fetching database portfolio:", err);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -239,48 +308,35 @@ export const Portfolio: React.FC = () => {
 
       {/* 3. Center 3D Interactive SkinnedMesh Carousel */}
       <div className="absolute inset-0 z-[1]">
-        {planes.length > 0 ? (
-          <Canvas
-            camera={{
-              position: [0, 0.4, 8.8],
-              fov: 46,
-              near: 0.1,
-              far: 100,
-            }}
-          >
-            {/* Dark Background matching website */}
-            <color attach="background" args={["#050505"]} />
+        <Canvas
+          frameloop="always"
+          dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.5)]}
+          camera={{
+            position: [0, 0.4, 8.8],
+            fov: 46,
+            near: 0.1,
+            far: 100,
+          }}
+        >
+          {/* Dark Background matching website */}
+          <color attach="background" args={["#050505"]} />
 
-            {/* Crisp Studio Lights */}
-            <ambientLight intensity={2.2} />
-            <directionalLight position={[6, 8, 5]} intensity={2.5} color="#ffffff" />
-            <directionalLight
-              position={[-5, -4, -4]}
-              intensity={1.4}
-              color="#ffd8c2"
-            />
+          {/* Crisp Studio Lights */}
+          <ambientLight intensity={2.2} />
+          <directionalLight position={[6, 8, 5]} intensity={2.5} color="#ffffff" />
+          <directionalLight
+            position={[-5, -4, -4]}
+            intensity={1.4}
+            color="#ffd8c2"
+          />
 
-            <SkinnedPlane
-              planes={planes}
-              selectedId={selectedPlane?.id}
-              scrollProgress={scrollProgress}
-              onSelectPlane={setSelectedPlane}
-            />
-          </Canvas>
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-center p-6 pointer-events-none">
-            {isLoading ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 rounded-full border-2 border-red-500/30 border-t-red-500 animate-spin" />
-                <span className="text-xs font-mono uppercase tracking-widest text-neutral-400">Loading Portfolio...</span>
-              </div>
-            ) : (
-              <div className="text-stone-500 text-sm font-mono uppercase tracking-widest">
-                No portfolio items available in the database.
-              </div>
-            )}
-          </div>
-        )}
+          <SkinnedPlane
+            planes={planes}
+            selectedId={selectedPlane?.id}
+            scrollProgress={scrollProgress}
+            onSelectPlane={setSelectedPlane}
+          />
+        </Canvas>
       </div>
 
       {/* 4. Bottom Left Display Branding */}

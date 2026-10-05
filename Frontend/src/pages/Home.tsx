@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useCallback, useState } from 'react'
+import { Suspense, useEffect, useRef, useCallback } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { ScrollControls, useScroll } from '@react-three/drei'
 import gsap from 'gsap'
@@ -85,23 +85,6 @@ interface HomeProps {
 function Home({ on3DReady }: HomeProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const progressRef = useRef<number>(0);
-  const [isInView, setIsInView] = useState(true);
-
-  // Monitor visibility to pause Three.js rendering when off-screen to save 100% GPU
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsInView(entry.isIntersecting);
-      },
-      { rootMargin: "300px 0px" }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   const handle3DReady = useCallback(() => {
     on3DReady?.();
@@ -150,7 +133,7 @@ function Home({ on3DReady }: HomeProps) {
       <div className="absolute inset-0 z-10 w-full h-full">
         <div className="w-full h-full">
           <Canvas
-            frameloop={isInView ? "always" : "never"}
+            frameloop="always"
             dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.5)]}
             gl={{
               antialias: true,

@@ -4,22 +4,24 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import Home from "./pages/Home";
 import Services from "./pages/Services";
-import About from "./pages/About";
-import MissionVision from "./pages/MissionVision";
-import ToolsAndTechnology from "./pages/ToolsAndTechnology";
-import PlatformsWeManage from "./pages/PlatformsWeManage";
-import Process from "./pages/Process";
-import Portfolio from "./pages/Portfolio";
-import ThreeDProjects from "./pages/ThreeDProjects";
-import WorkWithUs from "./pages/WhyWorkWithUs";
-import OurTeam from "./pages/OurTeam";
-import Blogs from "./pages/Blogs";
-import Contact from "./pages/Contact";
-import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import TopHeader from "./components/TopHeader";
 import Preloader3D from "./components/Preloader/Preloader3D";
-import MilestoneShowcase from "./components/MilestoneShowcase";
+
+// Code-Split Below-The-Fold Sections to eliminate initial load bottleneck
+const PlatformsWeManage = lazy(() => import("./pages/PlatformsWeManage"));
+const Portfolio = lazy(() => import("./pages/Portfolio"));
+const ThreeDProjects = lazy(() => import("./pages/ThreeDProjects"));
+const ToolsAndTechnology = lazy(() => import("./pages/ToolsAndTechnology"));
+const Process = lazy(() => import("./pages/Process"));
+const About = lazy(() => import("./pages/About"));
+const MissionVision = lazy(() => import("./pages/MissionVision"));
+const MilestoneShowcase = lazy(() => import("./components/MilestoneShowcase"));
+const OurTeam = lazy(() => import("./pages/OurTeam"));
+const WorkWithUs = lazy(() => import("./pages/WhyWorkWithUs"));
+const Blogs = lazy(() => import("./pages/Blogs"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Footer = lazy(() => import("./components/Footer"));
 
 // Lazy-load Admin routes & modals so they don't bloat the main landing page bundle
 const AdminAuthModal = lazy(() => import("./components/Admin/AdminAuthModal"));
@@ -35,6 +37,19 @@ const MainLandingPage = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [is3DReady, setIs3DReady] = useState(false);
+  const isHomeReadyRef = useRef(false);
+  const isBackgroundReadyRef = useRef(false);
+
+  const checkAllReady = useCallback(() => {
+    if (isHomeReadyRef.current && isBackgroundReadyRef.current) {
+      setIs3DReady(true);
+    }
+  }, []);
+
+  const handleHome3DReady = useCallback(() => {
+    isHomeReadyRef.current = true;
+    checkAllReady();
+  }, [checkAllReady]);
 
   const handleStartPageReveal = useCallback(() => {
     (window as any).lenis?.start();
@@ -124,6 +139,16 @@ const MainLandingPage = () => {
     };
   }, [handleOpenAdminPortal]);
 
+  // Preload all 3D scene models (Portfolio & OurTeam 3D Character) in background while preloader runs
+  useEffect(() => {
+    Promise.allSettled([
+      import("./pages/Portfolio").then((m) => m.preloadPortfolioAssets?.()),
+      import("./pages/OurTeam").then((m) => m.preloadOurTeamAssets?.()),
+    ]).then(() => {
+      isBackgroundReadyRef.current = true;
+      checkAllReady();
+    });
+  }, [checkAllReady]);
 
   // Global Lenis Smooth Momentum Scrolling synchronized with GSAP ScrollTrigger
   useEffect(() => {
@@ -339,21 +364,23 @@ const MainLandingPage = () => {
 
       {/* Main Sections Flow */}
       <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
-        <Home on3DReady={() => setIs3DReady(true)} />
+        <Home on3DReady={handleHome3DReady} />
         <Services />
-        <PlatformsWeManage />
-        <Portfolio />
-        <ThreeDProjects />
-        <ToolsAndTechnology />
-        <Process />
-        <About />
-        <MissionVision />
+        <Suspense fallback={null}>
+          <PlatformsWeManage />
+          <Portfolio />
+          <ThreeDProjects />
+          <ToolsAndTechnology />
+          <Process />
+          <About />
+          <MissionVision />
           <MilestoneShowcase />
-        <OurTeam />
-        <WorkWithUs />
-        <Blogs />
-        <Contact />
-        <Footer />
+          <OurTeam />
+          <WorkWithUs />
+          <Blogs />
+          <Contact />
+          <Footer />
+        </Suspense>
       </main>
 
       {/* Admin Auth Modal */}

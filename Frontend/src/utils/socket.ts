@@ -4,10 +4,9 @@ import { Socket_Url } from "./constants";
 export const socket: Socket = io(Socket_Url, {
   withCredentials: true,
   autoConnect: true,
-  path: "/socket.io",
-  transports: ["websocket", "polling"],
-  reconnectionAttempts: 15,
-  reconnectionDelay: 1000,
+  transports: ["websocket"],
+  reconnectionAttempts: 5,
+  reconnectionDelay: 2000,
 });
 
 // Auto connect safely in browser environment

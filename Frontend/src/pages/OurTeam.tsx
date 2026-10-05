@@ -1,16 +1,57 @@
 import React, { useState, useEffect, Suspense, useCallback, useMemo, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { PeopleScene } from '../components/FounderScene/PeopleScene';
 import { FounderProfileModal } from '../components/FounderScene/FounderProfileModal';
-import { SceneLoader } from '../components/UI/SceneLoader';
 import desktopVignette from '../assets/Monochrome Vignette White Space.png';
 import mobileVignette from '../assets/Minimalist Black and White Vignette  mobile.png';
 import type { SceneState } from '../types/scene';
 
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+/**
+ * Preload 3D Character model & background vignettes during initial site loading
+ */
+export const preloadOurTeamAssets = async () => {
+  try {
+    useGLTF.preload('/businessman.glb');
+    
+    const loadModel = new Promise((resolve) => {
+      const loader = new GLTFLoader();
+      loader.load(
+        '/businessman.glb',
+        (gltf) => {
+          resolve(gltf);
+        },
+        undefined,
+        (err) => {
+          console.warn("businessman.glb preload warning:", err);
+          resolve(null);
+        }
+      );
+    });
+
+    const preloadImage = (src: string) =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+
+    await Promise.allSettled([
+      loadModel,
+      preloadImage(desktopVignette),
+      preloadImage(mobileVignette),
+    ]);
+  } catch (err) {
+    console.warn("OurTeam asset preload notice:", err);
+  }
+};
+
 export const OurTeam: React.FC = () => {
   const [sceneState, setSceneState] = useState<SceneState>('overview');
-  const [isInView, setIsInView] = useState<boolean>(true);
   const sectionRef = useRef<HTMLElement>(null);
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -18,22 +59,6 @@ export const OurTeam: React.FC = () => {
     }
     return false;
   });
-
-  // Pause WebGL rendering when section is offscreen to save GPU
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsInView(entry.isIntersecting);
-      },
-      { rootMargin: "400px 0px" }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   // Optimized window resize listener
   useEffect(() => {
@@ -90,10 +115,13 @@ export const OurTeam: React.FC = () => {
       className="relative w-full h-screen min-h-[640px] max-h-[1080px] overflow-hidden select-none bg-black text-black"
     >
       {/* Background Vignette Graphic Layer */}
-      <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden">
+      <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden bg-white">
         <img
           src={isMobile ? mobileVignette : desktopVignette}
           alt=""
+          onError={(e) => {
+            (e.currentTarget as HTMLElement).style.display = 'none';
+          }}
           className="w-full h-full object-fill select-none pointer-events-none"
         />
       </div>
@@ -144,7 +172,7 @@ export const OurTeam: React.FC = () => {
       {/* 3D WebGL Canvas with Transparent Alpha Background */}
       <div className="relative z-10 w-full h-full">
         <Canvas
-          frameloop={isInView ? "always" : "never"}
+          frameloop="always"
           shadows={{ type: THREE.PCFShadowMap }}
           dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 1.5)]}
           gl={{
@@ -174,9 +202,6 @@ export const OurTeam: React.FC = () => {
         onClose={handleCloseProfile}
         isMobile={isMobile}
       />
-
-      {/* Loading Screen */}
-      <SceneLoader />
     </section>
   );
 };
