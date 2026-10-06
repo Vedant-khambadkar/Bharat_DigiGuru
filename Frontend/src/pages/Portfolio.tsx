@@ -6,7 +6,7 @@ import SkinnedPlane, { type PlaneItem } from "../components/SkinnedPlane";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 import { getApiCache, setApiCache } from "../utils/apiCache";
-import { preloadMediaList } from "../utils/mediaCache";
+import { preloadMediaList, loadSharedThreeTexture } from "../utils/mediaCache";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -161,18 +161,46 @@ const preloadProgressivePortfolio = (items: PlaneItem[], activeIndex = 0) => {
   }
 };
 
-export const Portfolio: React.FC = () => {
+export interface PortfolioProps {
+  onPortfolioReady?: () => void;
+  onPortfolioError?: (error: Error) => void;
+}
+
+export const Portfolio: React.FC<PortfolioProps> = ({
+  onPortfolioReady,
+  onPortfolioError,
+}) => {
   const [planes, setPlanes] = useState<PlaneItem[]>(() => {
     const cached = getApiCache<PlaneItem[]>("portfolio_items");
     return cached && cached.length > 0 ? cached : DEFAULT_PORTFOLIO_ITEMS;
   });
-  const [selectedPlane, setSelectedPlane] = useState<PlaneItem | null>(() => {
-    const cached = getApiCache<PlaneItem[]>("portfolio_items");
-    return cached && cached.length > 0 ? cached[0] : DEFAULT_PORTFOLIO_ITEMS[0];
-  });
   const scrollProgressRef = useRef<number>(0);
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+
+  // Notify parent preloader when active portfolio assets are ready
+  useEffect(() => {
+    let isCancelled = false;
+    const activeUrl = planes[0]?.textureUrl;
+    if (activeUrl) {
+      loadSharedThreeTexture(activeUrl)
+        .then(() => {
+          if (!isCancelled) {
+            onPortfolioReady?.();
+          }
+        })
+        .catch((err: any) => {
+          if (!isCancelled) {
+            onPortfolioError?.(err);
+          }
+        });
+    } else {
+      onPortfolioReady?.();
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, [planes, onPortfolioReady, onPortfolioError]);
 
   // 1. Fetch Dynamic Portfolio directly from API / Database (with Cache Sync)
   useEffect(() => {
@@ -197,14 +225,6 @@ export const Portfolio: React.FC = () => {
           setPlanes(formatted);
           setApiCache("portfolio_items", formatted);
           preloadProgressivePortfolio(formatted, 0);
-
-          setSelectedPlane((current) => {
-            if (current) {
-              const matched = formatted.find((f: PlaneItem) => String(f.id) === String(current.id));
-              return matched || formatted[0];
-            }
-            return formatted[0];
-          });
         }
       } catch (err) {
         console.error("Error fetching database portfolio:", err);
@@ -223,7 +243,6 @@ export const Portfolio: React.FC = () => {
         const updated = [formatted, ...prev];
         setApiCache("portfolio_items", updated);
         preloadMediaList([formatted.textureUrl], { priority: "low" });
-        if (!selectedPlane) setSelectedPlane(formatted);
         return updated;
       });
     });
@@ -241,11 +260,6 @@ export const Portfolio: React.FC = () => {
         preloadMediaList([updatedItem.textureUrl], { priority: "low" });
         return updated;
       });
-      setSelectedPlane((current) =>
-        current && String(current.id) === String(updatedCard.id || updatedCard._id)
-          ? formatPortfolioItem(updatedCard, 0)
-          : current
-      );
     });
 
     const unsubscribeDelete = onSocketEvent("portfolio:deleted", (deletedId: any) => {
@@ -253,12 +267,6 @@ export const Portfolio: React.FC = () => {
         const filtered = prev.filter((p) => String(p.id) !== String(deletedId));
         setApiCache("portfolio_items", filtered);
         return filtered;
-      });
-      setSelectedPlane((current) => {
-        if (current && String(current.id) === String(deletedId)) {
-          return null;
-        }
-        return current;
       });
     });
 
@@ -343,19 +351,14 @@ export const Portfolio: React.FC = () => {
 
       {/* 1. Upper Left Section */}
       <div className="absolute top-16 sm:top-20 md:top-[125px] left-4 sm:left-8 md:left-12 max-w-[270px] sm:max-w-[340px] md:max-w-[380px] z-10 pointer-events-none">
-        <h1 className="font-neuropol text-lg sm:text-2xl md:text-[32px] font-normal leading-[1.2] tracking-wide mb-1.5 sm:mb-3 text-white uppercase">
-          Crafting Digital
-          <br />
-          Experiences That Speak.
-        </h1>
-        <p className="text-[10.5px] sm:text-xs md:text-[13px] leading-relaxed text-stone-300 m-0 tracking-[0.01em]">
-          At Bharat DigiGuru, we engineer photorealistic 3D CGI, immersive visual media, and next-generation interactive architectures tailored for world-class enterprises.
-        </p>
+        <div className="font-neuropol text-3xl sm:text-5xl md:text-6xl font-normal leading-[0.88] tracking-wider text-white m-0 uppercase select-none">
+          PORTFOLIO
+        </div>
       </div>
 
       {/* 2. Upper Right Section */}
-      <div className="hidden lg:block absolute top-[125px] right-12 max-w-[360px] text-right z-10 pointer-events-none">
-        <h2 className="font-neuropol text-xl lg:text-[22px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
+      <div className="hidden lg:block absolute top-[165px] right-12 max-w-[360px] text-right z-10 pointer-events-none">
+        <h2 className="font-neuropol text-xl lg:text-[18px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
           Shaping Your Vision
           <br />
           Into Immersive Reality.
@@ -395,18 +398,21 @@ export const Portfolio: React.FC = () => {
 
           <SkinnedPlane
             planes={planes}
-            selectedId={selectedPlane?.id}
             scrollProgressRef={scrollProgressRef}
-            onSelectPlane={setSelectedPlane}
           />
         </Canvas>
       </div>
 
-      {/* 4. Bottom Left Display Branding */}
-      <div className="absolute bottom-4 sm:bottom-6 md:bottom-9 left-4 sm:left-8 md:left-12 flex items-end gap-3.5 z-10 pointer-events-none">
-        <div className="font-neuropol text-6xl font-normal leading-[0.88] tracking-wider text-white m-0 uppercase select-none">
-          PORTFOLIO
-        </div>
+      {/* 4. Bottom Left Description Section */}
+      <div className="absolute bottom-6 sm:bottom-8 md:bottom-10 left-4 sm:left-8 md:left-12 max-w-[300px] sm:max-w-[380px] md:max-w-[440px] z-10 pointer-events-none flex flex-col gap-1.5 sm:gap-2">
+        <h1 className="font-neuropol text-base sm:text-lg md:text-[20px] font-normal leading-[1.25] tracking-wide text-white uppercase m-0">
+          Crafting Digital
+          <br />
+          Experiences That Speak.
+        </h1>
+        <p className="text-[10.5px] sm:text-xs md:text-[12.5px] leading-relaxed text-stone-300 m-0 tracking-[0.01em]">
+          At Bharat DigiGuru, we engineer photorealistic 3D CGI, immersive visual media, and next-generation interactive architectures tailored for world-class enterprises.
+        </p>
       </div>
     </section>
   );

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect, useState } from "react";
+import React, { useMemo, useRef, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { loadSharedThreeTexture } from "../utils/mediaCache";
@@ -75,8 +75,8 @@ function createSkinnedPlaneData(
   });
 
   const mesh = new THREE.SkinnedMesh(geometry, material);
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
   mesh.add(bones[0]);
   mesh.bind(skeleton);
 
@@ -116,7 +116,7 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
 }) => {
   const meshRef = useRef<THREE.SkinnedMesh>(null!);
   const groupYRef = useRef<THREE.Group>(null!);
-  const [isHovered, setIsHovered] = useState(false);
+  const isHoveredRef = useRef(false);
 
   const { mesh, skeletonHelper } = useMemo(() => {
     return createSkinnedPlaneData(width, height, segments, undefined, color);
@@ -183,7 +183,7 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
     // 2. Y-Elevation: rises to +0.45 on hover; drops immediately back to 0 when cursor leaves or when rotating
     if (groupYRef.current) {
       const isSpinning = isRotatingRef ? isRotatingRef.current : false;
-      const targetY = isHovered && !isSpinning ? 0.45 : 0;
+      const targetY = isHoveredRef.current && !isSpinning ? 0.45 : 0;
       if (Math.abs(groupYRef.current.position.y - targetY) > 0.001) {
         groupYRef.current.position.y = THREE.MathUtils.damp(
           groupYRef.current.position.y,
@@ -199,7 +199,7 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
 
   const handlePointerOver = (e: any) => {
     e.stopPropagation();
-    setIsHovered(true);
+    isHoveredRef.current = true;
     document.body.style.cursor = "pointer";
     if (onHoverPlane) {
       onHoverPlane(plane);
@@ -208,7 +208,7 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
 
   const handlePointerOut = (e: any) => {
     e.stopPropagation();
-    setIsHovered(false);
+    isHoveredRef.current = false;
     document.body.style.cursor = "grab";
   };
 
@@ -370,15 +370,12 @@ export default function SkinnedPlane({
       groupRef.current.scale.setScalar(introScale.current * responsiveScale);
     }
 
-    // 3. Auto-update active plane preview based on carousel rotation angle
+    // 3. Track active plane index without triggering React reconciliation
     if (total > 0) {
       const normalizedAngle = ((-totalRotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
       const activeIdx = Math.round((normalizedAngle / (Math.PI * 2)) * total) % total;
       if (activeIdx !== lastActiveIndex.current && activePlanes[activeIdx]) {
         lastActiveIndex.current = activeIdx;
-        if (onSelectPlane && !isDragging.current) {
-          onSelectPlane(activePlanes[activeIdx]);
-        }
       }
     }
 

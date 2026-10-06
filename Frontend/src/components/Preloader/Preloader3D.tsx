@@ -6,6 +6,7 @@ interface Preloader3DProps {
   isReady?: boolean;
   macReady?: boolean;
   businessmanReady?: boolean;
+  portfolioReady?: boolean;
   onStartExit?: () => void;
   onComplete: () => void;
 }
@@ -14,6 +15,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
   isReady = false,
   macReady = false,
   businessmanReady = false,
+  portfolioReady = false,
   onStartExit,
   onComplete,
 }) => {
@@ -118,14 +120,17 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       };
     }
 
-    // Neither or only one model ready: clamp progress strictly < 100%
+    // Multiple assets readiness: clamp progress strictly < 100% until fully ready
     let target = 35;
-    const readyCount = (macReady ? 1 : 0) + (businessmanReady ? 1 : 0);
+    const readyCount =
+      (macReady ? 1 : 0) + (businessmanReady ? 1 : 0) + (portfolioReady ? 1 : 0);
 
-    if (readyCount === 1) {
-      target = Math.max(70, Math.min(88, Math.round(dreiProgress * 0.88)));
+    if (readyCount === 2) {
+      target = Math.max(85, Math.min(96, Math.round(dreiProgress * 0.96)));
+    } else if (readyCount === 1) {
+      target = Math.max(60, Math.min(80, Math.round(dreiProgress * 0.8)));
     } else if (dreiProgress > 0) {
-      target = Math.min(65, Math.max(counterRef.current.value, Math.round(dreiProgress * 0.65)));
+      target = Math.min(50, Math.max(counterRef.current.value, Math.round(dreiProgress * 0.5)));
     } else {
       target = Math.max(counterRef.current.value, 30);
     }
@@ -143,7 +148,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     return () => {
       tween.kill();
     };
-  }, [dreiProgress, isReady, macReady, businessmanReady, triggerExit]);
+  }, [dreiProgress, isReady, macReady, businessmanReady, portfolioReady, triggerExit]);
 
   // Safety fallback: Auto-reveal in 12s maximum to release the user without blocking
   useEffect(() => {

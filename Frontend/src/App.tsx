@@ -39,11 +39,16 @@ const MainLandingPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [macReady, setMacReady] = useState(false);
   const [businessmanReady, setBusinessmanReady] = useState(false);
+  const [portfolioReady, setPortfolioReady] = useState(false);
   const [macFailed, setMacFailed] = useState(false);
   const [businessmanFailed, setBusinessmanFailed] = useState(false);
+  const [portfolioFailed, setPortfolioFailed] = useState(false);
 
-  const all3DReady = (macReady && businessmanReady) ||
-    ((macFailed || macReady) && (businessmanFailed || businessmanReady) && (macFailed || businessmanFailed));
+  const all3DReady =
+    (macReady || macFailed) &&
+    (businessmanReady || businessmanFailed) &&
+    (portfolioReady || portfolioFailed) &&
+    (macReady || businessmanReady || portfolioReady);
 
   const handleMacReady = useCallback(() => {
     setMacReady(true);
@@ -61,6 +66,15 @@ const MainLandingPage = () => {
   const handleBusinessmanError = useCallback((error: Error) => {
     console.error("[TEAM] Businessman model failed:", error);
     setBusinessmanFailed(true);
+  }, []);
+
+  const handlePortfolioReady = useCallback(() => {
+    setPortfolioReady(true);
+  }, []);
+
+  const handlePortfolioError = useCallback((error: Error) => {
+    console.error("[PORTFOLIO] Portfolio asset notice:", error);
+    setPortfolioFailed(true);
   }, []);
 
   const handleStartPageReveal = useCallback(() => {
@@ -372,6 +386,7 @@ const MainLandingPage = () => {
           isReady={all3DReady}
           macReady={macReady}
           businessmanReady={businessmanReady}
+          portfolioReady={portfolioReady}
           onStartExit={handleStartPageReveal}
           onComplete={handlePreloaderComplete}
         />
@@ -389,7 +404,10 @@ const MainLandingPage = () => {
         <Services />
         <Suspense fallback={null}>
           <PlatformsWeManage />
-          <Portfolio />
+          <Portfolio
+            onPortfolioReady={handlePortfolioReady}
+            onPortfolioError={handlePortfolioError}
+          />
           <ThreeDProjects />
           <ToolsAndTechnology />
           <Process />

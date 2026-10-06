@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { X, ArrowRight } from 'lucide-react';
-import founderPhoto from '../../assets/photography/photography-1.webp';
+import { X, ArrowRight, Sparkles } from 'lucide-react';
+import founderPhoto from '../../assets/Picture/Picture12.webp';
 
 interface FounderProfileModalProps {
   isOpen: boolean;
@@ -52,7 +52,7 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
   return (
     <div
       data-lenis-prevent="true"
-      className="fixed inset-0 z-[999999] overflow-y-auto overscroll-contain bg-[#0a0a0c]/98 flex items-start sm:items-center justify-center pt-20 pb-8 px-4 sm:p-6 md:p-8 select-none animate-fadeIn"
+      className="fixed inset-0 z-[999999] overflow-y-auto overscroll-contain bg-[#060608]/95 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6 md:p-10 select-none animate-fadeIn"
     >
       {/* Background Click to Dismiss */}
       <div
@@ -61,107 +61,135 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
         className="fixed inset-0 -z-10"
       />
 
-      {/* Main Content Canvas (Scrollable on mobile, compact fit on desktop) */}
+      {/* Main Modal Card */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Founders Profile"
-        className="relative z-10 w-full max-w-5xl lg:max-h-[96vh] bg-transparent text-white flex flex-col justify-between animate-scaleIn my-auto py-2 sm:py-0"
+        className="relative z-10 w-full max-w-4xl bg-[#0e0e12]/95 border border-white/10 rounded-2xl sm:rounded-3xl shadow-[0_20px_70px_rgba(0,0,0,0.8)] text-white p-5 sm:p-8 md:p-10 flex flex-col justify-between animate-scaleIn my-auto max-h-[92vh] overflow-y-auto"
       >
-        {/* Top Header Row with Monumental "FOUNDERS" Title & Close Button */}
-        <div className="w-full flex items-center justify-between pb-2 sm:pb-2">
-          <h1
-            className="font-[sans-serif] font-bold uppercase text-white tracking-tighter leading-none select-none text-left"
-            style={{
-              fontSize: "clamp(1.8rem, 5.5vw, 4.2rem)",
-              letterSpacing: "-0.04em",
-              lineHeight: 0.9,
-            }}
-          >
-            FOUNDERS
-          </h1>
+        {/* Top Header Bar */}
+        <div className="w-full flex items-center justify-between pb-4 sm:pb-6 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <h1 className="font-neuropol text-2xl sm:text-4xl md:text-5xl font-normal uppercase text-white tracking-wide m-0">
+              FOUNDERS
+            </h1>
+            <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-white/[0.05] border border-white/15 text-[11px] font-mono uppercase tracking-widest text-stone-300">
+              LEADERSHIP & VISION
+            </span>
+          </div>
 
           {/* Close Button */}
           <button
             onClick={onClose}
             aria-label="Close founders modal"
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 shadow-lg shrink-0"
+            className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 shrink-0"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
-        {/* Middle Section: Hero Picture (Left) + Oval Wireframe Badge (Right) */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-center my-2 sm:my-3">
-          {/* Left: Founder Landscape Photo */}
-          <div className="md:col-span-6 lg:col-span-7 relative w-full h-[140px] sm:h-[180px] lg:h-[210px] rounded-xl sm:rounded-2xl overflow-hidden bg-neutral-900 border border-white/15 shadow-xl group">
+        {/* Content Body: Photo on Left + Editorial Bio on Right */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 md:gap-10 items-center py-6 sm:py-8">
+          {/* Left Column: Portrait Photo with Proper Framing */}
+          <div className="md:col-span-5 relative w-full h-[300px] sm:h-[380px] md:h-[420px] rounded-2xl overflow-hidden bg-neutral-900 border border-white/15 shadow-2xl group">
             <img
               src={founderPhoto}
-              alt="Founders of Bharat DigiGuru"
-              className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-700 ease-out"
+              alt="Shubham Singh - Founder of Bharat DigiGuru"
+              className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
               loading="eager"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+            {/* Subtle Gradient Vignette */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e12] via-transparent to-transparent opacity-80 pointer-events-none" />
+            
+            {/* Bottom Floating Badge on Photo */}
+            <div className="absolute bottom-3 left-3 right-3 p-2.5 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-between">
+              <span className="text-[11px] font-neuropol uppercase text-white tracking-wider">
+                Shubham Singh
+              </span>
+              <span className="text-[9px] font-mono text-[#e06b3a] uppercase tracking-widest">
+                FOUNDER
+              </span>
+            </div>
           </div>
 
-          {/* Right: Oval Wireframe "Meet The Founders" Badge + Subtitle */}
-          <div className="md:col-span-6 lg:col-span-5 flex flex-col items-start justify-center gap-2 pl-0 md:pl-2">
-            {/* Oval Pill Badge */}
-            <div className="inline-flex items-center justify-center px-5 py-2 sm:px-6 sm:py-2.5 rounded-full border border-white/40 bg-white/[0.02] backdrop-blur-md shadow-sm">
-              <span className="text-xl sm:text-2xl lg:text-[26px] font-[sans-serif] font-light text-white tracking-tight">
-                Meet The Founders
+          {/* Right Column: Founder Details & Biography */}
+          <div className="md:col-span-7 flex flex-col items-start justify-center space-y-4 sm:space-y-5">
+            {/* Pill Badge & Subtitle */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-white/25 bg-white/[0.03] backdrop-blur-md shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-[#ff3b30]" />
+                <span className="text-xs sm:text-sm font-neuropol text-white tracking-wide uppercase">
+                  Meet The Founder
+                </span>
+              </div>
+              <span className="text-xs font-mono uppercase text-[#e06b3a] tracking-widest font-semibold">
+                Creative Director & Visionary
               </span>
             </div>
 
-            {/* Subtitle in Warm Terracotta */}
-            <p className="text-xs sm:text-sm font-[sans-serif] text-[#e06b3a] tracking-wide font-medium pl-1">
-              SHUBHAM SINGH
-            </p>
-          </div>
-        </div>
-
-        {/* Bottom Two-Column Profiles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-10 pt-3 sm:pt-4 border-t border-white/10 mt-1 sm:mt-2">
-          {/* Column 1: Oliver Muñoz */}
-          <div className="flex flex-col items-start text-left space-y-1.5 sm:space-y-2">
-            {/* Name with Orange Arrow */}
-            <div className="flex items-center gap-2">
-              <ArrowRight className="w-4 h-4 text-[#e06b3a] shrink-0" />
-              <h3 className="text-base sm:text-lg lg:text-xl font-[sans-serif] font-medium text-[#e06b3a] tracking-tight">
-                SHUMHAM
-              </h3>
+            {/* Name Heading */}
+            <div className="flex items-center gap-3">
+              <ArrowRight className="w-5 h-5 text-[#ff3b30] shrink-0" />
+              <h2 className="font-neuropol text-2xl sm:text-3xl lg:text-4xl text-white font-normal uppercase tracking-wider m-0">
+                SHUBHAM SINGH
+              </h2>
             </div>
 
-            {/* Bio Paragraphs */}
-            <div className="space-y-1 sm:space-y-1.5 text-[11px] sm:text-xs text-neutral-300 font-[sans-serif] leading-relaxed">
-              <p>Born in India and raised in a city of artists ‘VARANASI’ , Shubham has been taking pictures for as long as he can remember.
+            {/* Biography Paragraphs */}
+            <div className="space-y-2.5 text-xs sm:text-sm text-stone-300 font-sans leading-relaxed tracking-wide">
+              <p>
+                Born in India and raised in the city of artists, <strong className="text-white">Varanasi</strong>, Shubham has been capturing stories and crafting visuals for as long as he can remember.
               </p>
-              <p className="text-neutral-400">
-                As a digital content creator,he has worked with leading mobile companies.His body of work includes street photography still,short films and music videos..
+              <p className="text-stone-400">
+                As an accomplished digital content creator and 3D visionary, he has collaborated with premier global mobile enterprises. His portfolio encompasses high-end commercial CGI, street photography stills, cinematic short films, and high-impact music videos.
               </p>
             </div>
-            {/* Role Subtitle */}
-            <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.16em] text-neutral-400 font-semibold">
-             His unique style, training, and appreciation for his subjects makes his photographs a joy to look at.
-            </span>
 
-            {/* Outlined Action Pill Buttons */}
-            <div className="flex items-center gap-2 pt-1">
+            {/* Quote / Credo Highlight */}
+            <div className="p-3.5 rounded-xl bg-white/[0.03] border-l-2 border-[#ff3b30] w-full">
+              <p className="text-[11px] sm:text-xs italic text-stone-300 m-0 leading-relaxed font-sans">
+                "His unique style, artistic training, and profound appreciation for light and architecture make every frame an unforgettable visual journey."
+              </p>
+            </div>
+
+            {/* Specialties Tags */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {['3D CGI & ArchViz', 'Commercial Stills', 'Cinematic Direction', 'Creative Strategy'].map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/10 text-[10px] font-mono uppercase tracking-wider text-stone-300"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            {/* Social & Contact Actions */}
+            <div className="flex items-center gap-3 pt-2">
               <a
                 href="https://linkedin.com"
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-1 rounded-full border border-white/30 hover:border-white text-white font-mono text-[9px] tracking-widest uppercase hover:bg-white/10 transition-all duration-200 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/20 hover:border-[#ff3b30] text-white hover:text-white font-mono text-[10px] tracking-widest uppercase bg-white/[0.04] hover:bg-[#ff3b30]/10 transition-all duration-200 cursor-pointer"
               >
-                LIN
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+                </svg>
+                <span>LinkedIn</span>
               </a>
               <a
                 href="https://instagram.com"
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-1 rounded-full border border-white/30 hover:border-white text-white font-mono text-[9px] tracking-widest uppercase hover:bg-white/10 transition-all duration-200 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/20 hover:border-[#ff3b30] text-white hover:text-white font-mono text-[10px] tracking-widest uppercase bg-white/[0.04] hover:bg-[#ff3b30]/10 transition-all duration-200 cursor-pointer"
               >
-                IG
+                <svg className="w-3.5 h-3.5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+                <span>Instagram</span>
               </a>
             </div>
           </div>
@@ -177,7 +205,7 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
         @keyframes scaleIn {
           from {
             opacity: 0;
-            transform: scale(0.98) translateY(12px);
+            transform: scale(0.96) translateY(16px);
           }
           to {
             opacity: 1;
