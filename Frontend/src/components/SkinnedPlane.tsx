@@ -142,7 +142,7 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
     loadSharedThreeTexture(cleanUrl).then((tex) => {
       if (isCancelled || !tex || !meshRef.current) return;
       const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-      if (mat) {
+      if (mat && mat.map !== tex) {
         mat.map = tex;
         mat.color.set("#ffffff");
         mat.needsUpdate = true;

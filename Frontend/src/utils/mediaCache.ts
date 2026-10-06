@@ -108,8 +108,7 @@ export async function preloadMediaList(
 
 /**
  * Loads and caches a Three.js Texture with complete request deduplication.
- * If texture is already loaded, returns immediately from memory.
- * If texture is currently loading, returns the existing in-flight Promise.
+ * Ensures textures are oriented right-side up (flipY = true) and filtered properly.
  */
 export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | null> {
   const cleanUrl = url.trim();
@@ -139,6 +138,7 @@ export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | nul
         tex.generateMipmaps = true;
         tex.minFilter = THREE.LinearMipmapLinearFilter;
         tex.magFilter = THREE.LinearFilter;
+        tex.flipY = true;
         tex.needsUpdate = true;
 
         textureCache.set(cleanUrl, tex);
