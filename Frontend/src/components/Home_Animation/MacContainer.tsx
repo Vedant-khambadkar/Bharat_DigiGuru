@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { MODEL_URLS } from "../../config/models";
-import heroImg from "../../assets/Picture/Picture3.webp";
+import heroImg from "../../assets/Picture/screen-texture.jpg";
 import keyboardImg from "../../assets/Picture/keyboard Texture2.png";
 import laptopBackImg from "../../assets/Picture/laptop-back.png";
 
@@ -33,9 +33,9 @@ const PARAMS = {
   lidClosedAngle: 180,
   lidOpenAngle: 80,
 
-  // Scroll Window (0.0 to 0.60 across 5 pages)
+  // Scroll Window (Opens smoothly in initial scroll phase before cards emerge)
   scrollStart: 0.0,
-  scrollEnd: 0.60,
+  scrollEnd: 0.18,
 };
 
 // Precompute static radians & values once
@@ -45,13 +45,45 @@ const RAD_START_ROT_Z = THREE.MathUtils.degToRad(PARAMS.startRotZDeg);
 const RAD_TARGET_ROT_X = THREE.MathUtils.degToRad(PARAMS.rotXDeg);
 const RAD_TARGET_ROT_Y = THREE.MathUtils.degToRad(PARAMS.rotYDeg);
 const RAD_TARGET_ROT_Z = THREE.MathUtils.degToRad(PARAMS.rotZDeg);
-const RAD_INITIAL_SCREEN_X = THREE.MathUtils.degToRad(182);
+const RAD_INITIAL_SCREEN_X = THREE.MathUtils.degToRad(PARAMS.lidClosedAngle);
 
 const SCROLL_SPAN = Math.max(PARAMS.scrollEnd - PARAMS.scrollStart, 0.01);
-const HALF_PI = Math.PI / 2;
 
-// Ultra-fast inline linear interpolation
+// Fast inline lerp & smoothstep
 const inlineLerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+const smoothstep = (t: number): number => {
+  const clamped = Math.max(0, Math.min(1, t));
+  return clamped * clamped * (3 - 2 * clamped);
+};
+
+// Generates smooth rounded rectangle geometry with 0-to-1 UV mapping to perfectly fit MacBook beveled corners
+function createRoundedRectGeometry(width: number, height: number, radius: number, segments = 12): THREE.ShapeGeometry {
+  const x = -width / 2;
+  const y = -height / 2;
+  const shape = new THREE.Shape();
+  shape.moveTo(x + radius, y);
+  shape.lineTo(x + width - radius, y);
+  shape.absarc(x + width - radius, y + radius, radius, -Math.PI / 2, 0, false);
+  shape.lineTo(x + width, y + height - radius);
+  shape.absarc(x + width - radius, y + height - radius, radius, 0, Math.PI / 2, false);
+  shape.lineTo(x + radius, y + height);
+  shape.absarc(x + radius, y + height - radius, radius, Math.PI / 2, Math.PI, false);
+  shape.lineTo(x, y + radius);
+  shape.absarc(x + radius, y + radius, radius, Math.PI, (3 * Math.PI) / 2, false);
+
+  const geo = new THREE.ShapeGeometry(shape, segments);
+
+  const pos = geo.attributes.position;
+  const uvs = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    const px = pos.getX(i);
+    const py = pos.getY(i);
+    uvs[i * 2] = (px - x) / width;
+    uvs[i * 2 + 1] = (py - y) / height;
+  }
+  geo.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+  return geo;
+}
 
 interface MacContainerProps {
   onReady?: () => void;
@@ -75,9 +107,12 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
   const laptopBack = useTexture(laptopBackImg);
   const isReadySignaled = useRef(false);
 
+  // Rounded corner geometries for keyboard and back lid
+  const keyboardGeo = useMemo(() => createRoundedRectGeometry(31.1, 21.7, 1.4), []);
+  const lidGeo = useMemo(() => createRoundedRectGeometry(31.1, 21.7, 1.4), []);
+
   // Setup textures and materials cleanly with useMemo to avoid re-creation on every render
   const { meshes } = useMemo(() => {
-    // Sensibly cap anisotropy to 4 to reduce texture memory bandwidth while preserving crisp visuals
     const cappedAnisotropy = Math.min(gl.capabilities.getMaxAnisotropy(), 4);
 
     keyboard.colorSpace = THREE.SRGBColorSpace;
@@ -116,7 +151,6 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
       polygonOffsetUnits: -4,
     });
 
-    // Premium Apple Space Gray / Silver Anodized Aluminum
     const aluminumMaterial = new THREE.MeshStandardMaterial({
       color: new THREE.Color("#9ea4ad"),
       metalness: 0.88,
@@ -124,7 +158,6 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
       envMapIntensity: 2.2,
     });
 
-    // Apple Magic Keyboard Matte Black keycaps
     const keycapMaterial = new THREE.MeshStandardMaterial({
       color: new THREE.Color("#16181b"),
       metalness: 0.15,
@@ -143,17 +176,14 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
         const origMatName = ((meshChild.material as THREE.Material)?.name || "").toLowerCase();
 
         if (name.includes("matte") || parentName.includes("matte")) {
-          // Display screen
           meshChild.material = screenMaterial;
         } else if (
           origMatName.includes("black") ||
           name.includes("black") ||
           name.includes("key")
         ) {
-          // Authentic 3D black keycaps, speaker holes & port bezels
           meshChild.material = keycapMaterial;
         } else {
-          // Chassis, palm rest, trackpad, and outer shell
           meshChild.material = aluminumMaterial;
         }
       }
@@ -162,12 +192,10 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
     if (meshMap.screen) {
       meshMap.screen.rotation.x = RAD_INITIAL_SCREEN_X;
 
-      // Attach high-res unfragmented back lid plane directly to the screen hinge
       const existingLid = meshMap.screen.getObjectByName("laptop_lid_plane");
       if (existingLid) {
         meshMap.screen.remove(existingLid);
       }
-      const lidGeo = new THREE.PlaneGeometry(31.4, 22.0);
       const lidMesh = new THREE.Mesh(lidGeo, backMaterial);
       lidMesh.name = "laptop_lid_plane";
       lidMesh.position.set(0, -0.85, -10.8);
@@ -185,7 +213,7 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
       tSceneStart,
       tSceneEnd,
     };
-  }, [mac.scene, screen, keyboard, laptopBack, gl]);
+  }, [mac.scene, screen, keyboard, laptopBack, lidGeo, gl]);
 
   // Setup exact camera parameters
   useEffect(() => {
@@ -229,7 +257,6 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
           console.log("[HERO] MacBook first frame");
           console.log("[HERO] MacBook ready");
 
-          // Calculate timing stages
           const startTime = Number((window as any).__bdgMacStartTime) || tMount;
           const resourceEntries = performance.getEntriesByName(MODEL_URLS.mac) as PerformanceResourceTiming[];
           const glbEntry = resourceEntries.length > 0 ? resourceEntries[resourceEntries.length - 1] : undefined;
@@ -263,33 +290,39 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
 
   const data = useScroll();
 
-  // Optimized Scroll Animation Frame Loop without GSAP overhead or redundant per-frame calculations
+  // Smooth Scroll Animation Frame Loop
   useFrame(() => {
-    const p = data ? data.offset : 0;
+    const scrollOffset = data ? data.offset : 0;
 
-    // Fast bounds calculation and sine easing
-    const rawProgress = p <= 0 ? 0 : p >= PARAMS.scrollEnd ? 1 : p / SCROLL_SPAN;
-    const laptopProgress = Math.sin(rawProgress * HALF_PI);
+    let progress = 0;
+    if (scrollOffset <= PARAMS.scrollStart) {
+      progress = 0;
+    } else if (scrollOffset >= PARAMS.scrollEnd) {
+      progress = 1;
+    } else {
+      const rawT = (scrollOffset - PARAMS.scrollStart) / SCROLL_SPAN;
+      progress = smoothstep(rawT);
+    }
 
     // 1. Screen Lid Opening Animation
     if (meshes.screen) {
-      const lidAngleDeg = inlineLerp(PARAMS.lidClosedAngle, PARAMS.lidOpenAngle, laptopProgress);
-      meshes.screen.rotation.x = lidAngleDeg * (Math.PI / 180);
+      const lidAngleDeg = inlineLerp(PARAMS.lidClosedAngle, PARAMS.lidOpenAngle, progress);
+      meshes.screen.rotation.x = THREE.MathUtils.degToRad(lidAngleDeg);
     }
 
-    // 2. Base/Chassis Position & Rotation & Scale
+    // 2. Base/Chassis Position, Rotation & Scale
     if (groupRef.current) {
       const { targetX, targetY, scale } = responsiveConfig;
 
-      const curX = inlineLerp(PARAMS.startX, targetX, laptopProgress);
-      const curY = inlineLerp(PARAMS.startY, targetY, laptopProgress);
-      const curZ = inlineLerp(PARAMS.startZ, PARAMS.targetZ, laptopProgress);
+      const curX = inlineLerp(PARAMS.startX, targetX, progress);
+      const curY = inlineLerp(PARAMS.startY, targetY, progress);
+      const curZ = inlineLerp(PARAMS.startZ, PARAMS.targetZ, progress);
 
-      const curRotX = inlineLerp(RAD_START_ROT_X, RAD_TARGET_ROT_X, laptopProgress);
-      const curRotY = inlineLerp(RAD_START_ROT_Y, RAD_TARGET_ROT_Y, laptopProgress);
-      const curRotZ = inlineLerp(RAD_START_ROT_Z, RAD_TARGET_ROT_Z, laptopProgress);
+      const curRotX = inlineLerp(RAD_START_ROT_X, RAD_TARGET_ROT_X, progress);
+      const curRotY = inlineLerp(RAD_START_ROT_Y, RAD_TARGET_ROT_Y, progress);
+      const curRotZ = inlineLerp(RAD_START_ROT_Z, RAD_TARGET_ROT_Z, progress);
 
-      const curScale = inlineLerp(PARAMS.startScale, scale, laptopProgress);
+      const curScale = inlineLerp(PARAMS.startScale, scale, progress);
 
       groupRef.current.position.set(curX, curY, curZ);
       groupRef.current.rotation.set(curRotX, curRotY, curRotZ);
@@ -305,9 +338,12 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
     >
       <primitive object={mac.scene} />
 
-      {/* Photorealistic Keyboard, Keycaps & Trackpad Deck */}
-      <mesh position={[0, 0.06, -0.6]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[31.4, 22.0]} />
+      {/* Photorealistic Keyboard, Keycaps & Trackpad Deck with Rounded Corners */}
+      <mesh
+        geometry={keyboardGeo}
+        position={[0, 0.06, -0.6]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <meshStandardMaterial
           map={keyboard}
           roughness={0.35}
@@ -318,7 +354,7 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
         />
       </mesh>
 
-      {/* Baked contact shadow directly beneath the laptop chassis with frames={1} to save massive GPU cycles */}
+      {/* Baked contact shadow directly beneath the laptop chassis */}
       <ContactShadows
         frames={1}
         position={[0, -0.65, 0]}

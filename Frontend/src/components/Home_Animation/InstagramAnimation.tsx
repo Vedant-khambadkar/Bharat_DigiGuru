@@ -7,23 +7,29 @@ import InstagramImg from "../../assets/Picture/Instagram.png";
 
 const PARAMS = {
   // Start Pose (Emerges from center)
-  startPosX: -4.3,
-  startPosY: -0.5,
+  startPosX: -9,
+  startPosY: -1.1,
   startPosZ: -1.2,
   startRotXDeg: -10,
-  startRotYDeg: 37.5,
-  startRotZDeg: 0,
-  startScale: 0.01,
-  posX: -6.3,
-  posY: 5,
-  posZ: 8.4,
-  rotXDeg: 3,
-  rotYDeg: 20.5,
-  rotZDeg: -1.5,
-  scale: 3.9,
+  startRotYDeg: 20.5,
+  startRotZDeg: 12,
+  startScale: 0.001,
+
+  // Target Pose
+  posX: -5.6,
+  posY: 3.8,
+  posZ: 15.1,
+  rotXDeg: -1.5,
+  rotYDeg: 12,
+  rotZDeg: 0,
+  scale: 3.2,
   opacity: 1,
-  planeWidth: 5.15,
-  planeHeight: 3.9,
+
+  // Plane Dimensions
+  planeWidth: 5.7,
+  planeHeight: 3.7,
+
+  // Scroll Timing
   scrollStart: 0.18,
   scrollEnd: 0.38,
 };
