@@ -5,9 +5,9 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { MODEL_URLS } from "../../config/models";
-import heroImg from "../../assets/Picture/screen-texture.jpg";
-import keyboardImg from "../../assets/Picture/keyboard Texture2.png";
-import laptopBackImg from "../../assets/Picture/laptop-back.png";
+import heroImg from "../../assets/Picture/screen-texture.webp";
+import keyboardImg from "../../assets/Picture/keyboard Texture2.webp";
+import laptopBackImg from "../../assets/Picture/laptop-back.webp";
 
 // Tuned parameters for MacBook
 const PARAMS = {

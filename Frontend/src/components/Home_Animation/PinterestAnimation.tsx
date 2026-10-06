@@ -3,7 +3,7 @@ import React, { useMemo, useRef } from "react";
 import { useScroll, useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import PinterestImg from "../../assets/Picture/Pinterest.png";
+import PinterestImg from "../../assets/Picture/Pinterest.webp";
 
 // Tuned parameters for Pinterest Card
 const PARAMS = {

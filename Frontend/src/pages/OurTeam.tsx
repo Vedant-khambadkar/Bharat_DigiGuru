@@ -5,8 +5,8 @@ import { PeopleScene } from '../components/FounderScene/PeopleScene';
 import { FounderProfileModal } from '../components/FounderScene/FounderProfileModal';
 import ModelLoader from '../components/ModelLoader/ModelLoader';
 import ModelErrorBoundary from '../components/ModelLoader/ModelErrorBoundary';
-import desktopVignette from '../assets/Monochrome Vignette White Space.png';
-import mobileVignette from '../assets/Minimalist Black and White Vignette  mobile.png';
+import desktopVignette from '../assets/Monochrome Vignette White Space.webp';
+import mobileVignette from '../assets/Minimalist Black and White Vignette  mobile.webp';
 import type { SceneState } from '../types/scene';
 
 /**

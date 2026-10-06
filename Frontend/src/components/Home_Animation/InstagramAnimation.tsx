@@ -3,7 +3,7 @@ import React, { useRef, useMemo } from "react";
 import { useScroll, useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import InstagramImg from "../../assets/Picture/Instagram.png";
+import InstagramImg from "../../assets/Picture/Instagram.webp";
 
 const PARAMS = {
   // Start Pose (Emerges from center)
