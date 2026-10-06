@@ -20,13 +20,13 @@ export const ModelLoader: React.FC<ModelLoaderProps> = ({
   if (!active && displayProgress >= 100) return null;
 
   return (
-    <Html center zIndexRange={[50, 0]}>
+    <Html center zIndexRange={[50, 0]} style={{ pointerEvents: 'none', touchAction: 'pan-y' }}>
       <div
         className={`pointer-events-none flex flex-col items-center justify-center gap-2 rounded-2xl px-5 py-3 select-none backdrop-blur-xl transition-opacity duration-300 shadow-2xl ${theme === "light"
             ? "bg-white/80 border border-black/10 text-black"
             : "bg-[#0c0c0c]/85 border border-white/15 text-white"
           }`}
-        style={{ minWidth: "160px" }}
+        style={{ minWidth: "160px", pointerEvents: "none" }}
       >
         <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider">
           <span className="w-1.5 h-1.5 rounded-full bg-[#ff3b30] shadow-[0_0_8px_#ff3b30] animate-pulse" />

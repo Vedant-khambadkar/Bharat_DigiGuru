@@ -269,6 +269,25 @@ export const Portfolio: React.FC = () => {
     };
   }, []);
 
+  const [isSectionVisible, setIsSectionVisible] = useState(false);
+  const isMobile = typeof window !== "undefined" ? window.innerWidth < 768 : false;
+
+  // IntersectionObserver to pause Portfolio 3D canvas when offscreen
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsSectionVisible(entry.isIntersecting);
+      },
+      { rootMargin: "150px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // GSAP ScrollTrigger Pin: Stay pinned on this section while rotating geometry 360 degrees
   useEffect(() => {
     const section = sectionRef.current;
@@ -344,16 +363,23 @@ export const Portfolio: React.FC = () => {
       </div>
 
       {/* 3. Center 3D Interactive SkinnedMesh Carousel */}
-      <div className="absolute inset-0 z-[1]">
+      <div className="absolute inset-0 z-[1] touch-pan-y">
         <Canvas
-          frameloop="always"
-          dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.5)]}
+          frameloop={isSectionVisible ? "always" : "never"}
+          dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, isMobile ? 1.15 : 1.5)]}
+          gl={{
+            antialias: !isMobile,
+            powerPreference: "high-performance",
+            preserveDrawingBuffer: false,
+          }}
           camera={{
             position: [0, 0.4, 8.8],
             fov: 46,
             near: 0.1,
             far: 100,
           }}
+          style={{ touchAction: "pan-y" }}
+          className="w-full h-full block touch-pan-y"
         >
           {/* Dark Background matching website */}
           <color attach="background" args={["#050505"]} />

@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useCallback } from 'react'
+import { Suspense, useEffect, useRef, useCallback, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { ScrollControls, useScroll } from '@react-three/drei'
 import gsap from 'gsap'
@@ -81,6 +81,24 @@ interface HomeProps {
 function Home({ onMacReady, onMacError }: HomeProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const progressRef = useRef<number>(0);
+  const [isSectionVisible, setIsSectionVisible] = useState(true);
+  const isMobile = typeof window !== "undefined" ? window.innerWidth < 768 : false;
+
+  // IntersectionObserver to pause MacBook WebGL rendering when Home section is scrolled past
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsSectionVisible(entry.isIntersecting);
+      },
+      { rootMargin: "150px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleCanvasReady = useCallback(() => {
     // Canvas WebGL context is initialized
@@ -135,19 +153,22 @@ function Home({ onMacReady, onMacError }: HomeProps) {
       {/* =========================================================================
           LAYER 1: 3D CANVAS WITH MACBOOK & SOCIALS
          ========================================================================= */}
-      <div className="absolute inset-0 z-10 w-full h-full">
+      <div className="absolute inset-0 z-10 w-full h-full touch-pan-y">
         <div className="w-full h-full">
           <Canvas
-            frameloop="always"
-            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 1.5)]}
+            frameloop={isSectionVisible ? "always" : "never"}
+            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, isMobile ? 1.15 : 1.5)]}
             gl={{
-              antialias: true,
+              antialias: !isMobile,
               alpha: true,
               powerPreference: "high-performance",
               stencil: false,
               depth: true,
+              preserveDrawingBuffer: false,
             }}
             camera={{ position: [0, 4.3, 38], fov: 40 }}
+            style={{ touchAction: "pan-y" }}
+            className="w-full h-full block touch-pan-y"
           >
             <ResponsiveCamera />
             <CanvasReadyNotifier onReady={handleCanvasReady} />

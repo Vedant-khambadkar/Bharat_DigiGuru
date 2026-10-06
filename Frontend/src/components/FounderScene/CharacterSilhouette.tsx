@@ -43,13 +43,17 @@ export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
     const isFocused = sceneState === 'focusing' || sceneState === 'focused';
     const targetProgress = isFocused ? 1 : 0;
 
-    // Fast damp calculation
-    stateProgressRef.current = THREE.MathUtils.damp(
-      stateProgressRef.current,
-      targetProgress,
-      3.0,
-      delta
-    );
+    // Fast damp calculation only while changing
+    if (Math.abs(stateProgressRef.current - targetProgress) > 0.0005) {
+      stateProgressRef.current = THREE.MathUtils.damp(
+        stateProgressRef.current,
+        targetProgress,
+        3.0,
+        delta
+      );
+    } else {
+      stateProgressRef.current = targetProgress;
+    }
 
     const progress = stateProgressRef.current;
 
@@ -57,24 +61,23 @@ export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
     const time = state.clock.getElapsedTime() * speed + phase;
     const idleRot = Math.sin(time * 0.8) * 0.015;
 
-    // Push slightly backward when founder is focused
-    const pushBackZ = -progress * 1.5;
-
-    group.position.set(
-      baseX,
-      baseY,
-      baseZ + pushBackZ
-    );
-
     group.rotation.set(
       baseRotX,
       baseRotY + idleRot,
       baseRotZ
     );
 
-    // Scale down slightly during focus to emphasize depth of field
-    const scaleFactor = 1 - progress * 0.08;
-    group.scale.setScalar(baseScale * scaleFactor);
+    if (progress > 0.0005) {
+      // Push slightly backward when founder is focused
+      const pushBackZ = -progress * 1.5;
+      group.position.set(baseX, baseY, baseZ + pushBackZ);
+      // Scale down slightly during focus to emphasize depth of field
+      const scaleFactor = 1 - progress * 0.08;
+      group.scale.setScalar(baseScale * scaleFactor);
+    } else {
+      group.position.set(baseX, baseY, baseZ);
+      group.scale.setScalar(baseScale);
+    }
   });
 
   const isApex = config.id === 'p_apex' || config.id === 'mp1';

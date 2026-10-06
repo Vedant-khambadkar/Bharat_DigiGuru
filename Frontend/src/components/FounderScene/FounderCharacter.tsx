@@ -104,22 +104,30 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
 
     // Hover progress lerping
     const targetHover = hovered && sceneState === 'overview' && !isMobile ? 1 : 0;
-    hoverProgressRef.current = THREE.MathUtils.damp(
-      hoverProgressRef.current,
-      targetHover,
-      6.0,
-      delta
-    );
+    if (Math.abs(hoverProgressRef.current - targetHover) > 0.0005) {
+      hoverProgressRef.current = THREE.MathUtils.damp(
+        hoverProgressRef.current,
+        targetHover,
+        6.0,
+        delta
+      );
+    } else {
+      hoverProgressRef.current = targetHover;
+    }
 
     // Focus progress lerping
     const isFocused = sceneState === 'focusing' || sceneState === 'focused';
     const targetFocus = isFocused ? 1 : 0;
-    focusProgressRef.current = THREE.MathUtils.damp(
-      focusProgressRef.current,
-      targetFocus,
-      3.0,
-      delta
-    );
+    if (Math.abs(focusProgressRef.current - targetFocus) > 0.0005) {
+      focusProgressRef.current = THREE.MathUtils.damp(
+        focusProgressRef.current,
+        targetFocus,
+        3.0,
+        delta
+      );
+    } else {
+      focusProgressRef.current = targetFocus;
+    }
 
     const hoverVal = hoverProgressRef.current;
     const focusVal = focusProgressRef.current;
@@ -140,8 +148,12 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
       baseRotZ
     );
 
-    const currentScale = baseScale * (1 + hoverVal * 0.05 + focusVal * 0.08);
-    group.scale.setScalar(currentScale);
+    if (hoverVal > 0.0005 || focusVal > 0.0005) {
+      const currentScale = baseScale * (1 + hoverVal * 0.05 + focusVal * 0.08);
+      group.scale.setScalar(currentScale);
+    } else {
+      group.scale.setScalar(baseScale);
+    }
   });
 
   const handleClick = (e: any) => {
@@ -237,6 +249,7 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
             pointerEvents: 'auto',
             cursor: 'pointer',
             userSelect: 'none',
+            touchAction: 'pan-y',
           }}
         >
           <div

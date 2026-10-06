@@ -8,7 +8,7 @@ export const StudioEnvironment: React.FC<StudioEnvironmentProps> = ({ isMobile }
   // Optimized light parameters for 60fps performance & crisp shadows on all devices
   const keyLightPos: [number, number, number] = isMobile ? [11, 12, 13] : [18, 13, 19];
   const shadowFrustum = isMobile ? 10 : 16;
-  const mapSize = 1024;
+  const mapSize = isMobile ? 512 : 1024;
 
   return (
     <>
@@ -26,7 +26,7 @@ export const StudioEnvironment: React.FC<StudioEnvironmentProps> = ({ isMobile }
         shadow-camera-right={shadowFrustum}
         shadow-camera-top={shadowFrustum}
         shadow-camera-bottom={-shadowFrustum}
-        shadow-bias={-0.00008}
+        shadow-bias={-0.0001}
         shadow-normalBias={0.0004}
       />
 

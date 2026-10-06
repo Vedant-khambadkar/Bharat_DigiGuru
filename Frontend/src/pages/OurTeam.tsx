@@ -169,19 +169,21 @@ export const OurTeam: React.FC<OurTeamProps> = ({
       </div>
 
       {/* 3D WebGL Canvas with Transparent Alpha Background */}
-      <div className="relative z-10 w-full h-full">
+      <div className="relative z-10 w-full h-full touch-pan-y">
         <Canvas
           frameloop={isSectionVisible ? "always" : "never"}
           shadows={{ type: THREE.PCFShadowMap }}
-          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 1.5)]}
+          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, isMobile ? 1.15 : 1.5)]}
           gl={{
-            antialias: true,
+            antialias: !isMobile,
             alpha: true,
             powerPreference: 'high-performance',
             toneMapping: THREE.NoToneMapping,
+            preserveDrawingBuffer: false,
           }}
           camera={cameraProps}
-          className="w-full h-full block"
+          style={{ touchAction: 'pan-y' }}
+          className="w-full h-full block touch-pan-y"
         >
           <ModelErrorBoundary fallback={null} onError={onBusinessmanError}>
             <Suspense fallback={<ModelLoader theme="light" label="Loading 3D" />}>
