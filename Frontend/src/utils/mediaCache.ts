@@ -1,19 +1,11 @@
-/**
- * High-Performance Client-Side Media & Texture Pipeline
- * 
- * Leverages native Browser HTTP Cache + CloudFront CDN directly,
- * eliminating the expensive CacheStorage -> Blob -> Object URL duplication.
- * 
- * Key Features:
- * 1. Direct, instant URL resolution (0ms overhead)
- * 2. In-flight request deduplication
- * 3. Controlled concurrency for background preloading (never saturates network)
- * 4. Progressive idle loading via requestIdleCallback
- * 5. Clean cache invalidation for Admin mutations
- */
+import * as THREE from "three";
 
 const inFlightPreloads = new Set<string>();
 const preloadedUrls = new Set<string>();
+
+// Centralized Three.js texture cache and in-flight promise tracker
+const textureCache = new Map<string, THREE.Texture>();
+const inFlightTexturePromises = new Map<string, Promise<THREE.Texture | null>>();
 
 /**
  * Returns clean, resolved media URL.
@@ -24,8 +16,6 @@ export async function getCachedMediaUrl(url?: string): Promise<string> {
   if (!url || typeof url !== "string") return "";
   const cleanUrl = url.trim();
   if (!cleanUrl) return "";
-
-  // Data URLs, Blob URLs, or standard HTTP/HTTPS URLs resolve immediately
   return cleanUrl;
 }
 
@@ -83,7 +73,7 @@ export async function preloadMediaList(
         .filter((u): u is string => typeof u === "string" && Boolean(u.trim()))
         .map((u) => u.trim())
     )
-  ).filter((u) => !preloadedUrls.has(u));
+  ).filter((u) => !preloadedUrls.has(u) && !textureCache.has(u));
 
   if (validUrls.length === 0) return;
 
@@ -110,10 +100,62 @@ export async function preloadMediaList(
   } else if (priority === "low") {
     setTimeout(() => {
       runQueue();
-    }, 120);
+    }, 150);
   } else {
     await runQueue();
   }
+}
+
+/**
+ * Loads and caches a Three.js Texture with complete request deduplication.
+ * If texture is already loaded, returns immediately from memory.
+ * If texture is currently loading, returns the existing in-flight Promise.
+ */
+export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | null> {
+  const cleanUrl = url.trim();
+  if (!cleanUrl) return Promise.resolve(null);
+
+  // 1. Memory Cache Hit
+  const cached = textureCache.get(cleanUrl);
+  if (cached) {
+    return Promise.resolve(cached);
+  }
+
+  // 2. In-flight Request Deduplication
+  const inFlight = inFlightTexturePromises.get(cleanUrl);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  // 3. Initiate Single Controlled Texture Load
+  const loader = new THREE.TextureLoader();
+  loader.setCrossOrigin("anonymous");
+
+  const promise = new Promise<THREE.Texture | null>((resolve) => {
+    loader.load(
+      cleanUrl,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.generateMipmaps = true;
+        tex.minFilter = THREE.LinearMipmapLinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.needsUpdate = true;
+
+        textureCache.set(cleanUrl, tex);
+        preloadedUrls.add(cleanUrl);
+        inFlightTexturePromises.delete(cleanUrl);
+        resolve(tex);
+      },
+      undefined,
+      () => {
+        inFlightTexturePromises.delete(cleanUrl);
+        resolve(null);
+      }
+    );
+  });
+
+  inFlightTexturePromises.set(cleanUrl, promise);
+  return promise;
 }
 
 /**
@@ -124,9 +166,18 @@ export async function invalidateMediaCache(targetUrl?: string): Promise<void> {
   if (targetUrl) {
     preloadedUrls.delete(targetUrl);
     inFlightPreloads.delete(targetUrl);
+    const cachedTex = textureCache.get(targetUrl);
+    if (cachedTex) {
+      cachedTex.dispose();
+      textureCache.delete(targetUrl);
+    }
+    inFlightTexturePromises.delete(targetUrl);
   } else {
     preloadedUrls.clear();
     inFlightPreloads.clear();
+    textureCache.forEach((tex) => tex.dispose());
+    textureCache.clear();
+    inFlightTexturePromises.clear();
   }
 }
 
@@ -136,3 +187,4 @@ export async function invalidateMediaCache(targetUrl?: string): Promise<void> {
 export function useCachedMedia(url?: string): string {
   return url ? url.trim() : "";
 }
+

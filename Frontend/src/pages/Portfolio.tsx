@@ -170,7 +170,7 @@ export const Portfolio: React.FC = () => {
     const cached = getApiCache<PlaneItem[]>("portfolio_items");
     return cached && cached.length > 0 ? cached[0] : DEFAULT_PORTFOLIO_ITEMS[0];
   });
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const scrollProgressRef = useRef<number>(0);
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
@@ -303,7 +303,7 @@ export const Portfolio: React.FC = () => {
         scrub: 0.6,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
-          setScrollProgress(self.progress);
+          scrollProgressRef.current = self.progress;
           if (progressBarRef.current) {
             progressBarRef.current.style.width = `${self.progress * 100}%`;
           }
@@ -396,7 +396,7 @@ export const Portfolio: React.FC = () => {
           <SkinnedPlane
             planes={planes}
             selectedId={selectedPlane?.id}
-            scrollProgress={scrollProgress}
+            scrollProgressRef={scrollProgressRef}
             onSelectPlane={setSelectedPlane}
           />
         </Canvas>
