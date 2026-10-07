@@ -1,8 +1,9 @@
 /* eslint-disable react-hooks/immutability */
-import { useGLTF, useScroll, useTexture, ContactShadows } from "@react-three/drei";
+import { useGLTF, useTexture, ContactShadows } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { useHomeScrollProgress } from "./HomeScrollContext";
 
 import { MODEL_URLS } from "../../config/models";
 import heroImg from "../../assets/Picture/screen-texture.webp";
@@ -288,11 +289,11 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
     };
   }, [mac.scene, meshes, onReady]);
 
-  const data = useScroll();
+  const scrollProgressRef = useHomeScrollProgress();
 
   // Smooth Scroll Animation Frame Loop
   useFrame(() => {
-    const scrollOffset = data ? data.offset : 0;
+    const scrollOffset = scrollProgressRef.current || 0;
 
     let progress = 0;
     if (scrollOffset <= PARAMS.scrollStart) {

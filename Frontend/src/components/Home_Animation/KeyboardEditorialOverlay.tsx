@@ -79,10 +79,10 @@ export const KeyboardEditorialOverlay: React.FC<KeyboardEditorialOverlayProps> =
 
       const currentFrame = progress * 176;
 
-      // Dissolve frame range as laptop opens (Frame 50 to 84)
-      const fadeStartFrame = 50;
-      const fadeEndFrame = 84;
-      const fadeWindow = fadeEndFrame - fadeStartFrame; // 34 frames span
+      // Dissolve frame range as laptop opens (Frame 4 to 30, progress 0.02 to 0.17)
+      const fadeStartFrame = 4;
+      const fadeEndFrame = 30;
+      const fadeWindow = fadeEndFrame - fadeStartFrame; // 26 frames span
 
       // Update Individual Letter Opacities (Zero movement, pure stochastic opacity fade)
       const charElements = charRefs.current;
@@ -97,7 +97,7 @@ export const KeyboardEditorialOverlay: React.FC<KeyboardEditorialOverlayProps> =
             if (el) el.style.opacity = "1";
           }
         }
-      } else if (currentFrame >= fadeEndFrame + 6) {
+      } else if (currentFrame >= fadeEndFrame + 4) {
         if (!areCharsFullyHidden) {
           areCharsFullyHidden = true;
           areCharsFullyOpaque = false;
@@ -114,8 +114,8 @@ export const KeyboardEditorialOverlay: React.FC<KeyboardEditorialOverlayProps> =
           if (!el) continue;
 
           const randOffset = CHAR_RANDOM_OFFSETS[i % CHAR_RANDOM_OFFSETS.length];
-          const charStart = fadeStartFrame + randOffset * (fadeWindow - 6);
-          const charEnd = charStart + 6; // 6-frame smooth letter transition
+          const charStart = fadeStartFrame + randOffset * (fadeWindow - 4);
+          const charEnd = charStart + 4; // 4-frame smooth letter transition
 
           let charOpacity = 1;
           if (currentFrame <= charStart) {
@@ -141,7 +141,7 @@ export const KeyboardEditorialOverlay: React.FC<KeyboardEditorialOverlayProps> =
             if (el && el.style.opacity !== "1") el.style.opacity = "1";
           }
         }
-      } else if (currentFrame >= fadeEndFrame + 6) {
+      } else if (currentFrame >= fadeEndFrame + 4) {
         if (areCharsFullyHidden) {
           for (let i = 0; i < totalNarrativeWords; i++) {
             const el = narrativeWords[i];
@@ -154,8 +154,8 @@ export const KeyboardEditorialOverlay: React.FC<KeyboardEditorialOverlayProps> =
           if (!el) continue;
 
           const randOffset = CHAR_RANDOM_OFFSETS[(i * 3 + 7) % CHAR_RANDOM_OFFSETS.length];
-          const wordStart = fadeStartFrame + randOffset * (fadeWindow - 6);
-          const wordEnd = wordStart + 6;
+          const wordStart = fadeStartFrame + randOffset * (fadeWindow - 4);
+          const wordEnd = wordStart + 4;
 
           let wordOpacity = 1;
           if (currentFrame <= wordStart) {
@@ -172,12 +172,12 @@ export const KeyboardEditorialOverlay: React.FC<KeyboardEditorialOverlayProps> =
 
       // Compute general overlay elements fade
       let generalOpacity = 1;
-      if (currentFrame <= 28) {
+      if (currentFrame <= 4) {
         generalOpacity = 1;
-      } else if (currentFrame >= 56) {
+      } else if (currentFrame >= 24) {
         generalOpacity = 0;
       } else {
-        generalOpacity = 1 - (currentFrame - 28) / (56 - 28);
+        generalOpacity = 1 - (currentFrame - 4) / (24 - 4);
       }
 
       const isHeadlineHidden = currentFrame >= fadeEndFrame + 2;

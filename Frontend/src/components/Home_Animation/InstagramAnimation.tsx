@@ -1,9 +1,10 @@
 /* eslint-disable react-hooks/immutability */
 import React, { useRef, useMemo } from "react";
-import { useScroll, useTexture } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import InstagramImg from "../../assets/Picture/Instagram.webp";
+import { useHomeScrollProgress } from "./HomeScrollContext";
 
 const PARAMS = {
   // Start Pose (Emerges from center)
@@ -53,7 +54,7 @@ const InstagramAnimation: React.FC = () => {
   const isHiddenRef = useRef(true);
   const { size } = useThree();
   const texture = useTexture(InstagramImg);
-  const data = useScroll();
+  const scrollProgressRef = useHomeScrollProgress();
 
   useMemo(() => {
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -76,7 +77,7 @@ const InstagramAnimation: React.FC = () => {
     if (!meshRef.current) return;
     const mesh = meshRef.current;
     const mat = mesh.material as THREE.MeshBasicMaterial;
-    const p = data ? data.offset : 0;
+    const p = scrollProgressRef.current || 0;
 
     if (p < PARAMS.scrollStart) {
       if (isHiddenRef.current) return;

@@ -1,9 +1,10 @@
 /* eslint-disable react-hooks/immutability */
 import React, { useMemo, useRef } from "react";
-import { useScroll, useTexture } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import PinterestImg from "../../assets/Picture/Pinterest.webp";
+import { useHomeScrollProgress } from "./HomeScrollContext";
 
 // Tuned parameters for Pinterest Card
 const PARAMS = {
@@ -54,7 +55,7 @@ const PinterestAnimation: React.FC = () => {
   const isHiddenRef = useRef(true);
   const { size } = useThree();
   const texture = useTexture(PinterestImg);
-  const data = useScroll();
+  const scrollProgressRef = useHomeScrollProgress();
 
   useMemo(() => {
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -77,7 +78,7 @@ const PinterestAnimation: React.FC = () => {
     if (!meshRef.current) return;
     const mesh = meshRef.current;
     const mat = mesh.material as THREE.MeshBasicMaterial;
-    const p = data ? data.offset : 0;
+    const p = scrollProgressRef.current || 0;
 
     if (p < PARAMS.scrollStart) {
       if (isHiddenRef.current) return;

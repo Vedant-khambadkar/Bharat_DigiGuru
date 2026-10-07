@@ -1,6 +1,5 @@
 import { Suspense, useEffect, useRef, useCallback, useState } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { ScrollControls, useScroll } from '@react-three/drei'
+import { Canvas, useThree } from '@react-three/fiber'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import MacContainer from '../components/Home_Animation/MacContainer.tsx'
@@ -9,23 +8,12 @@ import YoutubeAnimation from '../components/Home_Animation/YoutubeAnimation.tsx'
 import PinterestAnimation from '../components/Home_Animation/PinterestAnimation.tsx'
 import TikTokAnimation from '../components/Home_Animation/TikTokAnimation.tsx'
 import KeyboardEditorialOverlay from '../components/Home_Animation/KeyboardEditorialOverlay.tsx'
+import { HomeScrollContext } from '../components/Home_Animation/HomeScrollContext.tsx'
 import ModelLoader from '../components/ModelLoader/ModelLoader.tsx'
 import ModelErrorBoundary from '../components/ModelLoader/ModelErrorBoundary.tsx'
 import * as THREE from "three"
 
 gsap.registerPlugin(ScrollTrigger);
-
-function ScrollTriggerSync({ progressRef }: { progressRef: React.MutableRefObject<number> }) {
-  const scrollData = useScroll();
-
-  useFrame(() => {
-    if (scrollData) {
-      scrollData.offset = progressRef.current;
-    }
-  });
-
-  return null;
-}
 
 const RAD_CAM_ROT_X = THREE.MathUtils.degToRad(-2);
 const RAD_CAM_ROT_Y = THREE.MathUtils.degToRad(6);
@@ -114,7 +102,7 @@ function Home({ onMacReady, onMacError }: HomeProps) {
     onMacError?.(error);
   }, [onMacError]);
 
-  // GSAP ScrollTrigger Pinning for smooth 5-stage laptop animation
+  // GSAP ScrollTrigger Pinning for ultra-smooth 5-stage laptop animation
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -126,7 +114,7 @@ function Home({ onMacReady, onMacError }: HomeProps) {
         end: "+=3200", // Distance user scrolls through the 5 pages of 3D animation
         pin: true,
         pinSpacing: true,
-        scrub: 0.6,
+        scrub: 0.5,
         anticipatePin: 1,
         fastScrollEnd: true,
         invalidateOnRefresh: true,
@@ -153,8 +141,8 @@ function Home({ onMacReady, onMacError }: HomeProps) {
       {/* =========================================================================
           LAYER 1: 3D CANVAS WITH MACBOOK & SOCIALS
          ========================================================================= */}
-      <div className="absolute inset-0 z-10 w-full h-full touch-pan-y">
-        <div className="w-full h-full">
+      <div className="absolute inset-0 z-10 w-full h-full pointer-events-none touch-pan-y">
+        <div className="w-full h-full pointer-events-none">
           <Canvas
             frameloop={isSectionVisible ? "always" : "never"}
             dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, isMobile ? 1.15 : 1.5)]}
@@ -167,16 +155,15 @@ function Home({ onMacReady, onMacError }: HomeProps) {
               preserveDrawingBuffer: false,
             }}
             camera={{ position: [0, 4.3, 38], fov: 40 }}
-            style={{ touchAction: "pan-y" }}
-            className="w-full h-full block touch-pan-y"
+            style={{ touchAction: "pan-y", pointerEvents: "none" }}
+            className="w-full h-full block pointer-events-none touch-pan-y"
           >
             <ResponsiveCamera />
             <CanvasReadyNotifier onReady={handleCanvasReady} />
             <ambientLight intensity={1.8} />
             <directionalLight position={[10, 15, 10]} intensity={2.2} color="#ffffff" />
             <directionalLight position={[-10, 8, -5]} intensity={0.9} color="#90b0e0" />
-            <ScrollControls pages={5} damping={0.15}>
-              <ScrollTriggerSync progressRef={progressRef} />
+            <HomeScrollContext.Provider value={{ scrollProgressRef: progressRef }}>
               <ModelErrorBoundary fallback={null} onError={handleModelError}>
                 <Suspense fallback={<ModelLoader label="Loading MacBook" />}>
                   <MacContainer onReady={handleMacReady} />
@@ -186,7 +173,7 @@ function Home({ onMacReady, onMacError }: HomeProps) {
               <YoutubeAnimation />
               <PinterestAnimation />
               <TikTokAnimation />
-            </ScrollControls>
+            </HomeScrollContext.Provider>
           </Canvas>
         </div>
       </div>
