@@ -4,9 +4,11 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-import visionVideo from "../assets/Videos/vission.mp4";
-import missionVideo from "../assets/Videos/mission.mp4";
-import valuesVideo from "../assets/Videos/values.mp4";
+import { useCachedVideo, preloadVideoList } from "../utils/videoCache";
+
+const CDN_BASE =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_CLOUDFRONT_URL) ||
+  "https://d1mou18mn47yy7.cloudfront.net";
 
 interface SlideItem {
   readonly id: string;
@@ -21,23 +23,49 @@ const SLIDES: readonly SlideItem[] = [
     name: "VISION",
     description:
       "To pioneer the future of digital commerce and brand storytelling by fusing next-generation AI intelligence, immersive 3D architectures, and hyper-scalable technologies that elevate businesses worldwide.",
-    videoSrc: visionVideo,
+    videoSrc: `${CDN_BASE}/assets/Videos/vission.webm`,
   },
   {
     id: "mission",
     name: "MISSION",
     description:
       "To empower visionary founders and enterprises through high-velocity creative engineering, data-backed growth systems, and robust digital ecosystems that consistently compound real enterprise value.",
-    videoSrc: missionVideo,
+    videoSrc: `${CDN_BASE}/assets/Videos/mission.webm`,
   },
   {
     id: "values",
     name: "VALUES",
     description:
       "We anchor every client partnership on unyielding transparency, creative mastery, agile sprint velocity, and measurable financial return on investment. If it doesn't move the business needle, we don't build it.",
-    videoSrc: valuesVideo,
+    videoSrc: `${CDN_BASE}/assets/Videos/values.webm`,
   },
 ] as const;
+
+const CachedVideoSlide: React.FC<{ slide: SlideItem; idx: number }> = ({ slide, idx }) => {
+  const cachedSrc = useCachedVideo(slide.videoSrc);
+
+  return (
+    <div
+      className={`bg-slide-${idx} absolute inset-0 w-full h-full pointer-events-none overflow-hidden will-change-[opacity,transform]`}
+    >
+      <video
+        key={cachedSrc}
+        src={cachedSrc}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        className="w-full h-full object-cover select-none pointer-events-none"
+      />
+
+      {/* Clean Subtle Vignette Overlays allowing background video to play with rich brightness & high visibility */}
+      <div className="absolute inset-0 bg-[#050505]/25" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 via-transparent to-[#050505]/50" />
+      <div className="absolute inset-0 bg-radial from-transparent via-[#050505]/20 to-[#050505]/70" />
+    </div>
+  );
+};
 
 export const MissionVision: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -217,6 +245,9 @@ export const MissionVision: React.FC = () => {
     window.addEventListener("start-hero-letters", handleRefresh);
     window.addEventListener("resize", handleRefresh);
 
+    // Preload videos into CacheStorage persistently
+    preloadVideoList(SLIDES.map((s) => s.videoSrc));
+
     return () => {
       clearTimeout(timer);
       window.removeEventListener("start-hero-letters", handleRefresh);
@@ -232,27 +263,9 @@ export const MissionVision: React.FC = () => {
       aria-label="Corporate Vision, Mission, and Strategy Showcase"
       className="relative z-20 w-full h-screen min-h-[600px] overflow-hidden bg-[#050505] text-white select-none isolate font-['Outfit',sans-serif]"
     >
-      {/* Background Video Layers with High-Contrast Vignette Overlays */}
+      {/* Background Video Layers with High-Contrast Vignette Overlays & Persistent Disk/Blob Cache */}
       {SLIDES.map((slide, idx) => (
-        <div
-          key={slide.id}
-          className={`bg-slide-${idx} absolute inset-0 w-full h-full pointer-events-none overflow-hidden will-change-[opacity,transform]`}
-        >
-          <video
-            src={slide.videoSrc}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            className="w-full h-full object-cover select-none pointer-events-none"
-          />
-
-          {/* Clean Subtle Vignette Overlays allowing background video to play with rich brightness & high visibility */}
-          <div className="absolute inset-0 bg-[#050505]/25" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 via-transparent to-[#050505]/50" />
-          <div className="absolute inset-0 bg-radial from-transparent via-[#050505]/20 to-[#050505]/70" />
-        </div>
+        <CachedVideoSlide key={slide.id} slide={slide} idx={idx} />
       ))}
 
       {/* Ambient Geometric Grid Overlay */}

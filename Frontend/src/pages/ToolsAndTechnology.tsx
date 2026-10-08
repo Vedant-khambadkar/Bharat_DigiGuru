@@ -314,8 +314,10 @@ export const ToolsAndTechnology: React.FC = () => {
             </linearGradient>
           </defs>
 
-          {/* Figma (Far Left) -> Top Left Curve */}
+          {/* Figma (Far Left) -> Google Calendar (Top Left) */}
           <path className="curved-spline-path" d="M 120 310 C 200 280 260 220 280 140" stroke="url(#wireGradientDesk1)" strokeWidth="1.6" />
+          {/* Figma (Far Left) -> Google Analytics (Bottom Left) - Inside Curve */}
+          <path className="curved-spline-path" d="M 100 325 C 195 400 235 485 240 585" stroke="url(#wireGradientDesk1)" strokeWidth="1.6" />
           {/* Calendar (Top Left) -> Center Heading */}
           <path className="curved-spline-path" d="M 330 150 C 400 200 440 260 480 320" stroke="url(#wireGradientDesk1)" strokeWidth="1.6" />
           {/* Workspace (Top Center) -> Center Heading */}
@@ -327,7 +329,7 @@ export const ToolsAndTechnology: React.FC = () => {
           {/* Meta (Bottom Center / Right) -> Center */}
           <path className="curved-spline-path" d="M 580 560 C 680 550 740 580 800 610" stroke="url(#wireGradientDesk2)" strokeWidth="1.6" />
           {/* Analytics (Bottom Left) -> Center */}
-          <path className="curved-spline-path" d="M 310 570 C 370 520 440 480 500 460" stroke="url(#wireGradientDesk1)" strokeWidth="1.6" />
+          <path className="curved-spline-path" d="M 300 600 C 370 540 440 480 500 460" stroke="url(#wireGradientDesk1)" strokeWidth="1.6" />
           {/* Bottom Center Node */}
           <path className="curved-spline-path" d="M 520 630 C 520 680 520 710 520 740" stroke="url(#wireGradientDesk1)" strokeWidth="1.6" />
         </svg>
@@ -455,16 +457,21 @@ export const ToolsAndTechnology: React.FC = () => {
         {/* 6. GOOGLE ANALYTICS (Bottom Left) */}
         <div className="floating-app-node anim-float-4 absolute bottom-[10%] left-[18%] lg:left-[20%] z-20 group cursor-pointer">
           <div className="relative flex items-center justify-center w-16 h-16 lg:w-19 lg:h-19 rounded-[22px] bg-[#1a1b20] border border-white/15 shadow-[0_12px_32px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.2)] group-hover:scale-110 group-hover:border-white/40 transition-all duration-300 p-3.5">
-            <svg viewBox="0 0 192 192" className="w-full h-full">
-              <path d="M152 24v144c0 13.255-10.745 24-24 24s-24-10.745-24-24V24c0-13.255 10.745-24 24-24s24 10.745 24 24z" fill="#F9AB00" />
-              <path d="M96 80v88c0 13.255-10.745 24-24 24s-24-10.745-24-24V80c0-13.255 10.745-24 24-24s24 10.745 24 24z" fill="#E37400" />
-              <circle cx="36" cy="168" r="24" fill="#E37400" />
+            <svg viewBox="0 0 2196 2431" className="w-full h-full" fill="none">
+              <path
+                fill="#F9AB00"
+                d="M2195.9 2126.7c0.9 166.9-133.7 302.8-300.5 303.7c-12.4 0.1-24.9-0.6-37.2-2.1c-154.8-22.9-268.2-157.6-264.4-314V316.1c-3.7-156.6 110-291.3 264.9-314c165.7-19.4 315.8 99.2 335.2 264.9c1.4 12.2 2.1 24.4 2 36.7L2195.9 2126.7z"
+              />
+              <path
+                fill="#E37400"
+                d="M301.1 1828.7c166.3 0 301.1 134.8 301.1 301.1c0 166.3-134.8 301.1-301.1 301.1C134.8 2430.9 0 2296.1 0 2129.8C0 1963.5 134.8 1828.7 301.1 1828.7z M1093.3 916.2c-167.1 9.2-296.7 149.3-292.8 316.6v808.7c0 219.5 96.6 352.7 238.1 381.1c163.3 33.1 322.4-72.4 355.5-235.7c4.1-20 6.1-40.3 6-60.7v-907.4c0.3-166.9-134.7-302.4-301.6-302.7C1096.8 916.1 1095 916.1 1093.3 916.2z"
+              />
             </svg>
-            <div className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-amber-500/20 text-[9px] font-mono text-amber-400 border border-amber-500/30 shadow-lg">
+            <div className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-full bg-amber-500/20 text-[9px] font-mono font-bold text-amber-400 border border-amber-500/40 shadow-lg">
               GA4
             </div>
           </div>
-          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-30">
+          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap px-2.5 py-0.5 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-neutral-200 shadow-xl z-40">
             Google Analytics
           </div>
         </div>

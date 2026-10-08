@@ -28,6 +28,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
 
   const counterRef = useRef({ value: 0 });
   const isExitingRef = useRef(false);
+  const hasFinishedRef = useRef(false);
 
   // Read Three.js asset loading progress directly from Drei
   const { progress: dreiProgress } = useProgress();
@@ -39,8 +40,12 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     if (progressBarRef.current) progressBarRef.current.style.width = `${val}%`;
     if (telemetryStatusRef.current) {
       if (val >= 100) {
-        telemetryStatusRef.current.textContent = "3D ENVIRONMENT & PORTFOLIO READY";
-      } else if (!portfolioReady && (macReady || businessmanReady)) {
+        telemetryStatusRef.current.textContent = "3D ENVIRONMENT & HARDWARE READY";
+      } else if (!macReady) {
+        telemetryStatusRef.current.textContent = "LOADING MACBOOK 3D & TEXTURES";
+      } else if (!businessmanReady) {
+        telemetryStatusRef.current.textContent = "LOADING 3D TEAM & CHARACTERS";
+      } else if (!portfolioReady) {
         telemetryStatusRef.current.textContent = "LOADING 100% PORTFOLIO 3D TEXTURES";
       } else {
         telemetryStatusRef.current.textContent = "INITIALIZING 3D ASSETS & HARDWARE";
@@ -71,7 +76,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       tl.to(contentRef.current, {
         opacity: 0,
         y: -25,
-        duration: 0.2,
+        duration: 0.25,
         ease: "power2.inOut",
       });
     }
@@ -82,19 +87,20 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       {
         yPercent: -100,
         opacity: 0,
-        duration: 0.5,
+        duration: 0.55,
         ease: "power3.inOut",
       },
-      contentRef.current ? "-=0.05" : 0
+      contentRef.current ? "-=0.08" : 0
     );
   }, [onStartExit, onComplete]);
 
-  // Progress interpolation driven directly by Both 3D Models Readiness
+  // Progress interpolation strictly driven by ALL 3D Models & Drei Asset Readiness
   useEffect(() => {
     if (isReady) {
+      hasFinishedRef.current = true;
       const tween = gsap.to(counterRef.current, {
         value: 100,
-        duration: 0.35,
+        duration: 0.45,
         ease: "power2.out",
         onUpdate: () => {
           const val = Math.round(counterRef.current.value);
@@ -104,7 +110,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
           updateDisplay(100);
           const timer = setTimeout(() => {
             triggerExit();
-          }, 120);
+          }, 200);
           return () => clearTimeout(timer);
         },
       });
@@ -113,24 +119,24 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       };
     }
 
-    // Multiple assets readiness: clamp progress strictly < 100% until fully ready
-    let target = 35;
+    // Multiple assets readiness: clamp progress strictly < 98% until MacBook & all 3D models are ready
+    let target = 25;
     const readyCount =
       (macReady ? 1 : 0) + (businessmanReady ? 1 : 0) + (portfolioReady ? 1 : 0);
 
     if (readyCount === 2) {
-      target = Math.max(85, Math.min(96, Math.round(dreiProgress * 0.96)));
+      target = Math.max(80, Math.min(94, Math.round(dreiProgress * 0.94)));
     } else if (readyCount === 1) {
-      target = Math.max(60, Math.min(80, Math.round(dreiProgress * 0.8)));
+      target = Math.max(55, Math.min(75, Math.round(dreiProgress * 0.75)));
     } else if (dreiProgress > 0) {
       target = Math.min(50, Math.max(counterRef.current.value, Math.round(dreiProgress * 0.5)));
     } else {
-      target = Math.max(counterRef.current.value, 30);
+      target = Math.max(counterRef.current.value, 20);
     }
 
     const tween = gsap.to(counterRef.current, {
       value: target,
-      duration: 0.4,
+      duration: 0.5,
       ease: "power2.out",
       onUpdate: () => {
         const val = Math.round(counterRef.current.value);
@@ -143,31 +149,30 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     };
   }, [dreiProgress, isReady, macReady, businessmanReady, portfolioReady, triggerExit]);
 
-  // Safety fallback: Auto-reveal in 12s maximum to release the user without blocking
+  // Fallback timer: only trigger if network completely stalls (20 seconds)
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
-      triggerExit();
-    }, 12000);
+      if (!isExitingRef.current) {
+        updateDisplay(100);
+        triggerExit();
+      }
+    }, 20000);
 
     return () => clearTimeout(safetyTimer);
   }, [triggerExit]);
 
-  // Keyboard shortcut & Click to bypass
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.code === "Space" || e.code === "Enter" || e.code === "Escape") && !isExitingRef.current) {
-        triggerExit();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [triggerExit]);
+  // Allow manual skip ONLY once 100% is reached or with explicit emergency bypass
+  const handleContainerClick = () => {
+    if (hasFinishedRef.current || isReady) {
+      triggerExit();
+    }
+  };
 
   return (
     <div
       ref={containerRef}
-      onClick={() => triggerExit()}
-      className="fixed inset-0 z-[9999] w-screen h-screen bg-[#050505] text-white flex flex-col justify-between p-6 sm:p-10 md:p-14 select-none overflow-hidden will-change-transform cursor-pointer"
+      onClick={handleContainerClick}
+      className="fixed inset-0 z-[9999] w-screen h-screen bg-[#050505] text-white flex flex-col justify-between p-6 sm:p-10 md:p-14 select-none overflow-hidden will-change-transform"
     >
       {/* Subtle Background Grid Texture (Pure Monochrome) */}
       <div
@@ -182,7 +187,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       <div className="relative z-10 w-full flex items-center justify-between font-mono text-[10px] sm:text-xs tracking-widest text-neutral-400 uppercase">
         <div className="flex items-center gap-2.5">
           <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-          <span className="text-neutral-300 font-semibold">BDG // SYS.INIT</span>
+          <span className="text-neutral-300 font-semibold">BDG // 3D.CORE.INIT</span>
         </div>
       </div>
 
@@ -205,7 +210,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
 
         {/* Micro Telemetry Status Line */}
         <div className="flex items-center justify-between w-full max-w-sm sm:max-w-md mt-3 font-mono text-[9px] sm:text-[10px] text-neutral-500 uppercase tracking-widest">
-          <span ref={telemetryStatusRef}>INITIALIZING 3D ASSETS & HARDWARE</span>
+          <span ref={telemetryStatusRef}>LOADING MACBOOK 3D & TEXTURES</span>
           <span ref={telemetryPercentRef} className="text-neutral-300 font-semibold">0%</span>
         </div>
       </div>
@@ -217,12 +222,12 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
             Bharat DigiGuru
           </span>
           <span className="text-[9px] sm:text-[10px] text-neutral-500">
-            DIGITAL MEDIA & ENGINEERING
+            DIGITAL MEDIA & 3D ENGINEERING
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-neutral-600 hidden sm:inline">[ CLICK OR SPACE TO ENTER ]</span>
+          <span className="text-neutral-600 hidden sm:inline">[ SYSTEM INITIALIZING ]</span>
           <span className="w-1.5 h-1.5 rounded-full bg-neutral-600" />
           <span className="text-neutral-400">V2.4</span>
         </div>

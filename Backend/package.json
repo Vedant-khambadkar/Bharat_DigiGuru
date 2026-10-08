@@ -11,7 +11,8 @@
     "seed": "tsx src/data/seedData.ts",
     "seed:services": "tsx src/scripts/seedServices.ts",
     "seed:team": "tsx src/scripts/seedTeam.ts",
-    "seed:blogs": "tsx src/scripts/seedBlogs.ts"
+    "seed:blogs": "tsx src/scripts/seedBlogs.ts",
+    "convert:videos": "tsx src/scripts/convertAndUploadVideos.ts"
   },
   "keywords": [
     "express",
