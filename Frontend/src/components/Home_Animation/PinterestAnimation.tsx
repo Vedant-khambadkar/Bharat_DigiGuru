@@ -18,13 +18,13 @@ const PARAMS = {
   startScale: 0.01,
 
   // Target Floating Pose
-  posX: -9.8,
-  posY: 4.7,
-  posZ: 17.7,
+  posX: -9.2,
+  posY: 4.4,
+  posZ: 16.5,
   rotXDeg: -3.0,
   rotYDeg: 14.5,
   rotZDeg: 0.5,
-  scale: 2.3,
+  scale: 2,
   opacity: 1.0,
 
   // Plane Dimensions (Width & Height)
@@ -67,9 +67,24 @@ const PinterestAnimation: React.FC = () => {
   // Pre-calculate responsive targets only when size changes
   const responsiveConfig = useMemo(() => {
     const aspect = size.width / Math.max(size.height, 1);
-    const responsiveScaleFactor = aspect < 0.75 ? 0.65 : aspect < 1.2 ? 0.82 : 1.0;
-    const targetPosX = aspect < 0.75 ? -4.8 : aspect < 1.2 ? -7.2 : PARAMS.posX;
-    const targetPosY = aspect < 0.75 ? 3.8 : aspect < 1.2 ? 4.3 : PARAMS.posY;
+    let responsiveScaleFactor = 1.0;
+    let targetPosX = PARAMS.posX;
+    let targetPosY = PARAMS.posY;
+
+    if (aspect < 0.75) {
+      responsiveScaleFactor = 0.68;
+      targetPosX = -3.4;
+      targetPosY = 3.6;
+    } else if (aspect < 1.2) {
+      responsiveScaleFactor = 0.84;
+      targetPosX = -5.2;
+      targetPosY = 4.0;
+    } else {
+      responsiveScaleFactor = 1.0;
+      targetPosX = PARAMS.posX;
+      targetPosY = PARAMS.posY;
+    }
+
     const targetScale = PARAMS.scale * responsiveScaleFactor;
     return { targetPosX, targetPosY, targetScale };
   }, [size.width, size.height]);

@@ -81,13 +81,6 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 }
 app.use("/uploads", express.static(UPLOADS_DIR));
 
-// 4. Request Logging (in development)
-if (process.env.NODE_ENV !== "production") {
-  app.use((req, _res, next) => {
-    console.log(`📡 [${req.method}] ${req.url}`);
-    next();
-  });
-}
 
 // 5. Mount API Routes under /api
 app.use("/api", apiRouter);
@@ -122,18 +115,7 @@ const startServer = async () => {
 
   // In standalone server mode (not serverless lambda), bind to port
   if (!process.env.VERCEL) {
-    server.listen(PORT, () => {
-      console.log(`
-=====================================================
-🚀 Bharat DigiGuru Backend Server Running!
-📡 REST API:      http://localhost:${PORT}/api
-⚡ Socket.IO:     http://localhost:${PORT}
-📁 Media Uploads: http://localhost:${PORT}/uploads
-🍃 Database:      ${process.env.MONGODB_URI ? "MongoDB Atlas" : "Local JSON DB"}
-🔐 Admin Email:   admin@bharatdigiguru.com
-=====================================================
-      `);
-    });
+    server.listen(PORT, () => {});
   }
 };
 

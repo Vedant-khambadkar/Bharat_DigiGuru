@@ -12,9 +12,6 @@ if ('scrollRestoration' in history) {
 }
 window.scrollTo(0, 0);
 
-if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-  console.log("[BOOT] React mounted");
-}
 
 createRoot(document.getElementById('root')!).render(
   <App />

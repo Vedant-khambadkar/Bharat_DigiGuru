@@ -80,13 +80,6 @@ export async function sendPasswordResetOtpEmail({
   otp,
   recipientName = "Administrator",
 }: SendOtpOptions): Promise<{ sent: boolean; message: string }> {
-  console.log("\n=======================================================");
-  console.log("🔐 [BHARAT DIGIGURU] PASSWORD RESET OTP GENERATED");
-  console.log(`📧 Recipient: ${toEmail}`);
-  console.log(`🔑 6-Digit OTP: >>> ${otp} <<<`);
-  console.log(`⏳ Valid For: 10 Minutes`);
-  console.log("=======================================================\n");
-
   const transporter = createTransporter();
   const fromAddress =
     process.env.SMTP_FROM ||
@@ -176,7 +169,6 @@ export async function sendPasswordResetOtpEmail({
       attachments,
     });
 
-    console.log(`✅ [EMAIL SENT] Password reset OTP delivered to ${toEmail}`);
     return { sent: true, message: `OTP successfully sent to ${toEmail}` };
   } catch (error: any) {
     console.error("❌ [EMAIL SEND ERROR]:", error.message);
@@ -412,16 +404,6 @@ export async function sendInquiryNotificationEmail(inquiry: {
     </html>
   `;
 
-  console.log("\n=======================================================");
-  console.log("📬 [NEW INQUIRY RECEIVED]");
-  console.log(`👤 Name: ${inquiry.name}`);
-  console.log(`📧 Email: ${inquiry.email}`);
-  console.log(`📱 Phone: ${inquiry.phone || "N/A"}`);
-  console.log(`🏢 Company: ${inquiry.company || "N/A"}`);
-  console.log(`🛠️ Services: ${servicesTextList}`);
-  console.log(`💬 Message: ${inquiry.message}`);
-  console.log("=======================================================\n");
-
   if (!transporter) {
     return;
   }
@@ -434,7 +416,6 @@ export async function sendInquiryNotificationEmail(inquiry: {
       html: htmlContent,
       attachments,
     });
-    console.log(`✅ [EMAIL NOTIFICATION] Inquiry sent to admin: ${adminEmail}`);
   } catch (err: any) {
     console.error("❌ [EMAIL NOTIFICATION ERROR]:", err.message);
   }
@@ -469,14 +450,6 @@ export async function sendAdminCredentialsEmail({
     : role.toLowerCase().includes("super")
     ? "#ff3b30"
     : "#2563eb";
-
-  console.log("\n=======================================================");
-  console.log("🚀 [BHARAT DIGIGURU] NEW ADMIN CREDENTIALS GENERATED");
-  console.log(`👤 Recipient: ${recipientName} (${toEmail})`);
-  console.log(`🛡️ Assigned Role: ${normalizedRole}`);
-  console.log(`🔑 Temporary Password: >>> ${password} <<<`);
-  console.log(`👨‍💼 Created By: ${creatorName}`);
-  console.log("=======================================================\n");
 
   const transporter = createTransporter();
   const fromAddress =
@@ -655,7 +628,6 @@ export async function sendAdminCredentialsEmail({
       attachments,
     });
 
-    console.log(`✅ [EMAIL SENT] Admin credentials delivered to ${toEmail}`);
     return { sent: true, message: `Credentials successfully sent to ${toEmail}` };
   } catch (error: any) {
     console.error("❌ [EMAIL SEND ERROR]:", error.message);

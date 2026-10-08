@@ -27,15 +27,12 @@ function ResponsiveCamera() {
     const aspect = size.width / Math.max(size.height, 1);
 
     if (aspect < 0.75) {
-      // Mobile Portrait
-      pCam.fov = 54;
-      pCam.position.set(0, 4.8, 42);
-    } else if (aspect < 1.2) {
-      // Tablet / iPad / Square
       pCam.fov = 46;
-      pCam.position.set(0, 4.5, 40);
+      pCam.position.set(0, 4.4, 39);
+    } else if (aspect < 1.2) {
+      pCam.fov = 42;
+      pCam.position.set(0, 4.3, 38.5);
     } else {
-      // Desktop & Widescreen
       pCam.fov = 40;
       pCam.position.set(0, 4.3, 38);
     }
@@ -50,9 +47,6 @@ function CanvasReadyNotifier({ onReady }: { onReady: () => void }) {
   useEffect(() => {
     const rafId = requestAnimationFrame(() => {
       (window as any).__bdgMacStartTime = (window as any).__bdgMacStartTime || performance.now();
-      if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-        console.log("[HERO] Canvas initialized");
-      }
       onReady();
     });
     return () => cancelAnimationFrame(rafId);

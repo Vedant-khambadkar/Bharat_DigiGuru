@@ -15,13 +15,13 @@ const PARAMS = {
   startRotYDeg: -4,
   startRotZDeg: 0.5,
   startScale: 0.01,
-  posX: -0.2,
-  posY: 4.1,
-  posZ: 14.6,
+  posX: 0.0,
+  posY: 3.9,
+  posZ: 14.8,
   rotXDeg: 0.5,
   rotYDeg: -6,
   rotZDeg: 0,
-  scale: 2.2,
+  scale: 1.85,
   opacity: 1,
   planeWidth: 3.05,
   planeHeight: 5.1,
@@ -60,9 +60,24 @@ const TikTokAnimation: React.FC = () => {
   // Pre-calculate responsive targets only when size changes
   const responsiveConfig = useMemo(() => {
     const aspect = size.width / Math.max(size.height, 1);
-    const responsiveScaleFactor = aspect < 0.75 ? 0.68 : aspect < 1.2 ? 0.84 : 1.0;
-    const targetPosX = aspect < 0.75 ? 0 : PARAMS.posX;
-    const targetPosY = aspect < 0.75 ? 3.3 : aspect < 1.2 ? 3.7 : PARAMS.posY;
+    let responsiveScaleFactor = 1.0;
+    let targetPosX = PARAMS.posX;
+    let targetPosY = PARAMS.posY;
+
+    if (aspect < 0.75) {
+      responsiveScaleFactor = 0.72;
+      targetPosX = 0;
+      targetPosY = 3.2;
+    } else if (aspect < 1.2) {
+      responsiveScaleFactor = 0.86;
+      targetPosX = 0;
+      targetPosY = 3.6;
+    } else {
+      responsiveScaleFactor = 1.0;
+      targetPosX = PARAMS.posX;
+      targetPosY = PARAMS.posY;
+    }
+
     const targetScale = PARAMS.scale * responsiveScaleFactor;
     return { targetPosX, targetPosY, targetScale };
   }, [size.width, size.height]);

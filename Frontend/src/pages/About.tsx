@@ -3,7 +3,7 @@ import LensText from "../components/LensText";
 import ColorLensImage from "../components/ColorLensImage";
 import WordReveal from "../components/WordReveal";
 import { Sparkles, Target, Zap } from "lucide-react";
-import Img1 from "../assets/Picture/Picture12.webp";
+import Img1 from "../assets/Picture/Picture10.webp";
 import Img2 from "../assets/Picture/Picture2.webp";
 import Img3 from "../assets/Picture/Picture3.webp";
 import Img4 from "../assets/Picture/Picture4.webp";
@@ -39,7 +39,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
           {/* Header with red square accent */}
           <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
             <h2 className="font-neuropol font-normal text-4xl sm:text-5xl lg:text-6xl uppercase tracking-wider text-white leading-none select-none">
-              <LensText text="ABOUT" strokeWidth="2px" strokeColor="#ffffff" />
+              <LensText text="ABOUT US" strokeWidth="2px" strokeColor="#ffffff" />
             </h2>
           </div>
 

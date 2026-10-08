@@ -19,12 +19,12 @@ const PARAMS = {
   startRotXDeg: 0,
   startRotYDeg: 48.0,
   startRotZDeg: 0,
-  startScale: 1.15,
+  startScale: 1,
 
   // Target Pose (Page 2 - Opened & Emerged)
-  targetX: -2.5,
-  targetY: -2.5,
-  targetZ: 6.0,
+  targetX: -1.8,
+  targetY: -2.3,
+  targetZ: 4.8,
   rotXDeg: 0,
   rotYDeg: 48.0,
   rotZDeg: 0,
@@ -92,15 +92,7 @@ interface MacContainerProps {
 
 const MacContainer = ({ onReady }: MacContainerProps) => {
   const groupRef = useRef<THREE.Group>(null);
-  const { camera, gl, size } = useThree();
-
-  if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-    if (!(window as any).__bdgMacLoggedStart) {
-      (window as any).__bdgMacLoggedStart = true;
-      console.log("[HERO] MacBook loading");
-      console.log("[3D TIMING] MacBook request start");
-    }
-  }
+  const { gl, size } = useThree();
 
   const mac = useGLTF(MODEL_URLS.mac);
   const screen = useTexture(heroImg);
@@ -216,27 +208,27 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
     };
   }, [mac.scene, screen, keyboard, laptopBack, lidGeo, gl]);
 
-  // Setup exact camera parameters
-  useEffect(() => {
-    if (!camera) return;
-    camera.position.set(0, 4.3, 38);
-    camera.rotation.set(
-      THREE.MathUtils.degToRad(-2),
-      THREE.MathUtils.degToRad(6),
-      0
-    );
-    if ((camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
-      (camera as THREE.PerspectiveCamera).fov = 40;
-      (camera as THREE.PerspectiveCamera).updateProjectionMatrix();
-    }
-  }, [camera]);
-
-  // Pre-calculate responsive targets when viewport size changes (NOT every frame)
+  // Pre-calculate responsive targets when viewport size changes
   const responsiveConfig = useMemo(() => {
     const aspect = size.width / Math.max(size.height, 1);
-    const targetX = aspect < 0.75 ? -0.7 : aspect < 1.2 ? -1.5 : PARAMS.targetX;
-    const targetY = aspect < 0.75 ? -1.8 : aspect < 1.2 ? -2.2 : PARAMS.targetY;
-    const scale = aspect < 0.75 ? 0.62 : aspect < 1.2 ? 0.67 : PARAMS.scale;
+    let targetX = PARAMS.targetX;
+    let targetY = PARAMS.targetY;
+    let scale = PARAMS.scale;
+
+    if (aspect < 0.75) {
+      targetX = -0.5;
+      targetY = -1.9;
+      scale = 0.68;
+    } else if (aspect < 1.2) {
+      targetX = -1.2;
+      targetY = -2.1;
+      scale = 0.72;
+    } else {
+      targetX = PARAMS.targetX;
+      targetY = PARAMS.targetY;
+      scale = PARAMS.scale;
+    }
+
     return { targetX, targetY, scale };
   }, [size.width, size.height]);
 
@@ -244,41 +236,11 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
   useEffect(() => {
     if (!mac.scene || isReadySignaled.current) return;
 
-    const tMount = performance.now();
     let frameId2: number;
     const frameId1 = requestAnimationFrame(() => {
       frameId2 = requestAnimationFrame(() => {
         if (isReadySignaled.current) return;
         isReadySignaled.current = true;
-        const tFirstFrame = performance.now();
-
-        if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-          console.log("[HERO] MacBook GLB loaded");
-          console.log("[HERO] MacBook scene ready");
-          console.log("[HERO] MacBook first frame");
-          console.log("[HERO] MacBook ready");
-
-          const startTime = Number((window as any).__bdgMacStartTime) || tMount;
-          const resourceEntries = performance.getEntriesByName(MODEL_URLS.mac) as PerformanceResourceTiming[];
-          const glbEntry = resourceEntries.length > 0 ? resourceEntries[resourceEntries.length - 1] : undefined;
-
-          const sceneStart = Number(meshes.tSceneStart) || tMount;
-          const sceneEnd = Number(meshes.tSceneEnd) || tMount;
-
-          const downloadDuration = glbEntry && glbEntry.responseEnd > glbEntry.requestStart && glbEntry.requestStart > 0
-            ? glbEntry.responseEnd - glbEntry.requestStart
-            : glbEntry ? glbEntry.duration : Math.max(0, sceneStart - startTime);
-
-          const glbLoadedTime = Math.max(downloadDuration, sceneStart - startTime);
-          const sceneSetupTime = Math.max(0, sceneEnd - sceneStart);
-          const firstFrameTime = Math.max(0, tFirstFrame - sceneEnd);
-          const totalDuration = Math.max(0, tFirstFrame - startTime);
-
-          console.log(`[3D TIMING] MacBook GLB loaded: ${glbLoadedTime.toFixed(1)} ms`);
-          console.log(`[3D TIMING] MacBook scene ready: ${sceneSetupTime.toFixed(1)} ms`);
-          console.log(`[3D TIMING] MacBook first frame: ${firstFrameTime.toFixed(1)} ms`);
-          console.log(`[3D TIMING] MacBook total: ${totalDuration.toFixed(1)} ms`);
-        }
         onReady?.();
       });
     });
@@ -287,7 +249,7 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
       cancelAnimationFrame(frameId1);
       cancelAnimationFrame(frameId2);
     };
-  }, [mac.scene, meshes, onReady]);
+  }, [mac.scene, onReady]);
 
   const scrollProgressRef = useHomeScrollProgress();
 

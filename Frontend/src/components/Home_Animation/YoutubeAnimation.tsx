@@ -14,13 +14,13 @@ const PARAMS = {
   startRotYDeg: 16.5,
   startRotZDeg: 3,
   startScale: 0.01,
-  posX: 6.6,
-  posY: 4.1,
-  posZ: 12.7,
+  posX: 5.4,
+  posY: 4.0,
+  posZ: 13.5,
   rotXDeg: 0.5,
   rotYDeg: 5.5,
   rotZDeg: 0.5,
-  scale: 2.6,
+  scale: 2.1,
   opacity: 1,
   planeWidth: 6.7,
   planeHeight: 4.45,
@@ -59,9 +59,24 @@ const YoutubeAnimation: React.FC = () => {
   // Pre-calculate responsive targets only when size changes
   const responsiveConfig = useMemo(() => {
     const aspect = size.width / Math.max(size.height, 1);
-    const responsiveScaleFactor = aspect < 0.75 ? 0.65 : aspect < 1.2 ? 0.82 : 1.0;
-    const targetPosX = aspect < 0.75 ? 3.6 : aspect < 1.2 ? 5.2 : PARAMS.posX;
-    const targetPosY = aspect < 0.75 ? 3.2 : aspect < 1.2 ? 3.7 : PARAMS.posY;
+    let responsiveScaleFactor = 1.0;
+    let targetPosX = PARAMS.posX;
+    let targetPosY = PARAMS.posY;
+
+    if (aspect < 0.75) {
+      responsiveScaleFactor = 0.68;
+      targetPosX = 2.6;
+      targetPosY = 3.0;
+    } else if (aspect < 1.2) {
+      responsiveScaleFactor = 0.84;
+      targetPosX = 4.0;
+      targetPosY = 3.5;
+    } else {
+      responsiveScaleFactor = 1.0;
+      targetPosX = PARAMS.posX;
+      targetPosY = PARAMS.posY;
+    }
+
     const targetScale = PARAMS.scale * responsiveScaleFactor;
     return { targetPosX, targetPosY, targetScale };
   }, [size.width, size.height]);

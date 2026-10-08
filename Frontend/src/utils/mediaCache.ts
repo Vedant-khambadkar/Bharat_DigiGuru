@@ -107,7 +107,16 @@ export async function preloadMediaList(
 }
 
 /**
- * Loads and caches a Three.js Texture with complete request deduplication.
+ * Synchronously retrieves a pre-cached Three.js texture if available.
+ */
+export function getLoadedTexture(url?: string): THREE.Texture | null {
+  if (!url) return null;
+  const cleanUrl = url.trim();
+  return textureCache.get(cleanUrl) || null;
+}
+
+/**
+ * Loads and caches a Three.js Texture with complete request deduplication and fallback.
  * Ensures textures are oriented right-side up (flipY = true) and filtered properly.
  */
 export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | null> {
@@ -147,7 +156,39 @@ export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | nul
         resolve(tex);
       },
       undefined,
-      () => {
+      async () => {
+        // Fallback: Fetch as Blob to bypass browser CORS / cache header quirks
+        try {
+          const res = await fetch(cleanUrl, { mode: "cors" });
+          if (res.ok) {
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            loader.load(
+              blobUrl,
+              (tex) => {
+                tex.colorSpace = THREE.SRGBColorSpace;
+                tex.generateMipmaps = true;
+                tex.minFilter = THREE.LinearMipmapLinearFilter;
+                tex.magFilter = THREE.LinearFilter;
+                tex.flipY = true;
+                tex.needsUpdate = true;
+
+                textureCache.set(cleanUrl, tex);
+                preloadedUrls.add(cleanUrl);
+                inFlightTexturePromises.delete(cleanUrl);
+                resolve(tex);
+              },
+              undefined,
+              () => {
+                inFlightTexturePromises.delete(cleanUrl);
+                resolve(null);
+              }
+            );
+            return;
+          }
+        } catch (_fetchErr) {
+          // Both loaders failed
+        }
         inFlightTexturePromises.delete(cleanUrl);
         resolve(null);
       }

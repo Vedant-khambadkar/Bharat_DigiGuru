@@ -5,7 +5,12 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  assetsInclude: ['**/*.glb', '**/*.gltf'],
+  assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.mp4', '**/*.webm'],
+  server: {
+    watch: {
+      ignored: ['**/src/assets/Videos/**'],
+    },
+  },
   build: {
     target: 'esnext',
     cssMinify: true,

@@ -123,8 +123,6 @@ export async function convertVideoToWebm(
     const ffmpegBinary = (typeof ffmpegPath === "string" ? ffmpegPath : (ffmpegPath as any)?.default || ffmpegPath) as unknown as string;
 
     if (ffmpegBinary) {
-      console.log(`🎬 [FFMPEG] Transcoding ${originalFilename} (${(inputBuffer.length / (1024 * 1024)).toFixed(2)} MB) -> WebM...`);
-
       await new Promise<void>((resolve, reject) => {
         // Fast WebM transcode: VP9 with realtime deadline and Opus audio for quick web loading
         execFile(
@@ -183,7 +181,6 @@ export async function convertVideoToWebm(
 
       if (fs.existsSync(outputTempPath)) {
         const outputBuffer = await fs.promises.readFile(outputTempPath);
-        console.log(`✅ [FFMPEG] Transcoded successfully: ${originalFilename} -> WebM (${(outputBuffer.length / (1024 * 1024)).toFixed(2)} MB)`);
         return {
           buffer: outputBuffer,
           mimetype: "video/webm",
@@ -237,8 +234,6 @@ export async function processFileForUpload(file: Express.Multer.File): Promise<{
         .webp({ quality: 85, effort: 4 })
         .toBuffer();
 
-      console.log(`🖼️ [IMAGE CONVERSION] Converted ${file.originalname} (${file.size} bytes) -> WebP (${webpBuffer.length} bytes) [Auto-Oriented]`);
-
       return {
         buffer: webpBuffer,
         mimetype: "image/webp",
@@ -287,8 +282,6 @@ export async function uploadFileToS3(
   const cleanBase = path.basename(file.originalname, path.extname(file.originalname)).replace(/[^a-zA-Z0-9_-]/g, "_");
   const uniqueKey = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e9)}-${cleanBase}${processed.ext}`;
 
-  console.log(`🔒 [AWS S3 PRIVATE UPLOAD] Storing object in bucket "${bucket}" (Region: ${region}) with key "${uniqueKey}" [Type: ${processed.mimetype}]`);
-
   const putCommand = new PutObjectCommand({
     Bucket: bucket,
     Key: uniqueKey,
@@ -302,7 +295,6 @@ export async function uploadFileToS3(
 
   // 2. Generate clean, cached CloudFront CDN URL
   const cloudFrontUrl = getCloudFrontUrl(uniqueKey);
-  console.log(`🌐 [CLOUDFRONT CDN] Generated CDN URL: ${cloudFrontUrl}`);
 
   return {
     url: cloudFrontUrl,
@@ -426,7 +418,6 @@ export async function deleteFileFromS3(fileKeyOrUrl: string): Promise<boolean> {
     });
 
     await client.send(command);
-    console.log(`🗑️ [AWS S3] Object deleted: ${key}`);
     return true;
   } catch (err: any) {
     console.error(`❌ [AWS S3 DELETE ERROR]:`, err.message);

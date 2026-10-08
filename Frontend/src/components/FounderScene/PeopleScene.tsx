@@ -33,13 +33,6 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
   isVisible = true,
   onReady,
 }) => {
-  if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-    if (!(window as any).__bdgBusinessmanLoggedStart) {
-      (window as any).__bdgBusinessmanLoggedStart = true;
-      console.log("[TEAM] Businessman loading");
-      console.log("[3D TIMING] Businessman request start");
-    }
-  }
 
   // Load authentic 3D businessman model (single GLTF source)
   const gltf = useGLTF(MODEL_URLS.businessman);

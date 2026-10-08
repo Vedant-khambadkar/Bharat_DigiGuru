@@ -5,6 +5,8 @@ import { X, Clock, Calendar, CheckCircle2 } from "lucide-react";
 import BlogCard from "../components/BlogCard";
 import type { BlogItem } from "../components/BlogCard";
 import LensText from "../components/LensText";
+import { userService } from "../services/service/userService";
+import { onSocketEvent } from "../utils/socket";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -126,11 +128,57 @@ const BLOGS_DATA: BlogItem[] = [
 ];
 
 export const Blogs: React.FC = () => {
-  const blogs = BLOGS_DATA;
+  const [blogs, setBlogs] = useState<BlogItem[]>(BLOGS_DATA);
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeBlog, setActiveBlog] = useState<BlogItem | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadBlogs = async (forceRefresh = false) => {
+      try {
+        const data = await userService.getBlogs(forceRefresh);
+        if (!isMounted || !data) return;
+        const items = Array.isArray(data) ? data : data.items || [];
+        if (Array.isArray(items) && items.length > 0) {
+          setBlogs(items);
+        }
+      } catch (err) {
+        console.warn("Could not fetch blogs from API, using fallback data:", err);
+      }
+    };
+
+    loadBlogs();
+
+    const unsubCreated = onSocketEvent("blog:created", (newBlog: any) => {
+      setBlogs((prev) => {
+        const exists = prev.some((b) => b.id === newBlog.id);
+        if (exists) return prev.map((b) => (b.id === newBlog.id ? newBlog : b));
+        return [newBlog, ...prev];
+      });
+      loadBlogs(true);
+    });
+
+    const unsubUpdated = onSocketEvent("blog:updated", (updatedBlog: any) => {
+      setBlogs((prev) => prev.map((b) => (b.id === updatedBlog.id ? { ...b, ...updatedBlog } : b)));
+      loadBlogs(true);
+    });
+
+    const unsubDeleted = onSocketEvent("blog:deleted", (deletedId: string) => {
+      setBlogs((prev) => prev.filter((b) => b.id !== deletedId));
+      loadBlogs(true);
+    });
+
+    return () => {
+      isMounted = false;
+      unsubCreated();
+      unsubUpdated();
+      unsubDeleted();
+    };
+  }, []);
+
 
   useEffect(() => {
     const track = trackRef.current;

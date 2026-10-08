@@ -90,10 +90,45 @@ class AdminApi {
     return api._delete(`/admin/team/${id}`);
   }
 
+  // Stories
+  getStories(params?: any) {
+    return api._get("/admin/stories", { params } as any);
+  }
+
+  createStory(data: any) {
+    return api._post("/admin/stories", data);
+  }
+
+  updateStory(id: string, data: any) {
+    return api._put(`/admin/stories/${id}`, data);
+  }
+
+  deleteStory(id: string) {
+    return api._delete(`/admin/stories/${id}`);
+  }
+
+  // Blogs
+  getBlogs(params?: any) {
+    return api._get("/admin/blogs", { params } as any);
+  }
+
+  createBlog(data: any) {
+    return api._post("/admin/blogs", data);
+  }
+
+  updateBlog(id: string, data: any) {
+    return api._put(`/admin/blogs/${id}`, data);
+  }
+
+  deleteBlog(id: string) {
+    return api._delete(`/admin/blogs/${id}`);
+  }
+
   // Inquiries
   getInquiries(params?: any) {
     return api._get("/admin/inquiries", { params } as any);
   }
+
 
   updateInquiryStatus(id: string, data: any) {
     return api._patch(`/admin/inquiries/${id}/status`, data);

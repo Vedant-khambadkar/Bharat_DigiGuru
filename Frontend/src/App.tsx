@@ -47,8 +47,7 @@ const MainLandingPage = () => {
   const all3DReady =
     (macReady || macFailed) &&
     (businessmanReady || businessmanFailed) &&
-    (portfolioReady || portfolioFailed) &&
-    (macReady || businessmanReady || portfolioReady);
+    (portfolioReady || portfolioFailed);
 
   const handleMacReady = useCallback(() => {
     setMacReady(true);
@@ -68,20 +67,9 @@ const MainLandingPage = () => {
     setBusinessmanFailed(true);
   }, []);
 
-  const handlePortfolioReady = useCallback(() => {
-    setPortfolioReady(true);
-  }, []);
-
-  const handlePortfolioError = useCallback((error: Error) => {
-    console.error("[PORTFOLIO] Portfolio asset notice:", error);
-    setPortfolioFailed(true);
-  }, []);
 
   const handleStartPageReveal = useCallback(() => {
     (window as any).lenis?.start();
-    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-      console.log("[LENIS] started");
-    }
     window.dispatchEvent(new CustomEvent("start-hero-letters"));
     const homeSection = document.getElementById("home-section");
     if (homeSection) {
@@ -168,12 +156,23 @@ const MainLandingPage = () => {
     };
   }, [handleOpenAdminPortal]);
 
-  // Preload below-the-fold assets in background without blocking Hero reveal
+  // Preload 100% of portfolio 3D textures before preloader finishes
   useEffect(() => {
-    Promise.allSettled([
-      import("./pages/Portfolio").then((m) => m.preloadPortfolioAssets?.()),
-      preloadOurTeamAssets(),
-    ]);
+    import("./pages/Portfolio")
+      .then((m) => {
+        if (m.preloadPortfolioAssets) {
+          return m.preloadPortfolioAssets();
+        }
+      })
+      .then(() => {
+        setPortfolioReady(true);
+      })
+      .catch((err) => {
+        console.warn("Portfolio preload notice:", err);
+        setPortfolioFailed(true);
+      });
+
+    preloadOurTeamAssets().catch(() => { });
   }, []);
 
   // Global Lenis Smooth Momentum Scrolling synchronized with GSAP ScrollTrigger
@@ -201,14 +200,11 @@ const MainLandingPage = () => {
 
     lenis.scrollTo(0, { immediate: true });
     window.scrollTo(0, 0);
-    
+
     // Stop scrolling while initial hero transition runs; guarantee start via timeout
     lenis.stop();
     const lenisSafetyUnlock = window.setTimeout(() => {
       lenis.start();
-      if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-        console.log("[LENIS] started (via safety timeout)");
-      }
     }, 10000);
 
     lenis.on("scroll", () => {
@@ -405,8 +401,6 @@ const MainLandingPage = () => {
         <Suspense fallback={null}>
           <PlatformsWeManage />
           <Portfolio
-            onPortfolioReady={handlePortfolioReady}
-            onPortfolioError={handlePortfolioError}
           />
           <ThreeDProjects />
           <ToolsAndTechnology />

@@ -17,9 +17,18 @@ class UserApi {
     return api._get("/team");
   }
 
+  getStories() {
+    return api._get("/stories");
+  }
+
+  getBlogs() {
+    return api._get("/blogs");
+  }
+
   submitInquiry(data: any) {
     return api._post("/inquiries/submit", data);
   }
+
 }
 
 export const userApi = new UserApi();

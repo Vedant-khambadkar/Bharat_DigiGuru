@@ -34,6 +34,18 @@ import {
   deleteTeamMember,
 } from "../controllers/teamController.js";
 import {
+  getStories,
+  createStory,
+  updateStory,
+  deleteStory,
+} from "../controllers/storyController.js";
+import {
+  getBlogs,
+  createBlog,
+  updateBlog,
+  deleteBlog,
+} from "../controllers/blogsController.js";
+import {
   getInquiries,
   updateInquiryStatus,
   deleteInquiry,
@@ -93,15 +105,28 @@ router.post("/team", createTeamMember);
 router.put("/team/:id", updateTeamMember);
 router.delete("/team/:id", deleteTeamMember);
 
-// 5. Inquiries Management
+// 5. Stories CRUD (Managed Admin, Super Admin, Admin)
+router.get("/stories", getStories);
+router.post("/stories", createStory);
+router.put("/stories/:id", updateStory);
+router.delete("/stories/:id", deleteStory);
+
+// 6. Blogs CRUD (Managed Admin, Super Admin, Admin)
+router.get("/blogs", getBlogs);
+router.post("/blogs", createBlog);
+router.put("/blogs/:id", updateBlog);
+router.delete("/blogs/:id", deleteBlog);
+
+// 7. Inquiries Management
 router.get("/inquiries", getInquiries);
 router.patch("/inquiries/:id/status", updateInquiryStatus);
 router.delete("/inquiries/:id", deleteInquiry);
 
-// 5. File / Media Upload & Presigned URLs
+// 8. File / Media Upload & Presigned URLs
 router.post("/upload", upload.single("file"), uploadMedia);
 router.get("/media/presigned-url", getPresignedUrlHandler);
 router.post("/media/presigned-upload", getPresignedUploadUrlHandler);
+
 
 export default router;
 

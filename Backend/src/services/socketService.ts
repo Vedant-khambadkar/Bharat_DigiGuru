@@ -15,17 +15,15 @@ export const initializeSocket = (httpServer: HttpServer, _corsOrigin?: any) => {
       allowedHeaders: ["Content-Type", "Authorization", "Accept", "X-Requested-With"],
     },
     transports: ["websocket", "polling"],
-    pingTimeout: 30000,
-    pingInterval: 25000,
+    pingTimeout: 10000,
+    pingInterval: 10000,
+    connectTimeout: 20000,
   });
 
   io.on("connection", (socket: Socket) => {
-    console.log(`⚡ [SOCKET.IO] Client connected: ${socket.id}`);
-
     // Allow client to join admin room or general room
     socket.on("join:admin", () => {
       socket.join("admin_room");
-      console.log(`🛡️ [SOCKET.IO] Client ${socket.id} joined admin room`);
     });
 
     // Handle client ping for live status verification
@@ -33,7 +31,7 @@ export const initializeSocket = (httpServer: HttpServer, _corsOrigin?: any) => {
       socket.emit("pong:status", { status: "ONLINE", timestamp: Date.now() });
     });
 
-    // Allow broadcasting updates sent directly through socket
+    // Allow direct client-to-server-to-client relay for all entities
     socket.on("service:created", (data) => socket.broadcast.emit("service:created", data));
     socket.on("service:updated", (data) => socket.broadcast.emit("service:updated", data));
     socket.on("service:deleted", (id) => socket.broadcast.emit("service:deleted", id));
@@ -46,13 +44,22 @@ export const initializeSocket = (httpServer: HttpServer, _corsOrigin?: any) => {
     socket.on("threed:updated", (data) => socket.broadcast.emit("threed:updated", data));
     socket.on("threed:deleted", (id) => socket.broadcast.emit("threed:deleted", id));
 
+    socket.on("team:created", (data) => socket.broadcast.emit("team:created", data));
+    socket.on("team:updated", (data) => socket.broadcast.emit("team:updated", data));
+    socket.on("team:deleted", (id) => socket.broadcast.emit("team:deleted", id));
+
     socket.on("blog:created", (data) => socket.broadcast.emit("blog:created", data));
     socket.on("blog:updated", (data) => socket.broadcast.emit("blog:updated", data));
     socket.on("blog:deleted", (id) => socket.broadcast.emit("blog:deleted", id));
 
-    socket.on("disconnect", (reason) => {
-      console.log(`🔌 [SOCKET.IO] Client disconnected: ${socket.id} (${reason})`);
-    });
+    socket.on("inquiry:new", (data) => socket.broadcast.emit("inquiry:new", data));
+    socket.on("inquiry:updated", (data) => socket.broadcast.emit("inquiry:updated", data));
+    socket.on("inquiry:deleted", (id) => socket.broadcast.emit("inquiry:deleted", id));
+
+    socket.on("admin:created", (data) => socket.broadcast.emit("admin:created", data));
+    socket.on("admin:deleted", (id) => socket.broadcast.emit("admin:deleted", id));
+
+    socket.on("disconnect", () => {});
   });
 
   return io;
@@ -66,6 +73,5 @@ export const getIO = (): SocketIOServer | null => {
 export const emitEvent = (eventName: string, payload: any) => {
   if (io) {
     io.emit(eventName, payload);
-    console.log(`📢 [SOCKET.IO EMIT] Event '${eventName}' broadcasted to clients.`);
   }
 };

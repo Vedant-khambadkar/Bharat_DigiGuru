@@ -1,11 +1,11 @@
 import React, { useMemo, useRef, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { loadSharedThreeTexture } from "../utils/mediaCache";
+import { loadSharedThreeTexture, getLoadedTexture } from "../utils/mediaCache";
 
 const WIDTH = 4.0;
 const HEIGHT = 2.5;
-const SEGMENTS = 30;
+const SEGMENTS = 6;
 const RADIUS = 0.12;
 
 export interface PlaneItem {
@@ -20,7 +20,7 @@ function createSkinnedPlaneData(
   width: number,
   height: number,
   segments: number,
-  _textureUrl?: string,
+  textureUrl?: string,
   color: string = "#6c8ebb"
 ) {
   // 1. Plane geometry subdivided horizontally along X-axis
@@ -67,8 +67,11 @@ function createSkinnedPlaneData(
 
   const skeleton = new THREE.Skeleton(bones);
 
+  const cachedTex = textureUrl ? getLoadedTexture(textureUrl) : null;
+
   const material = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(color),
+    map: cachedTex || null,
+    color: cachedTex ? new THREE.Color("#ffffff") : new THREE.Color(color),
     side: THREE.DoubleSide,
     roughness: 0.35,
     metalness: 0.05,
@@ -117,21 +120,20 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
   const meshRef = useRef<THREE.SkinnedMesh>(null!);
   const groupYRef = useRef<THREE.Group>(null!);
   const isHoveredRef = useRef(false);
+  const hasBonesBent = useRef(false);
 
   const { mesh, skeletonHelper } = useMemo(() => {
-    return createSkinnedPlaneData(width, height, segments, undefined, color);
-  }, [width, height, segments, color]);
+    return createSkinnedPlaneData(width, height, segments, textureUrl, color);
+  }, [width, height, segments, textureUrl, color]);
 
   // Load texture using centralized deduplication cache with progressive loading
   useEffect(() => {
     if (!textureUrl || textureUrl.trim().length === 0) {
-      if (meshRef.current) {
-        const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-        if (mat) {
-          mat.map = null;
-          mat.color.set(color);
-          mat.needsUpdate = true;
-        }
+      const mat = (meshRef.current?.material || mesh.material) as THREE.MeshStandardMaterial;
+      if (mat) {
+        mat.map = null;
+        mat.color.set(color);
+        mat.needsUpdate = true;
       }
       return;
     }
@@ -140,9 +142,9 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
     const cleanUrl = textureUrl.trim();
 
     loadSharedThreeTexture(cleanUrl).then((tex) => {
-      if (isCancelled || !tex || !meshRef.current) return;
-      const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-      if (mat && mat.map !== tex) {
+      if (isCancelled || !tex) return;
+      const mat = (meshRef.current?.material || mesh.material) as THREE.MeshStandardMaterial;
+      if (mat) {
         mat.map = tex;
         mat.color.set("#ffffff");
         mat.needsUpdate = true;
@@ -152,7 +154,7 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [textureUrl, color]);
+  }, [textureUrl, color, mesh]);
 
   // Clean WebGL geometry disposal on dynamic change / unmount
   useEffect(() => {
@@ -172,10 +174,16 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
     const bones = meshRef.current?.skeleton?.bones;
     if (bones && bendState) {
       const currentBend = bendState.current;
-      if (Math.abs(currentBend) > 0.0001 || Math.abs(bones[1]?.rotation?.y || 0) > 0.0001) {
+      if (Math.abs(currentBend) > 0.0002) {
+        hasBonesBent.current = true;
         for (let j = 1; j < bones.length; j++) {
           const factor = j / segments;
           bones[j].rotation.y = currentBend * (0.4 + factor * 1.1);
+        }
+      } else if (hasBonesBent.current) {
+        hasBonesBent.current = false;
+        for (let j = 1; j < bones.length; j++) {
+          bones[j].rotation.y = 0;
         }
       }
     }
@@ -184,14 +192,15 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
     if (groupYRef.current) {
       const isSpinning = isRotatingRef ? isRotatingRef.current : false;
       const targetY = isHoveredRef.current && !isSpinning ? 0.45 : 0;
-      if (Math.abs(groupYRef.current.position.y - targetY) > 0.001) {
+      const currentY = groupYRef.current.position.y;
+      if (Math.abs(currentY - targetY) > 0.002) {
         groupYRef.current.position.y = THREE.MathUtils.damp(
-          groupYRef.current.position.y,
+          currentY,
           targetY,
-          8,
+          10,
           delta
         );
-      } else {
+      } else if (currentY !== targetY) {
         groupYRef.current.position.y = targetY;
       }
     }
@@ -200,7 +209,6 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
   const handlePointerOver = (e: any) => {
     e.stopPropagation();
     isHoveredRef.current = true;
-    document.body.style.cursor = "pointer";
     if (onHoverPlane) {
       onHoverPlane(plane);
     }
@@ -209,7 +217,6 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
   const handlePointerOut = (e: any) => {
     e.stopPropagation();
     isHoveredRef.current = false;
-    document.body.style.cursor = "grab";
   };
 
   return (
@@ -274,10 +281,10 @@ export default function SkinnedPlane({
   const bendState = useRef(0);
   const isRotatingRef = useRef(false);
 
-  // Intro entrance animation state (starts below screen with initial spin & scale)
-  const introY = useRef(-5.2);
-  const introRotation = useRef(-Math.PI * 8.4);
-  const introScale = useRef(0);
+  // Direct instant resting pose (no 4-second spin lag or slow rise)
+  const introY = useRef(0);
+  const introRotation = useRef(0);
+  const introScale = useRef(1.0);
 
   // Scroll rotation damped state (full 360 degree revolution = 2 * PI)
   const scrollRotDamped = useRef(0);
@@ -285,13 +292,10 @@ export default function SkinnedPlane({
 
   // Pointer drag listeners for manual exploration
   useEffect(() => {
-    let startX = 0;
-
     const handlePointerDown = (e: PointerEvent) => {
       // Only drag if left click
       if (e.button !== 0) return;
       isDragging.current = true;
-      startX = e.clientX;
       prevPointerX.current = e.clientX;
     };
 
@@ -299,58 +303,47 @@ export default function SkinnedPlane({
       if (!isDragging.current) return;
       const deltaX = e.clientX - prevPointerX.current;
       prevPointerX.current = e.clientX;
-      if (Math.abs(e.clientX - startX) > 4) {
-        document.body.style.cursor = "grabbing";
-      }
-      targetRotation.current += deltaX * 0.01;
+      targetRotation.current += deltaX * 0.008;
     };
 
     const handlePointerUp = () => {
       isDragging.current = false;
-      document.body.style.cursor = "grab";
     };
 
-    window.addEventListener("pointerdown", handlePointerDown);
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
-
-    document.body.style.cursor = "grab";
+    window.addEventListener("pointerdown", handlePointerDown, { passive: true });
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerup", handlePointerUp, { passive: true });
+    window.addEventListener("pointercancel", handlePointerUp, { passive: true });
 
     return () => {
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
-      document.body.style.cursor = "default";
     };
   }, []);
 
   const { size } = useThree();
-  const isMobile = size.width < 640;
-  const isTablet = size.width >= 640 && size.width < 1024;
-  // Adaptive scaling so carousel fits comfortably on mobile screens without covering top/bottom text
+  const aspect = size.width / Math.max(size.height, 1);
+  const isMobile = size.width < 640 || aspect < 0.75;
+  const isTablet = (size.width >= 640 && size.width < 1024) || (aspect >= 0.75 && aspect < 1.35);
+  // Adaptive scaling so carousel fits comfortably on mobile and tablet screens without covering top/bottom text
   const responsiveScale = isMobile
-    ? Math.min(Math.max(size.width / 700, 0.46), 0.58)
+    ? Math.min(Math.max(size.width / 720, 0.44), 0.58)
     : isTablet
-    ? 0.78
-    : 1.0;
-  const responsiveYShift = isMobile ? -0.22 : 0;
+      ? 0.76
+      : 1.0;
+  const responsiveYShift = isMobile ? -0.2 : isTablet ? -0.1 : 0;
 
-  // Frame loop: smooth intro rise, scroll-driven 360 degree rotation, drag damping, and bone flexing physics
+  // Frame loop: smooth scroll-driven 360 degree rotation, drag damping, and bone flexing physics
   useFrame((_, delta) => {
-    // 0. Smoothly damp intro entrance values up to resting pose (y=0, rot=0, scale=1.0)
-    introY.current = THREE.MathUtils.damp(introY.current, 0, 3.2, delta);
-    introRotation.current = THREE.MathUtils.damp(introRotation.current, 0, 2.6, delta);
-    introScale.current = THREE.MathUtils.damp(introScale.current, 1.0, 3.5, delta);
-
     // 1. Scroll-driven 360-degree rotation (progress 0..1 maps to 0..2*PI)
     const currentProgress = scrollProgressRef ? scrollProgressRef.current : scrollProgress;
     const targetScrollRot = -currentProgress * Math.PI * 2;
     scrollRotDamped.current = THREE.MathUtils.damp(
       scrollRotDamped.current,
       targetScrollRot,
-      6,
+      24,
       delta
     );
 
@@ -358,7 +351,7 @@ export default function SkinnedPlane({
     currentRotation.current = THREE.MathUtils.damp(
       currentRotation.current,
       targetRotation.current,
-      6,
+      14,
       delta
     );
 
@@ -392,7 +385,7 @@ export default function SkinnedPlane({
     const targetBend = THREE.MathUtils.clamp(-rotVelocity * 0.009, -maxBendPerBone, maxBendPerBone);
 
     // 6. Smoothly damp bone bend; springs back to 0 (flat rest pose) when motion settles
-    bendState.current = THREE.MathUtils.damp(bendState.current, targetBend, 7, delta);
+    bendState.current = THREE.MathUtils.damp(bendState.current, targetBend, 8, delta);
   });
 
   return (

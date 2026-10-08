@@ -112,13 +112,63 @@ export interface ITeamMember {
   updatedAt?: string | Date;
 }
 
+export interface IStorySlide {
+  id: string;
+  type: "image" | "video";
+  url: string;
+  thumbnail?: string;
+  duration?: number;
+  caption?: string;
+  linkText?: string;
+  linkUrl?: string;
+}
+
+export interface IStoryItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  category?: string;
+  coverImage?: string;
+  author?: {
+    name: string;
+    avatar?: string;
+  };
+  slides: IStorySlide[];
+  isFeatured?: boolean;
+  isActive?: boolean;
+  order?: number;
+  viewCount?: number;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
+export interface IBlogItem {
+  id: string;
+  number?: string;
+  category: string;
+  title: string;
+  description: string;
+  readTime?: string;
+  date?: string;
+  image?: string;
+  content: string[];
+  bullets?: string[];
+  isPublished?: boolean;
+  order?: number;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
 export interface IDatabaseSchema {
   portfolio: IPortfolioItem[];
   threed: IThreeDProject[];
   services?: IServiceItem[];
   team?: ITeamMember[];
+  stories?: IStoryItem[];
+  blogs?: IBlogItem[];
   inquiries: IInquiry[];
   adminUser: IAdminUser;
   adminUsers?: IAdminUser[];
 }
+
 

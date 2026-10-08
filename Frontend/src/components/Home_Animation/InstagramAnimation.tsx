@@ -17,13 +17,13 @@ const PARAMS = {
   startScale: 0.001,
 
   // Target Pose
-  posX: -5.6,
-  posY: 3.8,
-  posZ: 15.1,
+  posX: -4.4,
+  posY: 3.7,
+  posZ: 15.2,
   rotXDeg: -1.5,
   rotYDeg: 12,
   rotZDeg: 0,
-  scale: 3.2,
+  scale: 2.5,
   opacity: 1,
 
   // Plane Dimensions
@@ -66,9 +66,24 @@ const InstagramAnimation: React.FC = () => {
   // Pre-calculate responsive targets only when size changes
   const responsiveConfig = useMemo(() => {
     const aspect = size.width / Math.max(size.height, 1);
-    const responsiveScaleFactor = aspect < 0.75 ? 0.65 : aspect < 1.2 ? 0.82 : 1.0;
-    const targetPosX = aspect < 0.75 ? -3.6 : aspect < 1.2 ? -5.0 : PARAMS.posX;
-    const targetPosY = aspect < 0.75 ? 3.8 : aspect < 1.2 ? 4.5 : PARAMS.posY;
+    let responsiveScaleFactor = 1.0;
+    let targetPosX = PARAMS.posX;
+    let targetPosY = PARAMS.posY;
+
+    if (aspect < 0.75) {
+      responsiveScaleFactor = 0.68;
+      targetPosX = -2.6;
+      targetPosY = 3.2;
+    } else if (aspect < 1.2) {
+      responsiveScaleFactor = 0.84;
+      targetPosX = -3.8;
+      targetPosY = 3.5;
+    } else {
+      responsiveScaleFactor = 1.0;
+      targetPosX = PARAMS.posX;
+      targetPosY = PARAMS.posY;
+    }
+
     const targetScale = PARAMS.scale * responsiveScaleFactor;
     return { targetPosX, targetPosY, targetScale };
   }, [size.width, size.height]);

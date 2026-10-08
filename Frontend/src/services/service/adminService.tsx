@@ -251,6 +251,115 @@ class AdminService {
     return res;
   }
 
+  // Stories
+  async getStories(
+    params?: { page?: number; limit?: number; search?: string; category?: string; isActive?: boolean },
+    forceRefresh = false
+  ) {
+    const key = this.getCacheKey("stories", params);
+
+    if (!forceRefresh) {
+      const cached = getApiCache<any>(key);
+      if (cached) {
+        return cached;
+      }
+      if (this._inflightRequests.has(key)) {
+        return this._inflightRequests.get(key);
+      }
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await adminApi.getStories(params);
+        if (res) {
+          setApiCache(key, res);
+        }
+        return res;
+      } finally {
+        this._inflightRequests.delete(key);
+      }
+    })();
+
+    this._inflightRequests.set(key, promise);
+    return promise;
+  }
+
+  async createStory(data: any) {
+    const res = await adminApi.createStory(data);
+    invalidateApiCache(["stories", "admin_stories", "stories_items", "admin_stats"]);
+    return res;
+  }
+
+  async updateStory(id: string, data: any) {
+    const res = await adminApi.updateStory(id, data);
+    invalidateApiCache(["stories", "admin_stories", "stories_items", "admin_stats"]);
+    if (data.coverImage) {
+      invalidateMediaCache(data.coverImage);
+    }
+    return res;
+  }
+
+  async deleteStory(id: string) {
+    const res = await adminApi.deleteStory(id);
+    invalidateApiCache(["stories", "admin_stories", "stories_items", "admin_stats"]);
+    return res;
+  }
+
+  // Blogs
+  async getBlogs(
+    params?: { page?: number; limit?: number; search?: string; category?: string },
+    forceRefresh = false
+  ) {
+    const key = this.getCacheKey("blogs", params);
+
+    if (!forceRefresh) {
+      const cached = getApiCache<any>(key);
+      if (cached) {
+        return cached;
+      }
+      if (this._inflightRequests.has(key)) {
+        return this._inflightRequests.get(key);
+      }
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await adminApi.getBlogs(params);
+        if (res) {
+          setApiCache(key, res);
+        }
+        return res;
+      } finally {
+        this._inflightRequests.delete(key);
+      }
+    })();
+
+    this._inflightRequests.set(key, promise);
+    return promise;
+  }
+
+  async createBlog(data: any) {
+    const res = await adminApi.createBlog(data);
+    invalidateApiCache(["blogs", "admin_blogs", "blogs_items", "admin_stats"]);
+    return res;
+  }
+
+  async updateBlog(id: string, data: any) {
+    const res = await adminApi.updateBlog(id, data);
+    invalidateApiCache(["blogs", "admin_blogs", "blogs_items", "admin_stats"]);
+    if (data.image) {
+      invalidateMediaCache(data.image);
+    }
+    return res;
+  }
+
+  async deleteBlog(id: string) {
+    const res = await adminApi.deleteBlog(id);
+    invalidateApiCache(["blogs", "admin_blogs", "blogs_items", "admin_stats"]);
+    return res;
+  }
+
+
   // Inquiries
   async getInquiries(
     params?: { status?: string; page?: number; limit?: number; search?: string },

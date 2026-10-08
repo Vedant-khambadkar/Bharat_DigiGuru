@@ -58,20 +58,20 @@ export const PlatformsWeManage: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  // GSAP entrance animation with scoped context cleanup
+  // High-performance instant GSAP entrance animation with early viewport trigger
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         ".chaos-header",
-        { opacity: 0, y: 35 },
+        { opacity: 0, y: 20 },
         {
           opacity: 1,
           y: 0,
-          duration: 1.1,
-          ease: "power3.out",
+          duration: 0.45,
+          ease: "power2.out",
           scrollTrigger: {
             trigger: chaosRef.current,
-            start: "top 80%",
+            start: "top 95%",
             toggleActions: "play none none none",
           },
         }
@@ -79,17 +79,17 @@ export const PlatformsWeManage: React.FC = () => {
 
       gsap.fromTo(
         ".floating-3d-node",
-        { opacity: 0, scale: 0.6, y: 30 },
+        { opacity: 0, scale: 0.85, y: 15 },
         {
           opacity: 1,
           scale: 1,
           y: 0,
-          duration: 0.9,
-          stagger: 0.08,
-          ease: "back.out(1.6)",
+          duration: 0.4,
+          stagger: 0.025,
+          ease: "back.out(1.4)",
           scrollTrigger: {
             trigger: chaosRef.current,
-            start: "top 75%",
+            start: "top 95%",
             toggleActions: "play none none none",
           },
         }
@@ -130,19 +130,36 @@ export const PlatformsWeManage: React.FC = () => {
         }}
       />
 
-      {/* Hardware-Accelerated 60/120 FPS CSS Keyframes using translate3d & opacity only */}
+      {/* Hardware-Accelerated 60/120 FPS CSS Keyframes for Fast Streaming Spline & Float Animations */}
       <style>{`
+        @keyframes streamDashesAnim {
+          from { stroke-dashoffset: 120; }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes streamPulseAnim {
+          0% { stroke-dashoffset: 350; opacity: 0; }
+          20% { opacity: 0.95; }
+          80% { opacity: 0.95; }
+          100% { stroke-dashoffset: -350; opacity: 0; }
+        }
         @keyframes floatOrbital1 {
-          0%, 100% { transform: translate3d(0, 0, 0); }
-          50% { transform: translate3d(0, -9px, 0); }
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-7px) rotate(1.2deg); }
         }
         @keyframes floatOrbital2 {
-          0%, 100% { transform: translate3d(0, 0, 0); }
-          50% { transform: translate3d(0, 9px, 0); }
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(7px) rotate(-1.2deg); }
         }
         @keyframes pulseGlowRing {
           0%, 100% { opacity: 0.25; transform: translate3d(0,0,0) scale(1); }
           50% { opacity: 0.5; transform: translate3d(0,0,0) scale(1.02); }
+        }
+
+        .animate-spline-stream {
+          animation: streamDashesAnim 4s linear infinite;
+        }
+        .animate-spline-pulse {
+          animation: streamPulseAnim 2.6s ease-in-out infinite;
         }
 
         /* Default ambient background */
@@ -167,21 +184,27 @@ export const PlatformsWeManage: React.FC = () => {
 
         .animate-float-1,
         .animate-float-2,
-        .animate-pulse-ring {
+        .animate-pulse-ring,
+        .animate-spline-stream,
+        .animate-spline-pulse {
           animation-play-state: paused;
           transform: translateZ(0);
         }
 
         #platforms-we-manage-section.is-in-view .animate-float-1 {
-          animation: floatOrbital1 4.8s ease-in-out infinite;
+          animation: floatOrbital1 3.5s ease-in-out infinite;
           animation-play-state: running;
         }
         #platforms-we-manage-section.is-in-view .animate-float-2 {
-          animation: floatOrbital2 5.6s ease-in-out infinite;
+          animation: floatOrbital2 4s ease-in-out infinite;
           animation-play-state: running;
         }
         #platforms-we-manage-section.is-in-view .animate-pulse-ring {
-          animation: pulseGlowRing 6s ease-in-out infinite;
+          animation: pulseGlowRing 4s ease-in-out infinite;
+          animation-play-state: running;
+        }
+        #platforms-we-manage-section.is-in-view .animate-spline-stream,
+        #platforms-we-manage-section.is-in-view .animate-spline-pulse {
           animation-play-state: running;
         }
 
@@ -193,7 +216,9 @@ export const PlatformsWeManage: React.FC = () => {
         @media (prefers-reduced-motion: reduce) {
           .animate-float-1,
           .animate-float-2,
-          .animate-pulse-ring {
+          .animate-pulse-ring,
+          .animate-spline-stream,
+          .animate-spline-pulse {
             animation: none !important;
           }
         }
@@ -288,7 +313,7 @@ export const PlatformsWeManage: React.FC = () => {
               <span
                 className="italic font-serif font-normal inline-block"
                 style={{
-                  background: "linear-gradient(95deg, #FF671F 0%, #FF9933 26%, #FFFFFF 50%, #138808 74%, #00A859 100%)",
+                  background: "linear-gradient(95deg, #FFA870 0%, #FFC199 26%, #FFFFFF 50%, #86EFAC 74%, #4ADE80 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}
@@ -388,7 +413,7 @@ export const PlatformsWeManage: React.FC = () => {
             <div className="absolute w-[560px] lg:w-[680px] h-[280px] lg:h-[350px] rounded-[100%] border border-white/[0.05]" />
           </div>
 
-          {/* Smooth High-Precision Orbit Track Spline Curves */}
+          {/* Smooth High-Precision Orbit Track Spline Curves with Streaming Dashes & Rays */}
           <svg
             className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible"
             viewBox="0 0 1000 500"
@@ -396,61 +421,143 @@ export const PlatformsWeManage: React.FC = () => {
             preserveAspectRatio="xMidYMid meet"
           >
             <defs>
-              <linearGradient id="tricolorSplineGradDesk" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FF671F" stopOpacity="0.1" />
-                <stop offset="40%" stopColor="#FF671F" stopOpacity="0.7" />
-                <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.9" />
-                <stop offset="60%" stopColor="#046A38" stopOpacity="0.7" />
-                <stop offset="100%" stopColor="#046A38" stopOpacity="0.1" />
+              {/* Vibrant neon lighting glow filter */}
+              <filter id="rayGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+
+              {/* 3-Color Soft Light Saffron, White, Mint Green Tricolor Gradient */}
+              <linearGradient id="splinePulseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFB077" stopOpacity="0" />
+                <stop offset="20%" stopColor="#FFB885" stopOpacity="0.9" />
+                <stop offset="38%" stopColor="#FFD2A6" stopOpacity="1" />
+                <stop offset="50%" stopColor="#FFFFFF" stopOpacity="1" />
+                <stop offset="62%" stopColor="#A3EBB1" stopOpacity="1" />
+                <stop offset="80%" stopColor="#72E09B" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#72E09B" stopOpacity="0" />
               </linearGradient>
             </defs>
 
+            {/* 1. Curve from Instagram to Twitter/X (Left Arch) */}
             <path
               d="M 280 90 C 220 160, 120 220, 80 250"
-              stroke="url(#tricolorSplineGradDesk)"
-              strokeWidth="1.6"
-              strokeDasharray="5 5"
-              className="opacity-70"
+              stroke="rgba(255, 255, 255, 0.22)"
+              strokeWidth="1.4"
+              strokeDasharray="6 6"
+              className="animate-spline-stream"
+            />
+            <path
+              d="M 280 90 C 220 160, 120 220, 80 250"
+              stroke="url(#splinePulseGrad)"
+              strokeWidth="2.8"
+              strokeDasharray="60 260"
+              strokeLinecap="round"
+              filter="url(#rayGlow)"
+              className="animate-spline-pulse"
             />
 
+            {/* 2. Curve across top from LinkedIn to YouTube */}
             <path
               d="M 580 95 C 680 70, 780 120, 850 160"
-              stroke="url(#tricolorSplineGradDesk)"
-              strokeWidth="1.6"
-              strokeDasharray="5 5"
-              className="opacity-70"
+              stroke="rgba(255, 255, 255, 0.24)"
+              strokeWidth="1.4"
+              strokeDasharray="6 6"
+              className="animate-spline-stream"
+              style={{ animationDuration: '4s' }}
+            />
+            <path
+              d="M 580 95 C 680 70, 780 120, 850 160"
+              stroke="url(#splinePulseGrad)"
+              strokeWidth="2.8"
+              strokeDasharray="60 260"
+              strokeLinecap="round"
+              filter="url(#rayGlow)"
+              className="animate-spline-pulse"
+              style={{ animationDelay: '0.6s' }}
             />
 
+            {/* 3. Curve from YouTube to TikTok (Right Arch) */}
             <path
               d="M 850 170 C 920 220, 940 300, 950 360"
-              stroke="rgba(255, 255, 255, 0.25)"
+              stroke="rgba(255, 255, 255, 0.22)"
               strokeWidth="1.4"
-              strokeDasharray="5 5"
-              className="opacity-60"
+              strokeDasharray="6 6"
+              className="animate-spline-stream"
+              style={{ animationDuration: '3.5s' }}
+            />
+            <path
+              d="M 850 170 C 920 220, 940 300, 950 360"
+              stroke="url(#splinePulseGrad)"
+              strokeWidth="2.8"
+              strokeDasharray="50 220"
+              strokeLinecap="round"
+              filter="url(#rayGlow)"
+              className="animate-spline-pulse"
+              style={{ animationDelay: '1.2s' }}
             />
 
+            {/* 4. Curve along bottom from Facebook to TikTok */}
             <path
               d="M 500 410 C 620 430, 740 420, 850 380"
-              stroke="url(#tricolorSplineGradDesk)"
-              strokeWidth="1.6"
-              strokeDasharray="5 5"
-              className="opacity-70"
+              stroke="rgba(255, 255, 255, 0.22)"
+              strokeWidth="1.4"
+              strokeDasharray="6 6"
+              className="animate-spline-stream"
+              style={{ animationDuration: '4.5s' }}
+            />
+            <path
+              d="M 500 410 C 620 430, 740 420, 850 380"
+              stroke="url(#splinePulseGrad)"
+              strokeWidth="2.8"
+              strokeDasharray="60 300"
+              strokeLinecap="round"
+              filter="url(#rayGlow)"
+              className="animate-spline-pulse"
+              style={{ animationDelay: '1.6s' }}
             />
 
+            {/* 5. Curve from Twitter/X down to Facebook */}
             <path
               d="M 80 270 C 90 330, 130 380, 200 400"
-              stroke="rgba(255, 255, 255, 0.2)"
+              stroke="rgba(255, 255, 255, 0.18)"
               strokeWidth="1.4"
-              strokeDasharray="5 5"
-              className="opacity-60"
+              strokeDasharray="6 6"
+              className="animate-spline-stream"
+              style={{ animationDuration: '4s' }}
+            />
+            <path
+              d="M 80 270 C 90 330, 130 380, 200 400"
+              stroke="url(#splinePulseGrad)"
+              strokeWidth="2.8"
+              strokeDasharray="50 250"
+              strokeLinecap="round"
+              filter="url(#rayGlow)"
+              className="animate-spline-pulse"
+              style={{ animationDelay: '0.9s' }}
             />
 
+            {/* 6. Curve along bottom left */}
             <path
               d="M 230 400 C 310 420, 390 425, 470 420"
-              stroke="url(#tricolorSplineGradDesk)"
-              strokeWidth="1.6"
-              strokeDasharray="5 5"
-              className="opacity-70"
+              stroke="rgba(255, 255, 255, 0.22)"
+              strokeWidth="1.4"
+              strokeDasharray="6 6"
+              className="animate-spline-stream"
+              style={{ animationDuration: '3.8s' }}
+            />
+            <path
+              d="M 230 400 C 310 420, 390 425, 470 420"
+              stroke="url(#splinePulseGrad)"
+              strokeWidth="2.8"
+              strokeDasharray="50 250"
+              strokeLinecap="round"
+              filter="url(#rayGlow)"
+              className="animate-spline-pulse"
+              style={{ animationDelay: '0.4s' }}
             />
           </svg>
 
@@ -627,7 +734,7 @@ export const PlatformsWeManage: React.FC = () => {
               <span
                 className="italic font-serif font-normal inline-block transition-all duration-300"
                 style={{
-                  background: "linear-gradient(95deg, #FF671F 0%, #FF9933 26%, #FFFFFF 50%, #138808 74%, #00A859 100%)",
+                  background: "linear-gradient(95deg, #FFA870 0%, #FFC199 26%, #FFFFFF 50%, #86EFAC 74%, #4ADE80 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                 }}

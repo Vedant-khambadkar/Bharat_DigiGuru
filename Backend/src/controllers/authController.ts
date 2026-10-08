@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { db } from "../data/db.js";
 import { AuthenticatedRequest, normalizeRole } from "../middleware/auth.js";
 import { sendPasswordResetOtpEmail, sendAdminCredentialsEmail } from "../services/emailService.js";
+import { emitEvent } from "../services/socketService.js";
 
 export const adminLogin = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -366,18 +367,22 @@ export const registerAdminUser = async (req: AuthenticatedRequest, res: Response
       creatorName: requesterName,
     });
 
+    const safeAdmin = {
+      id: (createdAdmin as any).id,
+      email: (createdAdmin as any).email,
+      name: (createdAdmin as any).name,
+      role: targetRole,
+      createdAt: (createdAdmin as any).createdAt,
+    };
+
+    emitEvent("admin:created", safeAdmin);
+
     res.status(201).json({
       success: true,
       message: emailResult.sent
         ? `Admin account created! Credentials sent to ${normalizedEmail}.`
         : `Admin account created! Note: Email delivery notice: ${emailResult.message}`,
-      user: {
-        id: (createdAdmin as any).id,
-        email: (createdAdmin as any).email,
-        name: (createdAdmin as any).name,
-        role: targetRole,
-        createdAt: (createdAdmin as any).createdAt,
-      },
+      user: safeAdmin,
       temporaryPassword: plainPassword,
     });
   } catch (err: any) {
@@ -441,6 +446,8 @@ export const deleteAdminUser = async (req: AuthenticatedRequest, res: Response):
       res.status(500).json({ success: false, message: "Failed to delete admin account." });
       return;
     }
+
+    emitEvent("admin:deleted", targetId);
 
     res.status(200).json({
       success: true,

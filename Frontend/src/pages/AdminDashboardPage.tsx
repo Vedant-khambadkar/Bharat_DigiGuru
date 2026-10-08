@@ -34,6 +34,9 @@ import {
   Crown,
   ShieldAlert,
   UserCheck,
+  Sparkles,
+  BookOpen,
+  FileText,
 } from "lucide-react";
 import { adminService } from "../services/service/adminService";
 import { socket, onSocketEvent } from "../utils/socket";
@@ -41,7 +44,7 @@ import { ConfirmDeleteModal } from "../components/Admin/ConfirmDeleteModal";
 import CachedImage from "../components/CachedImage";
 import { getApiCache, setApiCache } from "../utils/apiCache";
 
-type TabType = "overview" | "portfolio" | "services" | "team" | "threed" | "inquiries" | "admins";
+type TabType = "overview" | "portfolio" | "services" | "team" | "blogs" | "threed" | "inquiries" | "admins";
 
 const extractPaginatedData = (res: any) => {
   if (!res) return { items: [], total: 0, totalPages: 1, page: 1 };
@@ -105,6 +108,7 @@ export const AdminDashboardPage: React.FC = () => {
         totalPortfolio: number;
         totalServices: number;
         totalTeam: number;
+        totalBlogs: number;
         totalThreeD: number;
         totalInquiries: number;
         newInquiries: number;
@@ -112,6 +116,7 @@ export const AdminDashboardPage: React.FC = () => {
         totalPortfolio: 0,
         totalServices: 0,
         totalTeam: 0,
+        totalBlogs: 0,
         totalThreeD: 0,
         totalInquiries: 0,
         newInquiries: 0,
@@ -170,6 +175,23 @@ export const AdminDashboardPage: React.FC = () => {
   const [teamLoading, setTeamLoading] = useState<boolean>(false);
 
   // ==========================================
+  // BLOGS STATE (SERVER-SIDE PAGINATION + CACHE)
+  // ==========================================
+  const initialBlogsCache = extractPaginatedData(
+    getApiCache<any>("admin_blogs_limit=6&page=1&search=")
+  );
+  const [blogsItems, setBlogsItems] = useState<any[]>(initialBlogsCache.items);
+  const [blogsPage, setBlogsPage] = useState<number>(1);
+  const [blogsLimit, setBlogsLimit] = useState<number>(6);
+  const [blogsTotalPages, setBlogsTotalPages] = useState<number>(
+    initialBlogsCache.totalPages || 1
+  );
+  const [blogsTotal, setBlogsTotal] = useState<number>(initialBlogsCache.total || 0);
+  const [blogsSearch, setBlogsSearch] = useState<string>("");
+  const [blogsCategory, setBlogsCategory] = useState<string>("All");
+  const [blogsLoading, setBlogsLoading] = useState<boolean>(false);
+
+  // ==========================================
   // 3D SHOWCASE STATE (SERVER-SIDE PAGINATION + CACHE)
   // ==========================================
   const initialThreeDCache = extractPaginatedData(
@@ -208,7 +230,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   // Edit / Create Modal State
   const [editingItem, setEditingItem] = useState<{
-    type: "portfolio" | "services" | "threed" | "team";
+    type: "portfolio" | "services" | "team" | "blogs" | "threed";
     isNew: boolean;
     data: any;
   } | null>(null);
@@ -245,7 +267,7 @@ export const AdminDashboardPage: React.FC = () => {
   // Custom Delete Confirmation Modal State
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
-    type: "portfolio" | "services" | "threed" | "inquiries" | "adminUser" | "team";
+    type: "portfolio" | "services" | "team" | "blogs" | "threed" | "inquiries" | "adminUser";
     id: string | number;
     title?: string;
     isDeleting: boolean;
@@ -418,6 +440,46 @@ export const AdminDashboardPage: React.FC = () => {
     [teamPage, teamLimit, teamSearch, teamColumnFilter, teamItems.length]
   );
 
+  const fetchBlogs = useCallback(
+    async (
+      page = blogsPage,
+      limit = blogsLimit,
+      search = blogsSearch,
+      category = blogsCategory,
+      forceRefresh = false
+    ) => {
+      if (blogsItems.length === 0) {
+        setBlogsLoading(true);
+      }
+      try {
+        const res = await adminService.getBlogs(
+          {
+            page,
+            limit,
+            search: search.trim() || undefined,
+            category: category !== "All" ? category : undefined,
+          },
+          forceRefresh
+        );
+        const clean = extractPaginatedData(res);
+        setBlogsItems(clean.items);
+        setBlogsTotal(clean.total);
+        setBlogsTotalPages(clean.totalPages);
+        setBlogsPage(clean.page);
+        setStats((prev: any) => {
+          const updated = { ...prev, totalBlogs: clean.total };
+          setApiCache("admin_stats", updated);
+          return updated;
+        });
+      } catch (err) {
+        console.error("Failed to load blogs:", err);
+      } finally {
+        setBlogsLoading(false);
+      }
+    },
+    [blogsPage, blogsLimit, blogsSearch, blogsCategory, blogsItems.length]
+  );
+
   const fetchThreeD = useCallback(
     async (
       page = threeDPage,
@@ -528,6 +590,7 @@ export const AdminDashboardPage: React.FC = () => {
     fetchPortfolio(portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory, true);
     fetchServices(servicesPage, servicesLimit, servicesSearch, true);
     fetchTeam(teamPage, teamLimit, teamSearch, teamColumnFilter, true);
+    fetchBlogs(blogsPage, blogsLimit, blogsSearch, blogsCategory, true);
     if (currentUser.role === "managedAdmin") {
       fetchThreeD(threeDPage, threeDLimit, threeDSearch, threeDCategory, true);
     }
@@ -541,6 +604,7 @@ export const AdminDashboardPage: React.FC = () => {
     fetchPortfolio(1);
     fetchServices(1);
     fetchTeam(1);
+    fetchBlogs(1);
     if (currentUser.role === "managedAdmin") {
       fetchThreeD(1);
     }
@@ -605,6 +669,29 @@ export const AdminDashboardPage: React.FC = () => {
       fetchTeam(teamPage, teamLimit, teamSearch, teamColumnFilter, true);
     });
 
+    const unsubBlogCreated = onSocketEvent("blog:created", (newBlog) => {
+      showNotification(`Blog published: ${newBlog.title}!`, "success");
+      setStats((prev: any) => {
+        const updated = { ...prev, totalBlogs: (prev.totalBlogs || 0) + 1 };
+        setApiCache("admin_stats", updated);
+        return updated;
+      });
+      fetchBlogs(blogsPage, blogsLimit, blogsSearch, blogsCategory, true);
+    });
+
+    const unsubBlogUpdated = onSocketEvent("blog:updated", () => {
+      fetchBlogs(blogsPage, blogsLimit, blogsSearch, blogsCategory, true);
+    });
+
+    const unsubBlogDeleted = onSocketEvent("blog:deleted", () => {
+      setStats((prev: any) => {
+        const updated = { ...prev, totalBlogs: Math.max(0, (prev.totalBlogs || 1) - 1) };
+        setApiCache("admin_stats", updated);
+        return updated;
+      });
+      fetchBlogs(blogsPage, blogsLimit, blogsSearch, blogsCategory, true);
+    });
+
     const unsubInquiryNew = onSocketEvent("inquiry:new", (newInquiry) => {
       showNotification(`New Inquiry from ${newInquiry.name || newInquiry.fullName || "Client"}!`, "success");
       setStats((prev) => {
@@ -632,17 +719,55 @@ export const AdminDashboardPage: React.FC = () => {
       });
     });
 
-    const unsubPortCreated = onSocketEvent("portfolio:created", () => fetchPortfolio(undefined, undefined, undefined, undefined, true));
-    const unsubPortUpdated = onSocketEvent("portfolio:updated", () => fetchPortfolio(undefined, undefined, undefined, undefined, true));
-    const unsubPortDeleted = onSocketEvent("portfolio:deleted", () => fetchPortfolio(undefined, undefined, undefined, undefined, true));
+    const unsubPortCreated = onSocketEvent("portfolio:created", (newPort) => {
+      showNotification(`Portfolio project added: ${newPort?.title || "New Project"}!`, "success");
+      setStats((prev) => {
+        const updated = { ...prev, totalPortfolio: prev.totalPortfolio + 1 };
+        setApiCache("admin_stats", updated);
+        return updated;
+      });
+      fetchPortfolio(portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory, true);
+    });
+    const unsubPortUpdated = onSocketEvent("portfolio:updated", () => {
+      fetchPortfolio(portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory, true);
+    });
+    const unsubPortDeleted = onSocketEvent("portfolio:deleted", () => {
+      setStats((prev) => {
+        const updated = { ...prev, totalPortfolio: Math.max(0, prev.totalPortfolio - 1) };
+        setApiCache("admin_stats", updated);
+        return updated;
+      });
+      fetchPortfolio(portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory, true);
+    });
 
-    const unsubTeamPortCreated = onSocketEvent("team:created", () => fetchTeam(undefined, undefined, undefined, undefined, true));
-    const unsubTeamPortUpdated = onSocketEvent("team:updated", () => fetchTeam(undefined, undefined, undefined, undefined, true));
-    const unsubTeamPortDeleted = onSocketEvent("team:deleted", () => fetchTeam(undefined, undefined, undefined, undefined, true));
+    const unsubThreeDCreated = onSocketEvent("threed:created", (new3D) => {
+      showNotification(`3D Showcase added: ${new3D?.title || "New Showcase"}!`, "success");
+      setStats((prev) => {
+        const updated = { ...prev, totalThreeD: prev.totalThreeD + 1 };
+        setApiCache("admin_stats", updated);
+        return updated;
+      });
+      fetchThreeD(threeDPage, threeDLimit, threeDSearch, threeDCategory, true);
+    });
+    const unsubThreeDUpdated = onSocketEvent("threed:updated", () => {
+      fetchThreeD(threeDPage, threeDLimit, threeDSearch, threeDCategory, true);
+    });
+    const unsubThreeDDeleted = onSocketEvent("threed:deleted", () => {
+      setStats((prev) => {
+        const updated = { ...prev, totalThreeD: Math.max(0, prev.totalThreeD - 1) };
+        setApiCache("admin_stats", updated);
+        return updated;
+      });
+      fetchThreeD(threeDPage, threeDLimit, threeDSearch, threeDCategory, true);
+    });
 
-    const unsubThreeDCreated = onSocketEvent("threed:created", () => fetchThreeD(undefined, undefined, undefined, undefined, true));
-    const unsubThreeDUpdated = onSocketEvent("threed:updated", () => fetchThreeD(undefined, undefined, undefined, undefined, true));
-    const unsubThreeDDeleted = onSocketEvent("threed:deleted", () => fetchThreeD(undefined, undefined, undefined, undefined, true));
+    const unsubAdminCreated = onSocketEvent("admin:created", (newAdmin) => {
+      showNotification(`Admin account registered: ${newAdmin?.name || newAdmin?.email}!`, "success");
+      fetchAdminUsers();
+    });
+    const unsubAdminDeleted = onSocketEvent("admin:deleted", () => {
+      fetchAdminUsers();
+    });
 
     return () => {
       socket.off("connect", handleConnect);
@@ -653,9 +778,9 @@ export const AdminDashboardPage: React.FC = () => {
       unsubTeamCreated();
       unsubTeamUpdated();
       unsubTeamDeleted();
-      unsubTeamPortCreated();
-      unsubTeamPortUpdated();
-      unsubTeamPortDeleted();
+      unsubBlogCreated();
+      unsubBlogUpdated();
+      unsubBlogDeleted();
       unsubInquiryNew();
       unsubInquiryUpdated();
       unsubInquiryDeleted();
@@ -665,8 +790,36 @@ export const AdminDashboardPage: React.FC = () => {
       unsubThreeDCreated();
       unsubThreeDUpdated();
       unsubThreeDDeleted();
+      unsubAdminCreated();
+      unsubAdminDeleted();
     };
-  }, [fetchPortfolio, fetchServices, fetchTeam, fetchThreeD, servicesPage, servicesLimit, servicesSearch, teamPage, teamLimit, teamSearch, teamColumnFilter]);
+  }, [
+    fetchPortfolio,
+    fetchServices,
+    fetchTeam,
+    fetchBlogs,
+    fetchThreeD,
+    fetchAdminUsers,
+    portfolioPage,
+    portfolioLimit,
+    portfolioSearch,
+    portfolioCategory,
+    servicesPage,
+    servicesLimit,
+    servicesSearch,
+    teamPage,
+    teamLimit,
+    teamSearch,
+    teamColumnFilter,
+    blogsPage,
+    blogsLimit,
+    blogsSearch,
+    blogsCategory,
+    threeDPage,
+    threeDLimit,
+    threeDSearch,
+    threeDCategory,
+  ]);
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -797,6 +950,37 @@ export const AdminDashboardPage: React.FC = () => {
           showNotification("Team member updated!");
         }
         fetchTeam(teamPage, teamLimit, teamSearch, teamColumnFilter, true);
+      } else if (type === "blogs") {
+        const blogPayload = {
+          ...data,
+          id: data.id || data.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `blog-${Date.now()}`,
+          number: data.number || "(01)",
+          title: data.title || "Blog Title",
+          category: data.category || "Digital Acceleration",
+          description: data.description || "",
+          readTime: data.readTime || "5 MIN READ",
+          date: data.date || "AUG 2026",
+          image: data.image || "",
+          content: Array.isArray(data.content)
+            ? data.content
+            : typeof data.content === "string"
+            ? data.content.split("\n\n").map((s: string) => s.trim()).filter(Boolean)
+            : [],
+          bullets: Array.isArray(data.bullets)
+            ? data.bullets
+            : typeof data.bullets === "string"
+            ? data.bullets.split("\n").map((s: string) => s.trim().replace(/^[•\-\*]\s*/, "")).filter(Boolean)
+            : [],
+          isPublished: data.isPublished !== undefined ? Boolean(data.isPublished) : true,
+        };
+        if (isNew) {
+          await adminService.createBlog(blogPayload);
+          showNotification("Blog article published!");
+        } else {
+          await adminService.updateBlog(data.id || data._id, blogPayload);
+          showNotification("Blog article updated!");
+        }
+        fetchBlogs(blogsPage, blogsLimit, blogsSearch, blogsCategory, true);
       } else if (type === "threed") {
         if (!data.videoUrl) {
           showNotification("Please upload a video file or provide a video URL.", "error");
@@ -826,7 +1010,7 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   const handleDeleteItem = (
-    type: "portfolio" | "services" | "team" | "threed" | "inquiries" | "adminUser",
+    type: "portfolio" | "services" | "team" | "blogs" | "threed" | "inquiries" | "adminUser",
     id: string | number,
     title?: string
   ) => {
@@ -842,6 +1026,8 @@ export const AdminDashboardPage: React.FC = () => {
           ? "Service Capability"
           : type === "team"
           ? "Team Member"
+          : type === "blogs"
+          ? "Blog Article"
           : type === "threed"
           ? "3D Showcase"
           : type === "adminUser"
@@ -868,6 +1054,10 @@ export const AdminDashboardPage: React.FC = () => {
         await adminService.deleteTeamMember(String(id));
         showNotification("Team member removed.");
         fetchTeam(teamPage, teamLimit, teamSearch, teamColumnFilter, true);
+      } else if (type === "blogs") {
+        await adminService.deleteBlog(String(id));
+        showNotification("Blog article removed.");
+        fetchBlogs(blogsPage, blogsLimit, blogsSearch, blogsCategory, true);
       } else if (type === "threed") {
         await adminService.deleteThreeD(String(id));
         showNotification("3D showcase removed.");
@@ -1113,6 +1303,27 @@ export const AdminDashboardPage: React.FC = () => {
             </span>
           </button>
 
+          {/* Blogs & Articles - VISIBLE TO ALL ADMINS */}
+          <button
+            onClick={() => {
+              setActiveTab("blogs");
+              fetchBlogs(1);
+            }}
+            className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all cursor-pointer ${
+              activeTab === "blogs"
+                ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.35)]"
+                : "text-neutral-400 hover:text-white hover:bg-white/5 bg-white/[0.02] border border-white/5"
+            }`}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <BookOpen size={15} className="shrink-0 text-cyan-400" />
+              <span>BLOGS</span>
+            </div>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold font-mono ${activeTab === "blogs" ? "bg-white/20 text-white" : "bg-white/10 text-neutral-300"}`}>
+              {stats.totalBlogs || blogsTotal}
+            </span>
+          </button>
+
           {/* 3D SHOWCASE - ONLY VISIBLE TO MANAGED ADMIN */}
           {currentUser.role === "managedAdmin" && (
             <button
@@ -1266,7 +1477,28 @@ export const AdminDashboardPage: React.FC = () => {
             <span className="text-[9px] font-mono tracking-tight">Team</span>
           </button>
 
-          {/* 5. Inquiries */}
+          {/* 5. Blogs */}
+          <button
+            onClick={() => {
+              setActiveTab("blogs");
+              fetchBlogs(1);
+            }}
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2 rounded-2xl transition-all cursor-pointer relative ${
+              activeTab === "blogs"
+                ? "text-white font-bold"
+                : "text-neutral-400 hover:text-white"
+            }`}
+          >
+            <div className={`p-1.5 rounded-xl relative transition-all ${activeTab === "blogs" ? "bg-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.5)]" : "bg-transparent"}`}>
+              <BookOpen size={16} />
+              <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-cyan-500 text-[8px] font-mono text-white font-bold leading-none">
+                {stats.totalBlogs || blogsTotal}
+              </span>
+            </div>
+            <span className="text-[9px] font-mono tracking-tight">Blogs</span>
+          </button>
+
+          {/* 6. Inquiries */}
           <button
             onClick={() => {
               setActiveTab("inquiries");
@@ -1296,7 +1528,7 @@ export const AdminDashboardPage: React.FC = () => {
           {activeTab === "overview" && (
             <div className="flex flex-col gap-4 sm:gap-6">
               {/* Stat KPI Cards - Sleek modern glassmorphic cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
                 {/* 1. Portfolio Card */}
                 <div
                   onClick={() => {
@@ -1369,7 +1601,31 @@ export const AdminDashboardPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 4. Inquiries Card */}
+                {/* 4. Blogs & Articles Card */}
+                <div
+                  onClick={() => {
+                    setActiveTab("blogs");
+                    fetchBlogs(1);
+                  }}
+                  className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#12141c] to-[#0c0d14] border border-cyan-500/25 hover:border-cyan-500/60 flex items-center justify-between transition-all cursor-pointer group active:scale-[0.98] shadow-lg"
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className="text-cyan-400 font-mono text-xs font-bold uppercase tracking-wider">
+                      Blogs & Articles
+                    </span>
+                    <div className="font-['Syne',sans-serif] font-bold text-2xl sm:text-3xl text-white">
+                      {stats.totalBlogs || blogsTotal}
+                    </div>
+                    <span className="text-neutral-400 text-[10px] font-mono">
+                      Editorials →
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 group-hover:bg-cyan-500/20 transition-all">
+                    <BookOpen size={20} />
+                  </div>
+                </div>
+
+                {/* 5. Inquiries Card */}
                 <div
                   onClick={() => {
                     setActiveTab("inquiries");
@@ -1400,7 +1656,7 @@ export const AdminDashboardPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 5. 3D Studio or Admins Card */}
+                {/* 6. 3D Studio or Admins Card */}
                 {currentUser.role === "managedAdmin" ? (
                   <div
                     onClick={() => {
@@ -2325,6 +2581,315 @@ export const AdminDashboardPage: React.FC = () => {
           )}
 
           {/* =========================================================================
+              BLOGS & EDITORIAL ARTICLES TAB (SERVER-SIDE PAGINATED & REALTIME SYNC)
+             ========================================================================= */}
+          {activeTab === "blogs" && (
+            <div className="flex flex-col gap-3.5 sm:gap-6">
+              {/* Top Controls */}
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <h2 className="font-['Syne',sans-serif] font-bold text-base sm:text-xl text-white flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-cyan-400" />
+                    <span>Blogs & Articles ({blogsTotal})</span>
+                  </h2>
+                  <p className="font-mono text-[10px] sm:text-xs text-neutral-400">
+                    Editorial publications, industry knowledge, and thought-leadership articles
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    setEditingItem({
+                      type: "blogs",
+                      isNew: true,
+                      data: {
+                        number: `(${String(blogsTotal + 1).padStart(2, "0")})`,
+                        category: "Digital Acceleration",
+                        title: "",
+                        description: "",
+                        readTime: "5 MIN READ",
+                        date: "AUG 2026",
+                        image: "",
+                        content: [""],
+                        bullets: [""],
+                        isPublished: true,
+                      },
+                    })
+                  }
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-[0_0_20px_rgba(6,182,212,0.35)] shrink-0 active:scale-95 transition-all"
+                >
+                  <Plus size={14} />
+                  <span>ADD BLOG</span>
+                </button>
+              </div>
+
+              {/* Toolbar */}
+              <div className="p-3 sm:p-4 rounded-2xl bg-[#12141c] border border-white/10 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search articles by title, description, or content..."
+                    value={blogsSearch}
+                    onChange={(e) => {
+                      setBlogsSearch(e.target.value);
+                      fetchBlogs(1, blogsLimit, e.target.value, blogsCategory);
+                    }}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 sm:flex items-center gap-2">
+                  <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 min-w-0">
+                    <Filter className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <select
+                      value={blogsCategory}
+                      onChange={(e) => {
+                        setBlogsCategory(e.target.value);
+                        fetchBlogs(1, blogsLimit, blogsSearch, e.target.value);
+                      }}
+                      className="w-full bg-transparent text-xs font-mono text-neutral-300 focus:outline-none cursor-pointer truncate"
+                    >
+                      <option value="All" className="bg-[#12141c]">All Categories</option>
+                      <option value="Digital Acceleration" className="bg-[#12141c]">Digital Acceleration</option>
+                      <option value="Tech Era & Culture" className="bg-[#12141c]">Tech Era & Culture</option>
+                      <option value="SMM & ORM" className="bg-[#12141c]">SMM & ORM</option>
+                      <option value="Paid Media" className="bg-[#12141c]">Paid Media</option>
+                      <option value="Lead Systems" className="bg-[#12141c]">Lead Systems</option>
+                      <option value="Web Engineering" className="bg-[#12141c]">Web Engineering</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-1 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-neutral-400">
+                    <span>Limit:</span>
+                    <select
+                      value={blogsLimit}
+                      onChange={(e) => {
+                        const newLimit = Number(e.target.value);
+                        setBlogsLimit(newLimit);
+                        fetchBlogs(1, newLimit, blogsSearch, blogsCategory);
+                      }}
+                      className="bg-transparent text-white focus:outline-none cursor-pointer"
+                    >
+                      <option value="6" className="bg-[#12141c]">6</option>
+                      <option value="12" className="bg-[#12141c]">12</option>
+                      <option value="24" className="bg-[#12141c]">24</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Blogs Cards Grid */}
+              {blogsLoading ? (
+                <div className="py-16 flex flex-col items-center justify-center gap-3 text-neutral-400 font-mono text-xs">
+                  <Loader2 size={24} className="animate-spin text-cyan-400" />
+                  <span>Loading editorial articles...</span>
+                </div>
+              ) : blogsItems.length === 0 ? (
+                <div className="py-16 flex flex-col items-center justify-center gap-3 p-8 rounded-3xl bg-[#12141c] border border-white/10 text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <BookOpen size={28} />
+                  </div>
+                  <h3 className="font-['Syne',sans-serif] font-bold text-lg text-white">No Articles Found</h3>
+                  <p className="font-mono text-xs text-neutral-400 max-w-sm">
+                    {blogsSearch || blogsCategory !== "All"
+                      ? "No articles matched your filter criteria."
+                      : "Publish your first thought-leadership article to showcase in the blog."}
+                  </p>
+                  <button
+                    onClick={() =>
+                      setEditingItem({
+                        type: "blogs",
+                        isNew: true,
+                        data: {
+                          number: "(01)",
+                          category: "Digital Acceleration",
+                          title: "",
+                          description: "",
+                          readTime: "5 MIN READ",
+                          date: "AUG 2026",
+                          image: "",
+                          content: [""],
+                          bullets: [""],
+                          isPublished: true,
+                        },
+                      })
+                    }
+                    className="mt-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-mono text-xs font-bold uppercase cursor-pointer transition-all"
+                  >
+                    + Publish First Article
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {blogsItems.map((blog) => {
+                    const paragraphsCount = Array.isArray(blog.content) ? blog.content.length : 0;
+                    const bulletsCount = Array.isArray(blog.bullets) ? blog.bullets.length : 0;
+
+                    return (
+                      <div
+                        key={blog.id || blog._id}
+                        className="group relative rounded-2xl overflow-hidden bg-[#12141c] border border-white/10 hover:border-cyan-500/50 transition-all duration-300 flex flex-col justify-between shadow-xl"
+                      >
+                        <div>
+                          {/* Image Banner Header */}
+                          <div className="relative aspect-[16/9] w-full overflow-hidden bg-black/60 flex items-center justify-center border-b border-white/5">
+                            {blog.image ? (
+                              <CachedImage
+                                src={blog.image}
+                                alt={blog.title}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-cyan-950/40 via-black to-[#12141c]">
+                                <BookOpen size={32} className="text-cyan-500/40" />
+                                <span className="font-mono text-[10px] text-neutral-500">Text-Based Editorial</span>
+                              </div>
+                            )}
+
+                            {/* Top Floating Badges */}
+                            <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1.5 z-10">
+                              <span className="px-2.5 py-0.5 rounded-full bg-black/80 backdrop-blur-md border border-cyan-500/40 text-[10px] font-mono font-bold text-cyan-300">
+                                {blog.category || "Editorial"}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-mono font-bold text-white">
+                                {blog.number || "(01)"}
+                              </span>
+                            </div>
+
+                            {/* Bottom Floating Read-time & Date */}
+                            <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between text-[10px] font-mono text-neutral-300 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10">
+                              <span>{blog.date || "AUG 2026"}</span>
+                              <span className="text-cyan-300 font-bold">{blog.readTime || "5 MIN READ"}</span>
+                            </div>
+                          </div>
+
+                          {/* Article Body */}
+                          <div className="p-4 sm:p-5 flex flex-col gap-2.5">
+                            <h3 className="font-['Syne',sans-serif] font-bold text-base sm:text-lg text-white group-hover:text-cyan-300 transition-colors line-clamp-2 leading-snug">
+                              {blog.title}
+                            </h3>
+
+                            <p className="font-mono text-xs text-neutral-400 line-clamp-2 leading-relaxed">
+                              {blog.description}
+                            </p>
+
+                            {/* Structure Indicators */}
+                            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/5 text-[10px] font-mono">
+                              <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-neutral-300">
+                                📝 {paragraphsCount} {paragraphsCount === 1 ? "Paragraph" : "Paragraphs"}
+                              </span>
+                              {bulletsCount > 0 && (
+                                <span className="px-2 py-0.5 rounded-md bg-cyan-500/10 border border-cyan-500/20 text-cyan-300">
+                                  ⚡ {bulletsCount} {bulletsCount === 1 ? "Bullet" : "Bullets"}
+                                </span>
+                              )}
+                              <span
+                                className={`ml-auto px-2 py-0.5 rounded-md text-[9px] font-bold uppercase ${
+                                  blog.isPublished !== false
+                                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                    : "bg-neutral-500/20 text-neutral-400 border border-neutral-500/30"
+                                }`}
+                              >
+                                {blog.isPublished !== false ? "Published" : "Draft"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card Action Footer */}
+                        <div className="p-3 bg-[#0e1017] border-t border-white/10 flex items-center justify-between">
+                          <span className="font-mono text-[10px] text-neutral-500">
+                            Slug: {String(blog.id || blog._id || "").slice(0, 16)}...
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <a
+                              href={`/blogs/${blog.id || blog._id}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-neutral-300 hover:text-white transition-colors"
+                              title="View on Live Site"
+                            >
+                              <ExternalLink size={13} />
+                            </a>
+                            <button
+                              onClick={() =>
+                                setEditingItem({
+                                  type: "blogs",
+                                  isNew: false,
+                                  data: {
+                                    ...blog,
+                                    content: Array.isArray(blog.content) ? blog.content : [blog.content || ""],
+                                    bullets: Array.isArray(blog.bullets) ? blog.bullets : [blog.bullets || ""],
+                                  },
+                                })
+                              }
+                              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-neutral-300 hover:text-white transition-colors cursor-pointer active:scale-95"
+                              title="Edit Article"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteItem("blogs", blog.id || blog._id, blog.title)}
+                              className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors cursor-pointer active:scale-95"
+                              title="Delete Article"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Pagination */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-[#12141c] border border-white/10 mt-2">
+                <span className="text-xs font-mono text-neutral-400">
+                  Showing Page <strong className="text-white">{blogsPage}</strong> of{" "}
+                  <strong className="text-white">{blogsTotalPages}</strong> ({blogsTotal} articles)
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => fetchBlogs(blogsPage - 1, blogsLimit, blogsSearch, blogsCategory)}
+                    disabled={blogsPage <= 1 || blogsLoading}
+                    className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 text-white flex items-center gap-1 cursor-pointer active:scale-95 transition-colors"
+                  >
+                    <ChevronLeft size={13} />
+                    <span className="hidden sm:inline">PREV</span>
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: blogsTotalPages }, (_, i) => i + 1).map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => fetchBlogs(num, blogsLimit, blogsSearch, blogsCategory)}
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl font-mono text-xs transition-all cursor-pointer ${
+                          blogsPage === num
+                            ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold shadow-[0_0_10px_rgba(6,182,212,0.5)]"
+                            : "bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10"
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => fetchBlogs(blogsPage + 1, blogsLimit, blogsSearch, blogsCategory)}
+                    disabled={blogsPage >= blogsTotalPages || blogsLoading}
+                    className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 disabled:opacity-30 text-white flex items-center gap-1 cursor-pointer active:scale-95 transition-colors"
+                  >
+                    <span className="hidden sm:inline">NEXT</span>
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* =========================================================================
               3. 3D SHOWCASES TAB (SERVER-SIDE PAGINATED)
              ========================================================================= */}
           {activeTab === "threed" && (
@@ -3066,6 +3631,8 @@ export const AdminDashboardPage: React.FC = () => {
                   ? "Service Capability"
                   : editingItem.type === "team"
                   ? "Team Member"
+                  : editingItem.type === "blogs"
+                  ? "Blog Article"
                   : "3D Showcase Video"}
               </h3>
               <button
@@ -4397,6 +4964,397 @@ export const AdminDashboardPage: React.FC = () => {
                 </div>
               )}
 
+
+
+              {/* =========================================================================
+                  BLOGS & EDITORIAL ARTICLE SPECIFIC FIELDS
+                 ========================================================================= */}
+              {editingItem.type === "blogs" && (
+                <div className="flex flex-col gap-3.5">
+                  {/* Article Title */}
+                  <div className="flex flex-col gap-1">
+                    <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                      Article Headline / Title <span className="text-cyan-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editingItem.data.title || ""}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, title: e.target.value },
+                        })
+                      }
+                      placeholder="e.g. Empower Your Brand's Digital Journey with Bharat DigiGuru"
+                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500 font-semibold"
+                    />
+                  </div>
+
+                  {/* Category, Number, Read Time & Date */}
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                    <div className="flex flex-col gap-1 sm:col-span-2">
+                      <label className="font-mono text-[10px] text-neutral-400 uppercase font-semibold">
+                        Editorial Category
+                      </label>
+                      <input
+                        type="text"
+                        value={editingItem.data.category || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, category: e.target.value },
+                          })
+                        }
+                        placeholder="e.g. Digital Acceleration"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] text-neutral-400 uppercase font-semibold">
+                        Index Number
+                      </label>
+                      <input
+                        type="text"
+                        value={editingItem.data.number || "(01)"}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, number: e.target.value },
+                          })
+                        }
+                        placeholder="(01)"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] text-neutral-400 uppercase font-semibold">
+                        Read Time
+                      </label>
+                      <input
+                        type="text"
+                        value={editingItem.data.readTime || "5 MIN READ"}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, readTime: e.target.value },
+                          })
+                        }
+                        placeholder="6 MIN READ"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] text-neutral-400 uppercase font-semibold">
+                        Publication Date
+                      </label>
+                      <input
+                        type="text"
+                        value={editingItem.data.date || "AUG 2026"}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, date: e.target.value },
+                          })
+                        }
+                        placeholder="AUG 2026"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+
+                    {/* Status Toggle */}
+                    <div className="flex items-center p-3 rounded-xl bg-[#141620] border border-white/10 font-mono text-xs mt-auto">
+                      <label className="flex items-center gap-2 cursor-pointer text-white">
+                        <input
+                          type="checkbox"
+                          checked={editingItem.data.isPublished !== false}
+                          onChange={(e) =>
+                            setEditingItem({
+                              ...editingItem,
+                              data: { ...editingItem.data, isPublished: e.target.checked },
+                            })
+                          }
+                          className="w-4 h-4 rounded text-cyan-600 focus:ring-cyan-500"
+                        />
+                        <span>Published & Visible to Public</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Summary / Description */}
+                  <div className="flex flex-col gap-1">
+                    <label className="font-mono text-[10px] text-neutral-400 uppercase font-semibold">
+                      Short Summary / Card Description <span className="text-cyan-400">*</span>
+                    </label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={editingItem.data.description || ""}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, description: e.target.value },
+                        })
+                      }
+                      placeholder="Brief excerpt shown on article previews and cards..."
+                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 leading-relaxed"
+                    />
+                  </div>
+
+                  {/* Cover Image Upload / URL */}
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        Article Banner Image (Drag & Drop or URL)
+                      </label>
+                      {editingItem.data.image && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditingItem({
+                              ...editingItem,
+                              data: { ...editingItem.data, image: "" },
+                            })
+                          }
+                          className="text-[10px] font-mono text-red-400 hover:underline cursor-pointer flex items-center gap-1"
+                        >
+                          <Trash2 size={11} /> Remove
+                        </button>
+                      )}
+                    </div>
+
+                    {editingItem.data.image ? (
+                      <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 bg-black/40 p-2.5 flex items-center gap-3">
+                        <div className="w-24 h-16 rounded-xl overflow-hidden bg-black shrink-0 border border-white/10 relative">
+                          <CachedImage
+                            src={editingItem.data.image}
+                            alt="Cover Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1 min-w-0 flex-1">
+                          <span className="font-mono text-[11px] text-cyan-400 font-semibold flex items-center gap-1">
+                            <CheckCircle size={12} /> Image Attached
+                          </span>
+                          <p className="font-mono text-[10px] text-neutral-400 truncate max-w-full">
+                            {editingItem.data.image}
+                          </p>
+                          <div className="flex items-center gap-2 pt-1">
+                            <label className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold cursor-pointer transition-colors active:scale-95 inline-flex items-center gap-1">
+                              <UploadCloud size={11} />
+                              <span>Replace Image</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) handleFileUpload(f, "image");
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragActive(true);
+                        }}
+                        onDragLeave={() => setDragActive(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragActive(false);
+                          const f = e.dataTransfer.files?.[0];
+                          if (f) handleFileUpload(f, "image");
+                        }}
+                        className="relative border-2 border-dashed border-cyan-500/30 hover:border-cyan-500/60 rounded-2xl p-4 text-center cursor-pointer flex flex-col items-center justify-center gap-2 bg-[#181a24]/50"
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleFileUpload(f, "image");
+                          }}
+                        />
+                        {isUploading ? (
+                          <div className="flex flex-col items-center gap-1.5 py-2">
+                            <Loader2 className="w-6 h-6 text-cyan-400 animate-spin" />
+                            <span className="text-xs font-mono text-cyan-300">{uploadProgress || "Uploading image..."}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <UploadCloud size={18} className="text-cyan-400" />
+                            <p className="text-xs text-neutral-300">
+                              Drag cover image here or <span className="text-cyan-400 underline">browse</span>
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    <input
+                      type="text"
+                      value={editingItem.data.image || ""}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, image: e.target.value },
+                        })
+                      }
+                      placeholder="Or paste direct CloudFront / Unsplash / CDN image URL (https://...)"
+                      className="w-full bg-[#181a24]/50 border border-white/5 rounded-lg px-2.5 py-1 text-[11px] font-mono text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-cyan-500"
+                    />
+                  </div>
+
+                  {/* Dynamic Content Paragraphs */}
+                  <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-[#141620] border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-cyan-400">
+                        <FileText size={15} />
+                        <h4 className="font-['Syne',sans-serif] font-bold text-xs sm:text-sm text-white">
+                          Article Content Paragraphs ({(editingItem.data.content || []).length})
+                        </h4>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentContent = Array.isArray(editingItem.data.content) ? editingItem.data.content : [];
+                          setEditingItem({
+                            ...editingItem,
+                            data: {
+                              ...editingItem.data,
+                              content: [...currentContent, ""],
+                            },
+                          });
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 font-mono text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors active:scale-95"
+                      >
+                        <Plus size={11} />
+                        <span>Add Paragraph</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {(editingItem.data.content || [""]).map((para: string, idx: number) => (
+                        <div key={idx} className="flex flex-col gap-1 bg-[#181a24] border border-white/5 rounded-xl p-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-[10px] text-cyan-400 font-semibold">
+                              Paragraph #{idx + 1}
+                            </span>
+                            {(editingItem.data.content || []).length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...(editingItem.data.content || [])];
+                                  updated.splice(idx, 1);
+                                  setEditingItem({
+                                    ...editingItem,
+                                    data: { ...editingItem.data, content: updated },
+                                  });
+                                }}
+                                className="text-[10px] font-mono text-red-400 hover:text-red-300 flex items-center gap-0.5 cursor-pointer"
+                              >
+                                <Trash2 size={10} /> Delete
+                              </button>
+                            )}
+                          </div>
+                          <textarea
+                            rows={3}
+                            value={para}
+                            onChange={(e) => {
+                              const updated = [...(editingItem.data.content || [])];
+                              updated[idx] = e.target.value;
+                              setEditingItem({
+                                ...editingItem,
+                                data: { ...editingItem.data, content: updated },
+                              });
+                            }}
+                            placeholder={`Enter content for paragraph #${idx + 1}...`}
+                            className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-cyan-500 leading-relaxed"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Key Highlights / Bullets */}
+                  <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-[#141620] border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-cyan-400">
+                        <Sparkles size={15} />
+                        <h4 className="font-['Syne',sans-serif] font-bold text-xs sm:text-sm text-white">
+                          Key Bullets & Strategic Highlights ({(editingItem.data.bullets || []).length})
+                        </h4>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentBullets = Array.isArray(editingItem.data.bullets) ? editingItem.data.bullets : [];
+                          setEditingItem({
+                            ...editingItem,
+                            data: {
+                              ...editingItem.data,
+                              bullets: [...currentBullets, ""],
+                            },
+                          });
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 font-mono text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors active:scale-95"
+                      >
+                        <Plus size={11} />
+                        <span>Add Bullet</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {(editingItem.data.bullets || []).map((bullet: string, bIdx: number) => (
+                        <div key={bIdx} className="flex items-center gap-2">
+                          <span className="font-mono text-xs text-cyan-400 font-bold shrink-0">
+                            •
+                          </span>
+                          <input
+                            type="text"
+                            value={bullet}
+                            onChange={(e) => {
+                              const updated = [...(editingItem.data.bullets || [])];
+                              updated[bIdx] = e.target.value;
+                              setEditingItem({
+                                ...editingItem,
+                                data: { ...editingItem.data, bullets: updated },
+                              });
+                            }}
+                            placeholder="e.g. Elevate the brand's social media presence with expert SMM Strategies"
+                            className="flex-1 bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-neutral-600 focus:outline-none focus:border-cyan-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = [...(editingItem.data.bullets || [])];
+                              updated.splice(bIdx, 1);
+                              setEditingItem({
+                                ...editingItem,
+                                data: { ...editingItem.data, bullets: updated },
+                              });
+                            }}
+                            className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-neutral-400 hover:text-red-400 transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-end gap-2 mt-2 pt-2.5 border-t border-white/10">
                 <button
                   type="button"
@@ -4408,14 +5366,20 @@ export const AdminDashboardPage: React.FC = () => {
                 <button
                   type="submit"
                   className={`px-5 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-lg cursor-pointer active:scale-95 ${
-                    editingItem.type === "threed"
+                    editingItem.type === "blogs"
+                      ? "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.35)]"
+                      : editingItem.type === "threed"
                       ? "bg-purple-600 hover:bg-purple-700 text-white"
                       : editingItem.type === "team"
                       ? "bg-white hover:bg-neutral-200 !text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]"
                       : "bg-[#ff3b30] hover:bg-[#b91c1c] text-white"
                   }`}
                 >
-                  {editingItem.type === "threed"
+                  {editingItem.type === "blogs"
+                    ? editingItem.isNew
+                      ? "PUBLISH ARTICLE"
+                      : "UPDATE ARTICLE"
+                    : editingItem.type === "threed"
                     ? "PUBLISH 3D VIDEO"
                     : editingItem.type === "services"
                     ? editingItem.isNew

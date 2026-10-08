@@ -38,19 +38,19 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     if (telemetryPercentRef.current) telemetryPercentRef.current.textContent = `${val}%`;
     if (progressBarRef.current) progressBarRef.current.style.width = `${val}%`;
     if (telemetryStatusRef.current) {
-      telemetryStatusRef.current.textContent =
-        val < 100 ? "INITIALIZING 3D ASSETS & HARDWARE" : "3D ENVIRONMENT READY";
+      if (val >= 100) {
+        telemetryStatusRef.current.textContent = "3D ENVIRONMENT & PORTFOLIO READY";
+      } else if (!portfolioReady && (macReady || businessmanReady)) {
+        telemetryStatusRef.current.textContent = "LOADING 100% PORTFOLIO 3D TEXTURES";
+      } else {
+        telemetryStatusRef.current.textContent = "INITIALIZING 3D ASSETS & HARDWARE";
+      }
     }
   };
 
-  const triggerExit = useCallback((isTimeout = false) => {
+  const triggerExit = useCallback(() => {
     if (isExitingRef.current) return;
     isExitingRef.current = true;
-
-    if (isTimeout && typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-      console.log("[PRELOADER] timeout");
-      console.log("[PRELOADER] releasing UI");
-    }
 
     // Immediately trigger page reveal callback (starts Lenis and reveals hero)
     onStartExit?.();
@@ -62,9 +62,6 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
 
     const tl = gsap.timeline({
       onComplete: () => {
-        if (!isTimeout && typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-          console.log("[PRELOADER] hidden");
-        }
         onComplete();
       },
     });
@@ -105,12 +102,8 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
         },
         onComplete: () => {
           updateDisplay(100);
-          if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-            console.log("[PRELOADER] 100%");
-            console.log("[PRELOADER] hiding");
-          }
           const timer = setTimeout(() => {
-            triggerExit(false);
+            triggerExit();
           }, 120);
           return () => clearTimeout(timer);
         },
@@ -153,7 +146,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
   // Safety fallback: Auto-reveal in 12s maximum to release the user without blocking
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
-      triggerExit(true);
+      triggerExit();
     }, 12000);
 
     return () => clearTimeout(safetyTimer);
@@ -163,7 +156,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.code === "Space" || e.code === "Enter" || e.code === "Escape") && !isExitingRef.current) {
-        triggerExit(false);
+        triggerExit();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -173,7 +166,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
   return (
     <div
       ref={containerRef}
-      onClick={() => triggerExit(false)}
+      onClick={() => triggerExit()}
       className="fixed inset-0 z-[9999] w-screen h-screen bg-[#050505] text-white flex flex-col justify-between p-6 sm:p-10 md:p-14 select-none overflow-hidden will-change-transform cursor-pointer"
     >
       {/* Subtle Background Grid Texture (Pure Monochrome) */}

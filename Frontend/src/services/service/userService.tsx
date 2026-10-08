@@ -132,6 +132,72 @@ class UserService {
     }
   }
 
+  private _storiesPromise: Promise<any> | null = null;
+
+  async getStories(forceRefresh = false) {
+    if (!forceRefresh) {
+      const cached = getApiCache<any>("stories_items");
+      if (cached && (Array.isArray(cached) ? cached.length > 0 : true)) {
+        if (!this._storiesPromise) {
+          this._storiesPromise = this._fetchStoriesDirect();
+        }
+        return cached;
+      }
+    }
+
+    if (this._storiesPromise) return this._storiesPromise;
+    this._storiesPromise = this._fetchStoriesDirect();
+    return this._storiesPromise;
+  }
+
+  private async _fetchStoriesDirect() {
+    try {
+      const data = await userApi.getStories();
+      if (data) {
+        const items = Array.isArray(data) ? data : data.items || data;
+        if (Array.isArray(items) && items.length > 0) {
+          setApiCache("stories_items", items);
+        }
+      }
+      return data;
+    } finally {
+      this._storiesPromise = null;
+    }
+  }
+
+  private _blogsPromise: Promise<any> | null = null;
+
+  async getBlogs(forceRefresh = false) {
+    if (!forceRefresh) {
+      const cached = getApiCache<any>("blogs_items");
+      if (cached && (Array.isArray(cached) ? cached.length > 0 : true)) {
+        if (!this._blogsPromise) {
+          this._blogsPromise = this._fetchBlogsDirect();
+        }
+        return cached;
+      }
+    }
+
+    if (this._blogsPromise) return this._blogsPromise;
+    this._blogsPromise = this._fetchBlogsDirect();
+    return this._blogsPromise;
+  }
+
+  private async _fetchBlogsDirect() {
+    try {
+      const data = await userApi.getBlogs();
+      if (data) {
+        const items = Array.isArray(data) ? data : data.items || data;
+        if (Array.isArray(items) && items.length > 0) {
+          setApiCache("blogs_items", items);
+        }
+      }
+      return data;
+    } finally {
+      this._blogsPromise = null;
+    }
+  }
+
   submitInquiry(data: {
     name?: string;
     fullName?: string;
@@ -149,3 +215,4 @@ class UserService {
 }
 
 export const userService = new UserService();
+

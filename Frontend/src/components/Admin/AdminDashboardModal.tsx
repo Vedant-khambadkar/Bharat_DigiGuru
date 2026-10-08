@@ -626,7 +626,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
             {/* OVERVIEW TAB */}
             {activeTab === "overview" && (
               <div className="flex flex-col gap-6">
-                <div className={`grid grid-cols-1 ${currentUserRole === "managedAdmin" ? "sm:grid-cols-4" : "sm:grid-cols-3"} gap-4`}>
+                <div className={`grid grid-cols-1 ${currentUserRole === "managedAdmin" ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3 lg:grid-cols-3"} gap-4`}>
                   <div
                     onClick={() => {
                       setActiveTab("portfolio");

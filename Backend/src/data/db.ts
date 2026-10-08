@@ -2,16 +2,19 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { IDatabaseSchema, IPortfolioItem, IThreeDProject, IServiceItem, ITeamMember, IInquiry } from "../types/index.js";
+import { IDatabaseSchema, IPortfolioItem, IThreeDProject, IServiceItem, ITeamMember, IStoryItem, IBlogItem, IInquiry } from "../types/index.js";
 import { getInitialSeedData } from "./seedData.js";
 import {
   PortfolioModel,
   ThreeDModel,
   ServiceModel,
   TeamMemberModel,
+  StoryModel,
+  BlogModel,
   InquiryModel,
   AdminUserModel,
 } from "../models/index.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -71,6 +74,10 @@ class DatabaseStore {
           if (!Array.isArray(merged.services) || merged.services.length === 0) {
             merged.services = initialSeed.services || [];
           }
+          // Ensure stories exists
+          if (!Array.isArray(merged.stories) || merged.stories.length === 0) {
+            merged.stories = initialSeed.stories || [];
+          }
           return merged;
         }
       }
@@ -100,25 +107,21 @@ class DatabaseStore {
   public async connectMongo(uri?: string): Promise<boolean> {
     const mongoUri = uri || process.env.MONGODB_URI;
     if (!mongoUri) {
-      console.log("ℹ️ No MONGODB_URI provided. Running in file-backed local database mode.");
       return false;
     }
 
     try {
-      console.log("🔄 Connecting to MongoDB Cluster...");
       await mongoose.connect(mongoUri, {
         serverSelectionTimeoutMS: 10000,
       });
 
       this.isMongoConnected = true;
-      console.log("🍃 [MONGODB] Connected successfully to MongoDB Atlas!");
 
       // Auto-seed MongoDB collections if empty
       await this.seedMongoIfEmpty();
       return true;
     } catch (err: any) {
       console.error("❌ [MONGODB CONNECTION ERROR]:", err.message);
-      console.log("⚠️ Falling back to local JSON database store.");
       this.isMongoConnected = false;
       return false;
     }
@@ -132,35 +135,36 @@ class DatabaseStore {
       const adminCount = await AdminUserModel.countDocuments();
       if (adminCount === 0) {
         await AdminUserModel.create(seed.adminUser);
-        console.log("🌱 [MONGODB SEED] Initialized Admin User.");
       }
 
       // 2. Portfolio
       const portfolioCount = await PortfolioModel.countDocuments();
       if (portfolioCount === 0) {
         await PortfolioModel.insertMany(seed.portfolio);
-        console.log(`🌱 [MONGODB SEED] Seeded ${seed.portfolio.length} Portfolio Projects.`);
       }
 
       // 3. 3D Studio
       const threedCount = await ThreeDModel.countDocuments();
       if (threedCount === 0) {
         await ThreeDModel.insertMany(seed.threed);
-        console.log(`🌱 [MONGODB SEED] Seeded ${seed.threed.length} 3D Projects.`);
       }
 
       // 4. Services
       const servicesCount = await ServiceModel.countDocuments();
       if (servicesCount === 0 && seed.services && seed.services.length > 0) {
         await ServiceModel.insertMany(seed.services);
-        console.log(`🌱 [MONGODB SEED] Seeded ${seed.services.length} Services.`);
       }
 
       // 5. Inquiries
       const inqCount = await InquiryModel.countDocuments();
       if (inqCount === 0 && seed.inquiries.length > 0) {
         await InquiryModel.insertMany(seed.inquiries);
-        console.log(`🌱 [MONGODB SEED] Seeded ${seed.inquiries.length} Sample Inquiries.`);
+      }
+
+      // 6. Stories
+      const storiesCount = await StoryModel.countDocuments();
+      if (storiesCount === 0 && seed.stories && seed.stories.length > 0) {
+        await StoryModel.insertMany(seed.stories);
       }
     } catch (seedErr: any) {
       console.error("⚠️ [MONGODB SEED ERROR]:", seedErr.message);
@@ -1102,7 +1106,361 @@ class DatabaseStore {
     }
     return false;
   }
+
+  // ==========================================
+  // 6. STORIES (WITH SERVER-SIDE PAGINATION)
+  // ==========================================
+  public async getStories(params?: PaginationParams): Promise<PaginatedResult<IStoryItem> | IStoryItem[]> {
+    const page = Math.max(1, Number(params?.page) || 1);
+    const limit = Math.max(1, Number(params?.limit) || 10);
+    const search = params?.search?.trim().toLowerCase();
+    const category = params?.category?.trim();
+
+    if (this.isMongoConnected) {
+      const query: any = {};
+      if (search) {
+        query.$or = [
+          { title: { $regex: search, $options: "i" } },
+          { subtitle: { $regex: search, $options: "i" } },
+          { category: { $regex: search, $options: "i" } },
+        ];
+      }
+      if (category) {
+        query.category = { $regex: category, $options: "i" };
+      }
+
+      const total = await StoryModel.countDocuments(query);
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const skip = (page - 1) * limit;
+
+      const docs = await StoryModel.find(query)
+        .sort({ order: 1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      return {
+        items: docs.map((d: any) => ({
+          ...d,
+          id: String(d.id || d._id),
+        })),
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      };
+    }
+
+    // Local in-memory / JSON store fallback
+    if (!this.localData.stories) {
+      this.localData.stories = [];
+    }
+
+    let filtered = [...this.localData.stories];
+    if (search) {
+      filtered = filtered.filter(
+        (s) =>
+          (s.title && s.title.toLowerCase().includes(search)) ||
+          (s.subtitle && s.subtitle.toLowerCase().includes(search)) ||
+          (s.category && s.category.toLowerCase().includes(search))
+      );
+    }
+    if (category) {
+      filtered = filtered.filter((s) => s.category && s.category.toLowerCase() === category.toLowerCase());
+    }
+
+    filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const start = (page - 1) * limit;
+    const items = filtered.slice(start, start + limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    };
+  }
+
+  public async getAllStories(): Promise<IStoryItem[]> {
+    if (this.isMongoConnected) {
+      const docs = await StoryModel.find({ isActive: true }).sort({ order: 1, createdAt: -1 }).lean();
+      return docs.map((d: any) => ({
+        ...d,
+        id: String(d.id || d._id),
+      }));
+    }
+    if (!this.localData.stories) this.localData.stories = [];
+    return this.localData.stories
+      .filter((s) => s.isActive !== false)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  public async getStoryById(id: string): Promise<IStoryItem | null> {
+    if (this.isMongoConnected) {
+      const doc = await StoryModel.findOne({ id }).lean();
+      if (!doc) return null;
+      return {
+        ...doc,
+        id: String(doc.id || (doc as any)._id),
+      } as unknown as IStoryItem;
+    }
+    if (!this.localData.stories) this.localData.stories = [];
+    const found = this.localData.stories.find((s) => String(s.id) === String(id));
+    return found || null;
+  }
+
+  public async createStory(data: Partial<IStoryItem>): Promise<IStoryItem> {
+    const id = data.id || `story-${Date.now()}`;
+    const newStory: IStoryItem = {
+      id,
+      title: data.title || "Untitled Story",
+      subtitle: data.subtitle || "",
+      category: data.category || "Highlights",
+      coverImage: data.coverImage || "",
+      author: data.author || {
+        name: "Bharat DigiGuru Studio",
+      },
+      slides: Array.isArray(data.slides) ? data.slides : [],
+      isFeatured: data.isFeatured !== undefined ? Boolean(data.isFeatured) : false,
+      isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
+      order: data.order !== undefined ? Number(data.order) : 0,
+      viewCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (this.isMongoConnected) {
+      const doc = new StoryModel(newStory);
+      await doc.save();
+      return doc.toJSON() as unknown as IStoryItem;
+    }
+
+    if (!this.localData.stories) {
+      this.localData.stories = [];
+    }
+    this.localData.stories.unshift(newStory);
+    this.persistLocal(this.localData);
+    return newStory;
+  }
+
+  public async updateStory(id: string, data: Partial<IStoryItem>): Promise<IStoryItem | null> {
+    if (this.isMongoConnected) {
+      const doc = await StoryModel.findOneAndUpdate(
+        { id },
+        { ...data, updatedAt: new Date() },
+        { new: true }
+      );
+      return doc ? (doc.toJSON() as unknown as IStoryItem) : null;
+    }
+
+    if (!this.localData.stories) this.localData.stories = [];
+    const idx = this.localData.stories.findIndex((s) => String(s.id) === String(id));
+    if (idx === -1) return null;
+
+    this.localData.stories[idx] = {
+      ...this.localData.stories[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    this.persistLocal(this.localData);
+    return this.localData.stories[idx];
+  }
+
+  public async deleteStory(id: string): Promise<boolean> {
+    if (this.isMongoConnected) {
+      const res = await StoryModel.deleteOne({ id });
+      return res.deletedCount > 0;
+    }
+
+    if (!this.localData.stories) return false;
+    const initialLen = this.localData.stories.length;
+    this.localData.stories = this.localData.stories.filter((s) => String(s.id) !== String(id));
+    if (this.localData.stories.length !== initialLen) {
+      this.persistLocal(this.localData);
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // BLOGS OPERATIONS
+  // ==========================================
+  public async getBlogs(params?: PaginationParams): Promise<PaginatedResult<IBlogItem>> {
+    const page = Math.max(1, Number(params?.page) || 1);
+    const limit = Math.max(1, Math.min(100, Number(params?.limit) || 20));
+    const search = params?.search?.trim() || "";
+    const category = params?.category?.trim() || "";
+
+    if (this.isMongoConnected) {
+      const query: any = {};
+      if (search) {
+        query.$or = [
+          { title: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+          { category: { $regex: search, $options: "i" } },
+        ];
+      }
+      if (category && category !== "All") {
+        query.category = { $regex: new RegExp(`^${category}$`, "i") };
+      }
+
+      const total = await BlogModel.countDocuments(query);
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const skip = (page - 1) * limit;
+
+      const docs = await BlogModel.find(query)
+        .sort({ order: 1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+      const items = docs.map((doc) => doc.toJSON() as unknown as IBlogItem);
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      };
+    }
+
+    // Local JSON Database Fallback
+    if (!this.localData.blogs) this.localData.blogs = [];
+    let filtered = [...this.localData.blogs];
+
+    if (search) {
+      const s = search.toLowerCase();
+      filtered = filtered.filter(
+        (b) =>
+          b.title?.toLowerCase().includes(s) ||
+          b.description?.toLowerCase().includes(s) ||
+          b.category?.toLowerCase().includes(s)
+      );
+    }
+
+    if (category && category !== "All") {
+      filtered = filtered.filter(
+        (b) => b.category?.toLowerCase() === category.toLowerCase()
+      );
+    }
+
+    filtered.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const skip = (page - 1) * limit;
+    const items = filtered.slice(skip, skip + limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    };
+  }
+
+  public async getAllBlogs(): Promise<IBlogItem[]> {
+    if (this.isMongoConnected) {
+      const docs = await BlogModel.find().sort({ order: 1, createdAt: -1 });
+      return docs.map((d) => d.toJSON() as unknown as IBlogItem);
+    }
+    if (!this.localData.blogs) this.localData.blogs = [];
+    return [...this.localData.blogs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  public async getBlogById(id: string): Promise<IBlogItem | null> {
+    if (this.isMongoConnected) {
+      const doc = await BlogModel.findOne({ id });
+      return doc ? (doc.toJSON() as unknown as IBlogItem) : null;
+    }
+    if (!this.localData.blogs) this.localData.blogs = [];
+    const item = this.localData.blogs.find((b) => String(b.id) === String(id));
+    return item ? { ...item } : null;
+  }
+
+  public async createBlog(data: Partial<IBlogItem>): Promise<IBlogItem> {
+    const id = data.id || `blog-${Date.now()}`;
+    const newBlog: IBlogItem = {
+      id,
+      number: data.number || "(01)",
+      category: data.category || "Digital Acceleration",
+      title: data.title || "Untitled Blog",
+      description: data.description || "",
+      readTime: data.readTime || "5 MIN READ",
+      date: data.date || "AUG 2026",
+      image: data.image || "",
+      content: Array.isArray(data.content) ? data.content : [],
+      bullets: Array.isArray(data.bullets) ? data.bullets : [],
+      isPublished: data.isPublished !== false,
+      order: data.order ?? (this.localData.blogs?.length || 0) + 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (this.isMongoConnected) {
+      const doc = await BlogModel.create(newBlog);
+      return doc.toJSON() as unknown as IBlogItem;
+    }
+
+    if (!this.localData.blogs) this.localData.blogs = [];
+    this.localData.blogs.push(newBlog);
+    this.persistLocal(this.localData);
+    return newBlog;
+  }
+
+  public async updateBlog(id: string, data: Partial<IBlogItem>): Promise<IBlogItem | null> {
+    if (this.isMongoConnected) {
+      const doc = await BlogModel.findOneAndUpdate(
+        { id },
+        { ...data, updatedAt: new Date() },
+        { new: true }
+      );
+      return doc ? (doc.toJSON() as unknown as IBlogItem) : null;
+    }
+
+    if (!this.localData.blogs) this.localData.blogs = [];
+    const idx = this.localData.blogs.findIndex((b) => String(b.id) === String(id));
+    if (idx === -1) return null;
+
+    this.localData.blogs[idx] = {
+      ...this.localData.blogs[idx],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    this.persistLocal(this.localData);
+    return this.localData.blogs[idx];
+  }
+
+  public async deleteBlog(id: string): Promise<boolean> {
+    if (this.isMongoConnected) {
+      const res = await BlogModel.deleteOne({ id });
+      return res.deletedCount > 0;
+    }
+
+    if (!this.localData.blogs) return false;
+    const initialLen = this.localData.blogs.length;
+    this.localData.blogs = this.localData.blogs.filter((b) => String(b.id) !== String(id));
+    if (this.localData.blogs.length !== initialLen) {
+      this.persistLocal(this.localData);
+      return true;
+    }
+    return false;
+  }
 }
 
 export const db = new DatabaseStore();
+
 
