@@ -39,12 +39,16 @@ const RAD_TARGET_ROT_Z = THREE.MathUtils.degToRad(PARAMS.rotZDeg);
 const SCROLL_SPAN = Math.max(PARAMS.scrollEnd - PARAMS.scrollStart, 0.01);
 const HALF_PI = Math.PI / 2;
 
+// Shared plane geometry across social cards
+const SHARED_PLANE_GEO = new THREE.PlaneGeometry(1, 1);
+
 // Fast inline lerp
 const inlineLerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
 const YoutubeAnimation: React.FC = () => {
   const meshRef = useRef<THREE.Mesh>(null);
   const isHiddenRef = useRef(true);
+  const lastProgressRef = useRef(-1);
   const { size } = useThree();
   const texture = useTexture(YTImg);
   const scrollProgressRef = useHomeScrollProgress();
@@ -83,13 +87,14 @@ const YoutubeAnimation: React.FC = () => {
 
   useFrame(() => {
     if (!meshRef.current) return;
-    const mesh = meshRef.current;
-    const mat = mesh.material as THREE.MeshBasicMaterial;
     const p = scrollProgressRef.current || 0;
 
     if (p < PARAMS.scrollStart) {
       if (isHiddenRef.current) return;
       isHiddenRef.current = true;
+      lastProgressRef.current = p;
+      const mesh = meshRef.current;
+      const mat = mesh.material as THREE.MeshBasicMaterial;
       mesh.position.set(PARAMS.startPosX, PARAMS.startPosY, PARAMS.startPosZ);
       mesh.rotation.set(RAD_START_ROT_X, RAD_START_ROT_Y, RAD_START_ROT_Z);
       mesh.scale.set(
@@ -101,7 +106,13 @@ const YoutubeAnimation: React.FC = () => {
       return;
     }
 
+    // Skip recalculation if scroll progress has not changed
+    if (Math.abs(p - lastProgressRef.current) < 0.0001) return;
+    lastProgressRef.current = p;
+
     isHiddenRef.current = false;
+    const mesh = meshRef.current;
+    const mat = mesh.material as THREE.MeshBasicMaterial;
     const rawProgress = Math.min(Math.max((p - PARAMS.scrollStart) / SCROLL_SPAN, 0), 1);
     const progress = Math.sin(rawProgress * HALF_PI);
 
@@ -131,10 +142,10 @@ const YoutubeAnimation: React.FC = () => {
   return (
     <mesh
       ref={meshRef}
+      geometry={SHARED_PLANE_GEO}
       position={[PARAMS.startPosX, PARAMS.startPosY, PARAMS.startPosZ]}
       renderOrder={2}
     >
-      <planeGeometry args={[1, 1]} />
       <meshBasicMaterial
         map={texture}
         transparent

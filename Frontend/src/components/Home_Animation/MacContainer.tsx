@@ -105,7 +105,7 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
   const lidGeo = useMemo(() => createRoundedRectGeometry(31.1, 21.7, 1.4), []);
 
   // Setup textures and materials cleanly with useMemo to avoid re-creation on every render
-  const { meshes } = useMemo(() => {
+  const { meshes, screenMaterial, backMaterial, aluminumMaterial, keycapMaterial } = useMemo(() => {
     const cappedAnisotropy = Math.min(gl.capabilities.getMaxAnisotropy(), 4);
 
     keyboard.colorSpace = THREE.SRGBColorSpace;
@@ -251,9 +251,22 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
     };
   }, [mac.scene, onReady]);
 
-  const scrollProgressRef = useHomeScrollProgress();
+  // Clean WebGL geometry and material disposal on unmount
+  useEffect(() => {
+    return () => {
+      keyboardGeo.dispose();
+      lidGeo.dispose();
+      screenMaterial.dispose();
+      backMaterial.dispose();
+      aluminumMaterial.dispose();
+      keycapMaterial.dispose();
+    };
+  }, [keyboardGeo, lidGeo, screenMaterial, backMaterial, aluminumMaterial, keycapMaterial]);
 
-  // Smooth Scroll Animation Frame Loop
+  const scrollProgressRef = useHomeScrollProgress();
+  const lastProgressRef = useRef(-1);
+
+  // Smooth Scroll Animation Frame Loop with Idle Short-Circuit
   useFrame(() => {
     const scrollOffset = scrollProgressRef.current || 0;
 
@@ -267,10 +280,16 @@ const MacContainer = ({ onReady }: MacContainerProps) => {
       progress = smoothstep(rawT);
     }
 
+    // Skip redundant transformation recalculations if progress hasn't changed
+    if (Math.abs(progress - lastProgressRef.current) < 0.0001) {
+      return;
+    }
+    lastProgressRef.current = progress;
+
     // 1. Screen Lid Opening Animation
     if (meshes.screen) {
       const lidAngleDeg = inlineLerp(PARAMS.lidClosedAngle, PARAMS.lidOpenAngle, progress);
-      meshes.screen.rotation.x = THREE.MathUtils.degToRad(lidAngleDeg);
+      meshes.screen.rotation.x = lidAngleDeg * (Math.PI / 180);
     }
 
     // 2. Base/Chassis Position, Rotation & Scale

@@ -103,6 +103,15 @@ interface SingleSkinnedPlaneProps {
   onHoverPlane?: (plane: PlaneItem) => void;
 }
 
+// Reusable hit geometry & material to prevent per-card allocation
+const SHARED_HIT_GEOMETRY = new THREE.PlaneGeometry(WIDTH, HEIGHT);
+const SHARED_HIT_MATERIAL = new THREE.MeshBasicMaterial({
+  transparent: true,
+  opacity: 0,
+  depthWrite: false,
+  side: THREE.DoubleSide,
+});
+
 export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
   plane,
   width = WIDTH,
@@ -226,22 +235,16 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
         <group position={[radius, 0, 0]}>
           <primitive ref={meshRef} object={mesh} />
 
-          {/* Double-sided hit mesh covering the plane for instantaneous hover detection */}
+          {/* Double-sided shared hit mesh covering the plane for instantaneous hover detection */}
           <mesh
+            geometry={SHARED_HIT_GEOMETRY}
+            material={SHARED_HIT_MATERIAL}
             position={[width / 2, 0, 0.01]}
             onPointerOver={handlePointerOver}
             onPointerEnter={handlePointerOver}
             onPointerOut={handlePointerOut}
             onPointerLeave={handlePointerOut}
-          >
-            <planeGeometry args={[width, height]} />
-            <meshBasicMaterial
-              transparent
-              opacity={0}
-              depthWrite={false}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
+          />
 
           {showSkeleton && <primitive object={skeletonHelper} />}
         </group>

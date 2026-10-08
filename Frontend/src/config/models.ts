@@ -18,32 +18,51 @@ export const MODEL_URLS = {
 
 export type ModelKey = keyof typeof MODEL_URLS;
 
-// Initiate early parallel preload via Drei GLTF & Texture loaders
-if (typeof window !== "undefined") {
-  if (!(window as any).__bdgMacStartTime) {
-    (window as any).__bdgMacStartTime = performance.now();
-  }
-  if (!(window as any).__bdgBusinessmanStartTime) {
-    (window as any).__bdgBusinessmanStartTime = performance.now();
-  }
+export const preloadHero3DAssets = () => {
+  if (typeof window === "undefined") return;
   try {
-    // 3D Models
     useGLTF.preload(MODEL_URLS.mac);
-    useGLTF.preload(MODEL_URLS.businessman);
-
-    // Home 3D MacBook Textures
     useTexture.preload(heroImg);
     useTexture.preload(keyboardImg);
     useTexture.preload(laptopBackImg);
-
-    // Home 3D Social Media Cards Textures
     useTexture.preload(InstagramImg);
     useTexture.preload(YTImg);
     useTexture.preload(PinterestImg);
     useTexture.preload(TikTokImg);
   } catch (e) {
     if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-      console.debug("[3D] Preload notice:", e);
+      console.debug("[3D] Hero Preload notice:", e);
     }
+  }
+};
+
+export const preloadBusinessmanModel = () => {
+  if (typeof window === "undefined") return;
+  try {
+    useGLTF.preload(MODEL_URLS.businessman);
+  } catch (e) {
+    if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
+      console.debug("[3D] Team Preload notice:", e);
+    }
+  }
+};
+
+// Immediate early preload of critical Hero assets
+if (typeof window !== "undefined") {
+  if (!(window as any).__bdgMacStartTime) {
+    (window as any).__bdgMacStartTime = performance.now();
+  }
+  preloadHero3DAssets();
+
+  // Deferred preloading of below-the-fold businessman 3D model during idle scheduling
+  if ("requestIdleCallback" in window) {
+    (window as any).requestIdleCallback(
+      () => {
+        preloadBusinessmanModel();
+      },
+      { timeout: 4000 }
+    );
+  } else {
+    setTimeout(preloadBusinessmanModel, 1200);
   }
 }

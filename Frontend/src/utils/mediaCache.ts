@@ -1,5 +1,10 @@
 import * as THREE from "three";
 
+const CACHE_NAME = "bdg-persistent-media-v1";
+
+// Memory caches
+const blobUrlMemoryCache = new Map<string, string>();
+const inFlightFetchPromises = new Map<string, Promise<string>>();
 const inFlightPreloads = new Set<string>();
 const preloadedUrls = new Set<string>();
 
@@ -8,49 +13,122 @@ const textureCache = new Map<string, THREE.Texture>();
 const inFlightTexturePromises = new Map<string, Promise<THREE.Texture | null>>();
 
 /**
- * Returns clean, resolved media URL.
- * Bypasses redundant manual fetch + Blob creation, allowing the browser's
- * highly-optimized HTTP network cache and Three.js ImageLoader to work directly.
+ * Safely opens the persistent CacheStorage instance if supported by the browser.
+ */
+async function getMediaCache(): Promise<Cache | null> {
+  if (typeof window !== "undefined" && "caches" in window) {
+    try {
+      return await window.caches.open(CACHE_NAME);
+    } catch (err) {
+      console.warn("CacheStorage open error:", err);
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Retrieves an image/media URL from persistent CacheStorage.
+ * If already cached (e.g. from previous visit or reload), returns a local Blob URL
+ * with ZERO network requests to CloudFront / CDN.
+ * If not cached, fetches from CloudFront once, saves to persistent CacheStorage, and returns the Blob URL.
  */
 export async function getCachedMediaUrl(url?: string): Promise<string> {
   if (!url || typeof url !== "string") return "";
   const cleanUrl = url.trim();
   if (!cleanUrl) return "";
-  return cleanUrl;
+
+  // Data URLs and local blob URLs don't need caching
+  if (cleanUrl.startsWith("data:") || cleanUrl.startsWith("blob:")) {
+    return cleanUrl;
+  }
+
+  // 1. Check in-memory Blob URL cache (Instant synchronous access)
+  const inMemoryBlobUrl = blobUrlMemoryCache.get(cleanUrl);
+  if (inMemoryBlobUrl) {
+    return inMemoryBlobUrl;
+  }
+
+  // 2. In-flight request deduplication
+  const inFlightPromise = inFlightFetchPromises.get(cleanUrl);
+  if (inFlightPromise) {
+    return inFlightPromise;
+  }
+
+  const fetchAndCachePromise = (async (): Promise<string> => {
+    try {
+      const cache = await getMediaCache();
+
+      // 3. Check persistent CacheStorage (Preserved across page reloads & browser restarts)
+      if (cache) {
+        const cachedResponse = await cache.match(cleanUrl);
+        if (cachedResponse && cachedResponse.ok) {
+          const blob = await cachedResponse.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          blobUrlMemoryCache.set(cleanUrl, blobUrl);
+          preloadedUrls.add(cleanUrl);
+          return blobUrl;
+        }
+      }
+
+      // 4. Fetch from CloudFront CDN once
+      const response = await fetch(cleanUrl, {
+        mode: "cors",
+        credentials: "omit",
+      });
+
+      if (!response.ok) {
+        // Fallback to original URL if fetch fails
+        return cleanUrl;
+      }
+
+      // 5. Store in persistent CacheStorage
+      if (cache) {
+        try {
+          await cache.put(cleanUrl, response.clone());
+        } catch (putErr) {
+          console.warn("Could not cache response in CacheStorage:", putErr);
+        }
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      blobUrlMemoryCache.set(cleanUrl, blobUrl);
+      preloadedUrls.add(cleanUrl);
+      return blobUrl;
+    } catch (err) {
+      console.warn("Media cache fetch error, falling back to original URL:", cleanUrl, err);
+      return cleanUrl;
+    } finally {
+      inFlightFetchPromises.delete(cleanUrl);
+    }
+  })();
+
+  inFlightFetchPromises.set(cleanUrl, fetchAndCachePromise);
+  return fetchAndCachePromise;
 }
 
 /**
- * Preload an image using the browser's native Image() preloader with CORS.
- * Uses browser HTTP cache directly without creating intermediate JS Blobs in memory.
+ * Preload a single image directly into CacheStorage and memory.
  */
-function preloadSingleImage(url: string): Promise<void> {
-  if (!url || preloadedUrls.has(url)) return Promise.resolve();
-  if (url.startsWith("data:") || url.startsWith("blob:")) return Promise.resolve();
+async function preloadSingleImage(url: string): Promise<void> {
+  if (!url || preloadedUrls.has(url)) return;
+  if (url.startsWith("data:") || url.startsWith("blob:")) return;
 
   if (inFlightPreloads.has(url)) {
-    return Promise.resolve();
+    return;
   }
 
   inFlightPreloads.add(url);
 
-  return new Promise<void>((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.decoding = "async";
-
-    img.onload = () => {
-      preloadedUrls.add(url);
-      inFlightPreloads.delete(url);
-      resolve();
-    };
-
-    img.onerror = () => {
-      inFlightPreloads.delete(url);
-      resolve(); // Non-blocking failure
-    };
-
-    img.src = url;
-  });
+  try {
+    await getCachedMediaUrl(url);
+    preloadedUrls.add(url);
+  } catch (_e) {
+    // Non-blocking
+  } finally {
+    inFlightPreloads.delete(url);
+  }
 }
 
 export interface PreloadOptions {
@@ -59,21 +137,20 @@ export interface PreloadOptions {
 }
 
 /**
- * Preloads a list of media URLs with controlled concurrency (max 2 at a time by default)
- * and idle scheduling so initial rendering and 3D hero loading are never blocked.
+ * Preloads a list of media URLs with controlled concurrency into persistent CacheStorage.
  */
 export async function preloadMediaList(
   urls: (string | undefined)[],
   options: PreloadOptions = {}
 ): Promise<void> {
-  const { priority = "low", concurrency = 2 } = options;
+  const { priority = "low", concurrency = 3 } = options;
   const validUrls = Array.from(
     new Set(
       urls
         .filter((u): u is string => typeof u === "string" && Boolean(u.trim()))
         .map((u) => u.trim())
     )
-  ).filter((u) => !preloadedUrls.has(u) && !textureCache.has(u));
+  ).filter((u) => !preloadedUrls.has(u));
 
   if (validUrls.length === 0) return;
 
@@ -116,8 +193,7 @@ export function getLoadedTexture(url?: string): THREE.Texture | null {
 }
 
 /**
- * Loads and caches a Three.js Texture with complete request deduplication and fallback.
- * Ensures textures are oriented right-side up (flipY = true) and filtered properly.
+ * Loads and caches a Three.js Texture with complete request deduplication and persistent cache backing.
  */
 export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | null> {
   const cleanUrl = url.trim();
@@ -135,36 +211,34 @@ export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | nul
     return inFlight;
   }
 
-  // 3. Initiate Single Controlled Texture Load
-  const loader = new THREE.TextureLoader();
-  loader.setCrossOrigin("anonymous");
+  const promise = (async (): Promise<THREE.Texture | null> => {
+    try {
+      // First resolve the cached persistent Blob URL (from CacheStorage)
+      const resolvedMediaUrl = await getCachedMediaUrl(cleanUrl);
 
-  const promise = new Promise<THREE.Texture | null>((resolve) => {
-    loader.load(
-      cleanUrl,
-      (tex) => {
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.generateMipmaps = true;
-        tex.minFilter = THREE.LinearMipmapLinearFilter;
-        tex.magFilter = THREE.LinearFilter;
-        tex.flipY = true;
-        tex.needsUpdate = true;
+      const loader = new THREE.TextureLoader();
+      loader.setCrossOrigin("anonymous");
 
-        textureCache.set(cleanUrl, tex);
-        preloadedUrls.add(cleanUrl);
-        inFlightTexturePromises.delete(cleanUrl);
-        resolve(tex);
-      },
-      undefined,
-      async () => {
-        // Fallback: Fetch as Blob to bypass browser CORS / cache header quirks
-        try {
-          const res = await fetch(cleanUrl, { mode: "cors" });
-          if (res.ok) {
-            const blob = await res.blob();
-            const blobUrl = URL.createObjectURL(blob);
+      return await new Promise<THREE.Texture | null>((resolve) => {
+        loader.load(
+          resolvedMediaUrl,
+          (tex) => {
+            tex.colorSpace = THREE.SRGBColorSpace;
+            tex.generateMipmaps = true;
+            tex.minFilter = THREE.LinearMipmapLinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+            tex.flipY = true;
+            tex.needsUpdate = true;
+
+            textureCache.set(cleanUrl, tex);
+            preloadedUrls.add(cleanUrl);
+            resolve(tex);
+          },
+          undefined,
+          () => {
+            // Fallback to original url
             loader.load(
-              blobUrl,
+              cleanUrl,
               (tex) => {
                 tex.colorSpace = THREE.SRGBColorSpace;
                 tex.generateMipmaps = true;
@@ -174,58 +248,80 @@ export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | nul
                 tex.needsUpdate = true;
 
                 textureCache.set(cleanUrl, tex);
-                preloadedUrls.add(cleanUrl);
-                inFlightTexturePromises.delete(cleanUrl);
                 resolve(tex);
               },
               undefined,
-              () => {
-                inFlightTexturePromises.delete(cleanUrl);
-                resolve(null);
-              }
+              () => resolve(null)
             );
-            return;
           }
-        } catch (_fetchErr) {
-          // Both loaders failed
-        }
-        inFlightTexturePromises.delete(cleanUrl);
-        resolve(null);
-      }
-    );
-  });
+        );
+      });
+    } catch (_err) {
+      return null;
+    } finally {
+      inFlightTexturePromises.delete(cleanUrl);
+    }
+  })();
 
   inFlightTexturePromises.set(cleanUrl, promise);
   return promise;
 }
 
 /**
- * Invalidates cached URLs in memory and tracking sets
- * (e.g. when an admin uploads a new version of an image).
+ * Invalidates cached URLs in memory, texture cache, and persistent CacheStorage.
  */
 export async function invalidateMediaCache(targetUrl?: string): Promise<void> {
+  const cache = await getMediaCache();
+
   if (targetUrl) {
     preloadedUrls.delete(targetUrl);
     inFlightPreloads.delete(targetUrl);
+    const blobUrl = blobUrlMemoryCache.get(targetUrl);
+    if (blobUrl && blobUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(blobUrl);
+    }
+    blobUrlMemoryCache.delete(targetUrl);
+
     const cachedTex = textureCache.get(targetUrl);
     if (cachedTex) {
       cachedTex.dispose();
       textureCache.delete(targetUrl);
     }
     inFlightTexturePromises.delete(targetUrl);
+    inFlightFetchPromises.delete(targetUrl);
+
+    if (cache) {
+      try {
+        await cache.delete(targetUrl);
+      } catch (_e) {}
+    }
   } else {
     preloadedUrls.clear();
     inFlightPreloads.clear();
+    blobUrlMemoryCache.forEach((blobUrl) => {
+      if (blobUrl.startsWith("blob:")) URL.revokeObjectURL(blobUrl);
+    });
+    blobUrlMemoryCache.clear();
+
     textureCache.forEach((tex) => tex.dispose());
     textureCache.clear();
     inFlightTexturePromises.clear();
+    inFlightFetchPromises.clear();
+
+    if (typeof window !== "undefined" && "caches" in window) {
+      try {
+        await window.caches.delete(CACHE_NAME);
+      } catch (_e) {}
+    }
   }
 }
 
 /**
- * React hook to resolve media/image/poster URL directly.
+ * React hook to resolve media/image/poster URL directly from persistent CacheStorage.
  */
 export function useCachedMedia(url?: string): string {
-  return url ? url.trim() : "";
+  if (!url) return "";
+  const cleanUrl = url.trim();
+  const inMemory = blobUrlMemoryCache.get(cleanUrl);
+  return inMemory || cleanUrl;
 }
-

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { getCachedMediaUrl } from "../utils/mediaCache";
+import { getCachedMediaUrl, useCachedMedia } from "../utils/mediaCache";
 
 interface ColorLensImageProps {
   src: string;
@@ -19,13 +19,13 @@ export const ColorLensImage: React.FC<ColorLensImageProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [resolvedSrc, setResolvedSrc] = useState<string>(src);
+  const [resolvedSrc, setResolvedSrc] = useState<string>(() => useCachedMedia(src) || src);
 
   useEffect(() => {
     let isMounted = true;
     if (src) {
       getCachedMediaUrl(src).then((cached) => {
-        if (isMounted) setResolvedSrc(cached || src);
+        if (isMounted && cached) setResolvedSrc(cached);
       }).catch(() => {
         if (isMounted) setResolvedSrc(src);
       });

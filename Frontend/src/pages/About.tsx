@@ -1,14 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import LensText from "../components/LensText";
 import ColorLensImage from "../components/ColorLensImage";
 import WordReveal from "../components/WordReveal";
 import { Sparkles, Target, Zap } from "lucide-react";
-import Img1 from "../assets/Picture/Picture10.webp";
-import Img2 from "../assets/Picture/Picture2.webp";
-import Img3 from "../assets/Picture/Picture3.webp";
-import Img4 from "../assets/Picture/Picture4.webp";
-import Img5 from "../assets/Picture/Picture5.webp";
-import Img6 from "../assets/Picture/Picture6.webp";
+import { preloadMediaList } from "../utils/mediaCache";
+
+const CLOUDFRONT_BASE = (
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_CLOUDFRONT_URL) ||
+  "https://d1mou18mn47yy7.cloudfront.net"
+).replace(/\/+$/, "");
+
+export const ABOUT_IMAGES = {
+  img1: `${CLOUDFRONT_BASE}/assets/Picture/Picture10.webp`,
+  img2: `${CLOUDFRONT_BASE}/assets/Picture/Picture2.webp`,
+  img3: `${CLOUDFRONT_BASE}/assets/Picture/Picture3.webp`,
+  img4: `${CLOUDFRONT_BASE}/assets/Picture/Picture4.webp`,
+  img5: `${CLOUDFRONT_BASE}/assets/Picture/Picture5.webp`,
+  img6: `${CLOUDFRONT_BASE}/assets/Picture/Picture6.webp`,
+};
+
+export const preloadAboutAssets = async (): Promise<void> => {
+  await preloadMediaList(Object.values(ABOUT_IMAGES), { priority: "idle" });
+};
 
 interface AboutProps {
   id?: string;
@@ -16,6 +29,11 @@ interface AboutProps {
 
 export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
   const [hoveredPillar, setHoveredPillar] = useState<number | null>(null);
+
+  // Preload and store in persistent CacheStorage on mount
+  useEffect(() => {
+    preloadAboutAssets().catch(() => {});
+  }, []);
 
   return (
     <section
@@ -57,7 +75,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         {/* Image 1: Camera Lens */}
         <div className="w-full aspect-[3/4] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
-            src={Img1}
+            src={ABOUT_IMAGES.img1}
             alt="Analog camera lens"
             lensRadius={100}
           />
@@ -66,7 +84,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         {/* Image 2: Woman with Prism/Lens */}
         <div className="w-full aspect-[3/4] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
-            src={Img2}
+            src={ABOUT_IMAGES.img2}
             alt="Portrait with crystal lens"
             lensRadius={100}
           />
@@ -75,7 +93,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         {/* Image 3: Laptop Hands & Mug */}
         <div className="w-full aspect-[3/4] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 sm:col-span-2 lg:col-span-1">
           <ColorLensImage
-            src={Img3}
+            src={ABOUT_IMAGES.img3}
             alt="Overhead laptop keyboard typing"
             lensRadius={100}
           />
@@ -84,7 +102,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         {/* Image 4: Wide Graphic Tablet with Stylus & Laptop Screen */}
         <div className="col-span-full lg:col-span-3 aspect-[16/9] lg:aspect-[16/8.2] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
-            src={Img4}
+            src={ABOUT_IMAGES.img4}
             alt="Drawing on digital tablet with stylus and laptop"
             lensRadius={120}
           />
@@ -93,7 +111,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         {/* Image 5: Studio/Classroom with Desks & Green Board */}
         <div className="w-full aspect-[3/4] lg:aspect-[3/4.85] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
-            src={Img5}
+            src={ABOUT_IMAGES.img5}
             alt="Studio workshop and classroom desks"
             lensRadius={100}
           />
@@ -102,7 +120,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         {/* Image 6: Controller / Architectural Light Beams & Shadows */}
         <div className="w-full aspect-[3/4] lg:aspect-[3/4.85] rounded-xl lg:rounded-md overflow-hidden transition-all duration-300 hover:border-neutral-600">
           <ColorLensImage
-            src={Img6}
+            src={ABOUT_IMAGES.img6}
             alt="White gaming controller"
             lensRadius={100}
           />
