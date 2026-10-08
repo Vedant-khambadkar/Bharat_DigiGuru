@@ -180,6 +180,7 @@ export const Blogs: React.FC = () => {
   }, []);
 
 
+  // Dynamic GSAP Horizontal Scroll Engine that adapts seamlessly to any number of stories from Admin Panel
   useEffect(() => {
     const track = trackRef.current;
     const section = sectionRef.current;
@@ -187,35 +188,64 @@ export const Blogs: React.FC = () => {
 
     const mm = gsap.matchMedia();
 
-    // Desktop Layout (>= 1024px): Pinned Horizontal Glide
+    // Desktop Layout (>= 1024px): Dynamic Pinned Horizontal Glide
     mm.add("(min-width: 1024px)", () => {
       const getScrollAmount = () => {
-        return track.scrollWidth - window.innerWidth + 140;
+        if (!track) return 0;
+        const totalTrackWidth = track.scrollWidth;
+        const viewportWidth = window.innerWidth;
+        // Calculate exact horizontal delta with right-side comfortable margin
+        const delta = totalTrackWidth - viewportWidth + 120;
+        return delta > 0 ? delta : 0;
       };
 
-      gsap.to(track, {
-        x: () => -getScrollAmount(),
-        ease: "none",
-        scrollTrigger: {
-          trigger: section,
-          start: "top top",
-          end: () => `+=${getScrollAmount() + 500}`,
-          pin: true,
-          pinSpacing: true,
-          scrub: 0.5,
-          fastScrollEnd: true,
-          invalidateOnRefresh: true,
-        },
-      });
+      const scrollDistance = getScrollAmount();
+
+      // Only create pinned horizontal scroll if content overflows the viewport
+      if (scrollDistance > 0) {
+        gsap.to(track, {
+          x: () => -getScrollAmount(),
+          ease: "none",
+          scrollTrigger: {
+            id: "stories-horizontal-scroll",
+            trigger: section,
+            start: "top top",
+            end: () => `+=${Math.max(window.innerHeight * 0.9, getScrollAmount() * 1.15)}`,
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            fastScrollEnd: true,
+            invalidateOnRefresh: true,
+          },
+        });
+      } else {
+        // Reset transform if all cards fit comfortably on large wide screens
+        gsap.set(track, { clearProps: "transform,x" });
+      }
     });
 
-    // Mobile / Tablet (< 1024px): Reset horizontal transform for fluid touch scroll
+    // Mobile / Tablet (< 1024px): Reset horizontal transform for fluid native touch scroll
     mm.add("(max-width: 1023px)", () => {
       gsap.set(track, { clearProps: "transform,x" });
     });
 
-    return () => mm.revert();
-  }, []);
+    // Auto-refresh ScrollTrigger whenever track dimensions change (e.g. dynamic admin cards added/removed)
+    const resizeObserver = new ResizeObserver(() => {
+      ScrollTrigger.refresh();
+    });
+    resizeObserver.observe(track);
+
+    // Initial tick to refresh after layout render
+    const timeoutId = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 150);
+
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+      mm.revert();
+    };
+  }, [blogs]);
 
   return (
     <section

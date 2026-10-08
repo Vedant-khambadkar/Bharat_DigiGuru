@@ -33,7 +33,7 @@ export const WordReveal: React.FC<WordRevealProps> = ({
           setInView(true);
         }
       },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+      { threshold: 0.05, rootMargin: "50px 0px" }
     );
 
     observer.observe(el);
@@ -66,11 +66,10 @@ export const WordReveal: React.FC<WordRevealProps> = ({
         return (
           <span
             key={`${i}-${waveCount}`}
-            className={`inline-block transition-all duration-500 ease-out ${wordClassName}`}
+            className={`inline-block transition-all duration-400 ease-out will-change-[transform,opacity] ${wordClassName}`}
             style={{
               opacity: isRevealed ? 1 : 0.08,
-              transform: isRevealed ? "translateY(0px)" : "translateY(7px)",
-              filter: isRevealed ? "blur(0px)" : "blur(2.5px)",
+              transform: isRevealed ? "translate3d(0, 0px, 0)" : "translate3d(0, 6px, 0)",
               transitionDelay: isRevealed ? `${wordDelay}ms` : "0ms",
               marginRight: "0.28em",
             }}

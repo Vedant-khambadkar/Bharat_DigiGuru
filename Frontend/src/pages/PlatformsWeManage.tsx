@@ -156,10 +156,10 @@ export const PlatformsWeManage: React.FC = () => {
         }
 
         .animate-spline-stream {
-          animation: streamDashesAnim 4s linear infinite;
+          animation: streamDashesAnim 12s linear infinite;
         }
         .animate-spline-pulse {
-          animation: streamPulseAnim 2.6s ease-in-out infinite;
+          animation: streamPulseAnim 7.5s ease-in-out infinite;
         }
 
         /* Default ambient background */
@@ -200,7 +200,7 @@ export const PlatformsWeManage: React.FC = () => {
           animation-play-state: running;
         }
         #platforms-we-manage-section.is-in-view .animate-pulse-ring {
-          animation: pulseGlowRing 4s ease-in-out infinite;
+          animation: pulseGlowRing 5.5s ease-in-out infinite;
           animation-play-state: running;
         }
         #platforms-we-manage-section.is-in-view .animate-spline-stream,
@@ -341,7 +341,7 @@ export const PlatformsWeManage: React.FC = () => {
                 <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
-                <div className="absolute -bottom-2 -right-1 px-1.5 py-0.5 rounded bg-neutral-800 text-[8px] font-mono text-neutral-200 border border-neutral-700 shadow-md">
+                <div className="absolute -bottom-2 -right-1 px-1.5 py-0.5 rounded bg-neutral-800 text-[8px] font-mono text-neutral-200 border border-neutral-700 shadow-md whitespace-nowrap inline-flex items-center justify-center">
                   #1 Trend
                 </div>
               </div>
@@ -359,7 +359,7 @@ export const PlatformsWeManage: React.FC = () => {
                 <svg className="w-6 h-6 fill-white drop-shadow-[2px_0px_0px_rgba(254,44,85,0.8)]" viewBox="0 0 24 24">
                   <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
                 </svg>
-                <div className="absolute -bottom-2 -right-1 px-1.5 py-0.5 rounded bg-gradient-to-r from-[#25F4EE] to-[#FE2C55] text-black text-[8px] font-mono font-bold shadow-md">
+                <div className="absolute -bottom-2 -right-1 px-1.5 py-0.5 rounded bg-gradient-to-r from-[#25F4EE] to-[#FE2C55] text-black text-[8px] font-mono font-bold shadow-md whitespace-nowrap inline-flex items-center justify-center">
                   Viral
                 </div>
               </div>
@@ -377,7 +377,7 @@ export const PlatformsWeManage: React.FC = () => {
                 <svg className="w-7 h-7 fill-[#1877F2]" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
-                <div className="absolute -top-2 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-mono text-[8px] font-bold shadow-md">
+                <div className="absolute -top-2 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-mono text-[8px] font-bold shadow-md whitespace-nowrap inline-flex items-center justify-center">
                   Ads
                 </div>
               </div>
@@ -395,7 +395,7 @@ export const PlatformsWeManage: React.FC = () => {
                 <svg className="w-7 h-7 fill-[#E60023]" viewBox="0 0 24 24">
                   <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
                 </svg>
-                <div className="absolute -top-2 -left-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 text-white font-mono text-[8px] font-bold shadow-md">
+                <div className="absolute -top-2 -left-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 text-white font-mono text-[8px] font-bold shadow-md whitespace-nowrap inline-flex items-center justify-center">
                   Pins
                 </div>
               </div>
@@ -421,9 +421,9 @@ export const PlatformsWeManage: React.FC = () => {
             preserveAspectRatio="xMidYMid meet"
           >
             <defs>
-              {/* Vibrant neon lighting glow filter */}
+              {/* Vibrant neon lighting glow filter - refined and thin */}
               <filter id="rayGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
+                <feGaussianBlur in="SourceGraphic" stdDeviation="1.0" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
@@ -445,15 +445,15 @@ export const PlatformsWeManage: React.FC = () => {
             {/* 1. Curve from Instagram to Twitter/X (Left Arch) */}
             <path
               d="M 280 90 C 220 160, 120 220, 80 250"
-              stroke="rgba(255, 255, 255, 0.22)"
-              strokeWidth="1.4"
-              strokeDasharray="6 6"
+              stroke="rgba(255, 255, 255, 0.18)"
+              strokeWidth="0.8"
+              strokeDasharray="5 5"
               className="animate-spline-stream"
             />
             <path
               d="M 280 90 C 220 160, 120 220, 80 250"
               stroke="url(#splinePulseGrad)"
-              strokeWidth="2.8"
+              strokeWidth="1.2"
               strokeDasharray="60 260"
               strokeLinecap="round"
               filter="url(#rayGlow)"
@@ -463,101 +463,101 @@ export const PlatformsWeManage: React.FC = () => {
             {/* 2. Curve across top from LinkedIn to YouTube */}
             <path
               d="M 580 95 C 680 70, 780 120, 850 160"
-              stroke="rgba(255, 255, 255, 0.24)"
-              strokeWidth="1.4"
-              strokeDasharray="6 6"
+              stroke="rgba(255, 255, 255, 0.18)"
+              strokeWidth="0.8"
+              strokeDasharray="5 5"
               className="animate-spline-stream"
-              style={{ animationDuration: '4s' }}
+              style={{ animationDuration: '12s' }}
             />
             <path
               d="M 580 95 C 680 70, 780 120, 850 160"
               stroke="url(#splinePulseGrad)"
-              strokeWidth="2.8"
+              strokeWidth="1.2"
               strokeDasharray="60 260"
               strokeLinecap="round"
               filter="url(#rayGlow)"
               className="animate-spline-pulse"
-              style={{ animationDelay: '0.6s' }}
+              style={{ animationDelay: '1.5s' }}
             />
 
             {/* 3. Curve from YouTube to TikTok (Right Arch) */}
             <path
               d="M 850 170 C 920 220, 940 300, 950 360"
-              stroke="rgba(255, 255, 255, 0.22)"
-              strokeWidth="1.4"
-              strokeDasharray="6 6"
+              stroke="rgba(255, 255, 255, 0.18)"
+              strokeWidth="0.8"
+              strokeDasharray="5 5"
               className="animate-spline-stream"
-              style={{ animationDuration: '3.5s' }}
+              style={{ animationDuration: '11s' }}
             />
             <path
               d="M 850 170 C 920 220, 940 300, 950 360"
               stroke="url(#splinePulseGrad)"
-              strokeWidth="2.8"
+              strokeWidth="1.2"
               strokeDasharray="50 220"
               strokeLinecap="round"
               filter="url(#rayGlow)"
               className="animate-spline-pulse"
-              style={{ animationDelay: '1.2s' }}
+              style={{ animationDelay: '3.0s' }}
             />
 
             {/* 4. Curve along bottom from Facebook to TikTok */}
             <path
               d="M 500 410 C 620 430, 740 420, 850 380"
-              stroke="rgba(255, 255, 255, 0.22)"
-              strokeWidth="1.4"
-              strokeDasharray="6 6"
+              stroke="rgba(255, 255, 255, 0.18)"
+              strokeWidth="0.8"
+              strokeDasharray="5 5"
               className="animate-spline-stream"
-              style={{ animationDuration: '4.5s' }}
+              style={{ animationDuration: '13.5s' }}
             />
             <path
               d="M 500 410 C 620 430, 740 420, 850 380"
               stroke="url(#splinePulseGrad)"
-              strokeWidth="2.8"
+              strokeWidth="1.2"
               strokeDasharray="60 300"
               strokeLinecap="round"
               filter="url(#rayGlow)"
               className="animate-spline-pulse"
-              style={{ animationDelay: '1.6s' }}
+              style={{ animationDelay: '4.5s' }}
             />
 
             {/* 5. Curve from Twitter/X down to Facebook */}
             <path
               d="M 80 270 C 90 330, 130 380, 200 400"
-              stroke="rgba(255, 255, 255, 0.18)"
-              strokeWidth="1.4"
-              strokeDasharray="6 6"
+              stroke="rgba(255, 255, 255, 0.15)"
+              strokeWidth="0.8"
+              strokeDasharray="5 5"
               className="animate-spline-stream"
-              style={{ animationDuration: '4s' }}
+              style={{ animationDuration: '12s' }}
             />
             <path
               d="M 80 270 C 90 330, 130 380, 200 400"
               stroke="url(#splinePulseGrad)"
-              strokeWidth="2.8"
+              strokeWidth="1.2"
               strokeDasharray="50 250"
               strokeLinecap="round"
               filter="url(#rayGlow)"
               className="animate-spline-pulse"
-              style={{ animationDelay: '0.9s' }}
+              style={{ animationDelay: '2.2s' }}
             />
 
             {/* 6. Curve along bottom left */}
             <path
               d="M 230 400 C 310 420, 390 425, 470 420"
-              stroke="rgba(255, 255, 255, 0.22)"
-              strokeWidth="1.4"
-              strokeDasharray="6 6"
+              stroke="rgba(255, 255, 255, 0.18)"
+              strokeWidth="0.8"
+              strokeDasharray="5 5"
               className="animate-spline-stream"
-              style={{ animationDuration: '3.8s' }}
+              style={{ animationDuration: '11.5s' }}
             />
             <path
               d="M 230 400 C 310 420, 390 425, 470 420"
               stroke="url(#splinePulseGrad)"
-              strokeWidth="2.8"
+              strokeWidth="1.2"
               strokeDasharray="50 250"
               strokeLinecap="round"
               filter="url(#rayGlow)"
               className="animate-spline-pulse"
-              style={{ animationDelay: '0.4s' }}
+              style={{ animationDelay: '1.0s' }}
             />
           </svg>
 
@@ -630,7 +630,7 @@ export const PlatformsWeManage: React.FC = () => {
               <svg className="w-8 h-8 fill-[#FF0000]" viewBox="0 0 24 24">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
               </svg>
-              <div className="absolute -bottom-2 -left-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-600 to-rose-600 text-white text-[9px] font-bold shadow-md border border-red-400/40">
+              <div className="absolute -bottom-2 -left-1 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-600 to-rose-600 text-white text-[9px] font-bold shadow-md border border-red-400/40 whitespace-nowrap inline-flex items-center justify-center">
                 4K
               </div>
             </div>
@@ -651,7 +651,7 @@ export const PlatformsWeManage: React.FC = () => {
               <svg className="w-7 h-7 fill-white" viewBox="0 0 24 24">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
-              <div className="absolute -bottom-2 -right-1 px-2 py-0.5 rounded bg-neutral-800 text-[9px] font-mono text-neutral-200 border border-neutral-700 shadow-md">
+              <div className="absolute -bottom-2 -right-1 px-2 py-0.5 rounded bg-neutral-800 text-[9px] font-mono text-neutral-200 border border-neutral-700 shadow-md whitespace-nowrap inline-flex items-center justify-center">
                 #1 Trend
               </div>
             </div>
@@ -672,7 +672,7 @@ export const PlatformsWeManage: React.FC = () => {
               <svg className="w-7 h-7 fill-white drop-shadow-[2px_0px_0px_rgba(254,44,85,0.8)]" viewBox="0 0 24 24">
                 <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
               </svg>
-              <div className="absolute -bottom-2 -right-1 px-2 py-0.5 rounded bg-gradient-to-r from-[#25F4EE] to-[#FE2C55] text-black text-[9px] font-mono font-bold shadow-md">
+              <div className="absolute -bottom-2 -right-1 px-2 py-0.5 rounded bg-gradient-to-r from-[#25F4EE] to-[#FE2C55] text-black text-[9px] font-mono font-bold shadow-md whitespace-nowrap inline-flex items-center justify-center">
                 Viral
               </div>
             </div>
@@ -693,7 +693,7 @@ export const PlatformsWeManage: React.FC = () => {
               <svg className="w-8 h-8 fill-[#E60023]" viewBox="0 0 24 24">
                 <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
               </svg>
-              <div className="absolute -top-2 -left-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 text-white font-mono text-[9px] font-bold shadow-md border border-red-400/40">
+              <div className="absolute -top-2 -left-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 text-white font-mono text-[9px] font-bold shadow-md border border-red-400/40 whitespace-nowrap inline-flex items-center justify-center">
                 Pins
               </div>
             </div>
@@ -714,7 +714,7 @@ export const PlatformsWeManage: React.FC = () => {
               <svg className="w-8 h-8 fill-[#1877F2]" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
               </svg>
-              <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-mono text-[9px] font-bold shadow-md border border-blue-400/40">
+              <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-mono text-[9px] font-bold shadow-md border border-blue-400/40 whitespace-nowrap inline-flex items-center justify-center">
                 Ads
               </div>
             </div>

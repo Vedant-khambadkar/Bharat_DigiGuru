@@ -36,7 +36,7 @@ export const Footer: React.FC = () => {
       {/* Top Grid Section: Brand Info + 4 Nav Columns (Edge-to-Edge Full Width) */}
       <div className="relative px-6 sm:px-10 md:px-12 lg:px-16 z-10 w-full max-w-8xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-14 lg:gap-12 items-start">
         {/* Left Column: Brand Wordmark & Summary */}
-        <div className="lg:col-span-4 flex flex-col gap-4">
+        <div className="lg:col-span-4 flex flex-col gap-4 ">
           <a
             href="#home-section"
             onClick={(e) => {
@@ -252,22 +252,28 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="tel:+919876543210"
-                  className="hover:text-white transition-colors inline-flex items-center gap-1.5 text-neutral-300 group font-mono"
+                  href="tel:+918682858584"
+                  className="hover:text-white transition-colors inline-flex items-center gap-1.5 text-neutral-300 group font-mono text-xs sm:text-sm"
                 >
                   <Phone className="w-3.5 h-3.5 text-[#ff3b30] shrink-0" />
-                  <span className="truncate">+91 98765 43210</span>
+                  <span className="truncate">+91 86828 58584</span>
+                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+5927667700"
+                  className="hover:text-white transition-colors inline-flex items-center gap-1.5 text-neutral-300 group font-mono text-xs sm:text-sm"
+                >
+                  <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="truncate">+592 766 7700</span>
                   <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </a>
               </li>
               <li className="pt-2 text-neutral-500 text-[11px] leading-relaxed">
                 <div className="flex items-center gap-1.5 text-neutral-400 mb-1">
                   <MapPin className="w-3.5 h-3.5 text-[#ff3b30] shrink-0" />
-                  <span>India</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-neutral-400">
-                  <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>Global Deployments</span>
+                  <span>India & Global Deployments</span>
                 </div>
               </li>
             </ul>

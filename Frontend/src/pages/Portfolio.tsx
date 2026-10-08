@@ -187,21 +187,16 @@ export const Portfolio: React.FC = () => {
         />
       </div>
 
-      {/* 1. Upper Left Section */}
-      <div className="absolute top-16 sm:top-20 md:top-[125px] left-4 sm:left-8 md:left-12 max-w-[270px] sm:max-w-[340px] md:max-w-[380px] z-10 pointer-events-none">
-        <h1 className="font-neuropol text-lg sm:text-2xl md:text-[32px] font-normal leading-[1.2] tracking-wide mb-1.5 sm:mb-3 text-white uppercase">
-          Crafting Digital
-          <br />
-          Experiences That Speak.
-        </h1>
-        <p className="text-[10.5px] sm:text-xs md:text-[13px] leading-relaxed text-stone-300 m-0 tracking-[0.01em]">
-          At Bharat DigiGuru, we engineer photorealistic 3D CGI, immersive visual media, and next-generation interactive architectures tailored for world-class enterprises.
-        </p>
+      {/* 1. Upper Left Section: PORTFOLIO Header */}
+      <div className="absolute top-16 sm:top-20 md:top-[110px] lg:top-[125px] left-4 sm:left-8 md:left-12 z-10 pointer-events-none select-none">
+        <div className="font-neuropol text-3xl sm:text-5xl md:text-6xl font-normal leading-[0.88] tracking-wider text-white m-0 uppercase">
+          PORTFOLIO
+        </div>
       </div>
 
       {/* 2. Upper Right Section */}
-      <div className="hidden lg:block absolute top-[125px] right-12 max-w-[360px] text-right z-10 pointer-events-none">
-        <h2 className="font-neuropol text-xl lg:text-[22px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
+      <div className="hidden md:block absolute top-16 sm:top-20 md:top-[110px] lg:top-[225px] right-4 sm:right-8 md:right-12 max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] text-right z-10 pointer-events-none select-none">
+        <h2 className="font-neuropol text-sm sm:text-base md:text-lg lg:text-[20px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
           Shaping Your Vision
           <br />
           Into Immersive Reality.
@@ -254,12 +249,17 @@ export const Portfolio: React.FC = () => {
         )}
       </div>
 
-      {/* 4. Bottom Left Display Branding */}
-      <div className="absolute bottom-4 sm:bottom-6 md:bottom-9 left-4 sm:left-8 md:left-12 flex items-end gap-3.5 z-10 pointer-events-none">
-        <div className="font-neuropol text-3xl sm:text-5xl md:text-6xl font-normal leading-[0.88] tracking-wider text-white m-0 uppercase select-none">
-          PORTFOLIO
-        </div>
-      </div>
+      {/* 4. Bottom Left Responsive Statement Branding */}
+      <div className="absolute bottom-0 left-4 sm:left-8 md:left-12 pb-3 sm:pb-4 md:pb-6 max-w-[calc(100vw-2rem)] sm:max-w-[300px] md:max-w-[350px] lg:max-w-[390px] flex flex-col items-start gap-1 sm:gap-1.5 z-10 pointer-events-none select-none">
+        <h1 className="font-neuropol text-xs sm:text-sm md:text-base lg:text-lg xl:text-[20px] font-normal leading-[1.25] tracking-wider text-white uppercase m-0">
+          Crafting Digital
+          <br />
+          Experiences That Speak.
+        </h1>
+        <p className="text-[9px] sm:text-[10px] md:text-[11px] lg:text-xs leading-relaxed text-stone-300 m-0 tracking-[0.01em]">
+          At Bharat DigiGuru, we engineer photorealistic 3D CGI, immersive visual media, and next-generation interactive architectures tailored for world-class enterprises.
+        </p>
+      </div> 
     </section>
   );
 };

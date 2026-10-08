@@ -8,6 +8,8 @@ import {
   AlertCircle,
   Copy,
   Check,
+  Phone,
+  Globe,
 } from "lucide-react";
 import LensText from "../components/LensText";
 import { userService } from "../services/service/userService";
@@ -305,18 +307,50 @@ export const Contact: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex items-start gap-3.5 pt-1">
-                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
-                  <Mail className="w-4 h-4 text-neutral-300" />
+              <div className="flex flex-col gap-3 pt-1 border-t border-neutral-800/80 mt-1">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
+                    <Mail className="w-4 h-4 text-neutral-300" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs text-neutral-500">Email us directly</span>
+                    <a
+                      href={`mailto:${clientEmail}`}
+                      className="font-medium text-xs sm:text-sm text-white hover:underline truncate"
+                    >
+                      {clientEmail}
+                    </a>
+                  </div>
                 </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-xs text-neutral-500">Email us directly at</span>
-                  <a
-                    href={`mailto:${clientEmail}`}
-                    className="font-medium text-sm sm:text-base text-white hover:underline truncate"
-                  >
-                    {clientEmail}
-                  </a>
+
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
+                    <Phone className="w-4 h-4 text-[#ff3b30]" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs text-neutral-500">India Contact</span>
+                    <a
+                      href="tel:+918682858584"
+                      className="font-mono font-medium text-xs sm:text-sm text-white hover:text-[#ff3b30] transition-colors"
+                    >
+                      +91 86828 58584
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white shrink-0">
+                    <Globe className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs text-neutral-500">Global Contact</span>
+                    <a
+                      href="tel:+5927667700"
+                      className="font-mono font-medium text-xs sm:text-sm text-white hover:text-emerald-400 transition-colors"
+                    >
+                      +592 766 7700
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>

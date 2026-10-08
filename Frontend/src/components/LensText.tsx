@@ -86,6 +86,14 @@ export const LensText: React.FC<LensTextProps> = ({
       rafId = requestAnimationFrame(updateMask);
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isVisible || e.touches.length === 0) return;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateMask);
+    };
+
     const handleScroll = () => {
       if (!isVisible) return;
       updateRect();
@@ -97,12 +105,16 @@ export const LensText: React.FC<LensTextProps> = ({
 
     const bindListeners = () => {
       window.addEventListener("mousemove", handleMouseMove, { passive: true });
+      window.addEventListener("touchmove", handleTouchMove, { passive: true });
+      window.addEventListener("touchstart", handleTouchMove, { passive: true });
       window.addEventListener("scroll", handleScroll, { passive: true });
       window.addEventListener("resize", updateRect, { passive: true });
     };
 
     const unbindListeners = () => {
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchstart", handleTouchMove);
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", updateRect);
       if (rafId) {

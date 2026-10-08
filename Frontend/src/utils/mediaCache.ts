@@ -96,8 +96,8 @@ export async function getCachedMediaUrl(url?: string): Promise<string> {
       blobUrlMemoryCache.set(cleanUrl, blobUrl);
       preloadedUrls.add(cleanUrl);
       return blobUrl;
-    } catch (err) {
-      console.warn("Media cache fetch error, falling back to original URL:", cleanUrl, err);
+    } catch (_err) {
+      // Fallback silently to direct URL for standard browser <img> tag loading
       return cleanUrl;
     } finally {
       inFlightFetchPromises.delete(cleanUrl);
