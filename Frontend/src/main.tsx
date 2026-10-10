@@ -1,18 +1,16 @@
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { initThreeAssetCache } from './utils/threeAssetCache.ts'
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.tsx";
+import { initThreeAssetCache } from "./utils/threeAssetCache.ts";
 
-// Initialize 3D Asset Caching (GLB, HDR, Draco, Textures)
+// Initialize Three.js asset caching once before React mounts.
+// This function should be synchronous, lightweight, and idempotent.
 initThreeAssetCache();
 
-// Force browser to always start at the absolute top on page reload
-if ('scrollRestoration' in history) {
-  history.scrollRestoration = 'manual';
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error('Root element "#root" was not found.');
 }
-window.scrollTo(0, 0);
 
-
-createRoot(document.getElementById('root')!).render(
-  <App />
-)
+createRoot(rootElement).render(<App />);
