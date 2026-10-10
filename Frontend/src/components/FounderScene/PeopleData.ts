@@ -1,11 +1,5 @@
 import type { PersonConfig } from '../../types/scene';
 
-/**
- * EXACT 1:1 PROPORTIONS & SPACING MATCHING THE REFERENCE IMAGE:
- * - Crowd spread naturally in an open wedge with breathing room between each silhouette
- * - Founder positioned downstage with proportional scale (~1.08x)
- * - Upright rotation (standing tall on floor)
- */
 
 export const DESKTOP_PEOPLE: PersonConfig[] = [
   // 1. Far Left Mid
@@ -97,8 +91,8 @@ export const MOBILE_PEOPLE: PersonConfig[] = [
 
   // 9. Forward Flank Right
   { id: 'mp_front_r', position: [3.05, 0, -14.5], rotationY: -0.55, scale: 0.86, phaseOffset: 3.8, idleSpeed: 0.9 },
-  
-  { id: 'mp_front_r2', position: [5.05, 0, -14.5], rotationY: -20.55, scale: 0.86, phaseOffset: 3.8, idleSpeed: 0.9 },
+
+  { id: 'mp_front_r', position: [5.05, 0, -14.5], rotationY: -20.55, scale: 0.86, phaseOffset: 3.8, idleSpeed: 0.9 },
 ];
 
 export const MOBILE_FOUNDER: PersonConfig = {
