@@ -34,8 +34,6 @@ const ALLOWED_ORIGINS = [
   "http://127.0.0.1:5173",
   "https://test.bharatdigiguru.com",
   "https://bharatdigiguru.com",
-  "https://bharat-digi-guru-six.vercel.app",
-  "https://bharat-digi-guru-s7ek.vercel.app",
   ...envOrigins,
 ];
 
@@ -111,11 +109,19 @@ initializeSocket(server, ALLOWED_ORIGINS);
 
 // 9. Database Connection & Server Initialization
 const startServer = async () => {
-  await db.connectMongo();
+  const isMongo = await db.connectMongo();
+  if (isMongo) {
+    console.log("📦 Connected to MongoDB Atlas");
+  } else {
+    console.log("ℹ️ Connected to local JSON database store");
+  }
 
   // In standalone server mode (not serverless lambda), bind to port
   if (!process.env.VERCEL) {
-    server.listen(PORT, () => {});
+    server.listen(PORT, () => {
+      console.log(`🚀 Bharat DigiGuru Server running on http://localhost:${PORT}`);
+      console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
+    });
   }
 };
 
