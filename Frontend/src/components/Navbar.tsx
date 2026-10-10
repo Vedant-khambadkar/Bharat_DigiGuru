@@ -68,7 +68,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
       }
     };
 
+    const handleToggleMenu = () => {
+      setMobileMenuOpen((prev) => !prev);
+    };
+
     window.addEventListener("app:modal-state", handleModalState);
+    window.addEventListener("app:toggle-menu", handleToggleMenu);
+    window.addEventListener("app:open-menu", () => setMobileMenuOpen(true));
     const observer = new MutationObserver(checkModal);
     observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
@@ -109,6 +115,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
     handleScroll();
     return () => {
       window.removeEventListener("app:modal-state", handleModalState);
+      window.removeEventListener("app:toggle-menu", handleToggleMenu);
       observer.disconnect();
       window.removeEventListener("scroll", handleScroll);
     };

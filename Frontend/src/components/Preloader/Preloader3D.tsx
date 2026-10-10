@@ -39,12 +39,13 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     if (telemetryPercentRef.current) telemetryPercentRef.current.textContent = `${val}%`;
     if (progressBarRef.current) progressBarRef.current.style.width = `${val}%`;
     if (telemetryStatusRef.current) {
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
       if (val >= 100) {
-        telemetryStatusRef.current.textContent = "3D ENVIRONMENT & HARDWARE READY";
+        telemetryStatusRef.current.textContent = isMobile ? "DIGITAL EXPERIENCE READY" : "3D ENVIRONMENT & HARDWARE READY";
       } else if (!macReady) {
-        telemetryStatusRef.current.textContent = "INITIALIZING 3D ENVIRONMENT";
+        telemetryStatusRef.current.textContent = isMobile ? "INITIALIZING CREATIVE STUDIO" : "INITIALIZING 3D ENVIRONMENT";
       } else {
-        telemetryStatusRef.current.textContent = "INITIALIZING HARDWARE ACCELERATION";
+        telemetryStatusRef.current.textContent = isMobile ? "PREPARING INTERFACE" : "INITIALIZING HARDWARE ACCELERATION";
       }
     }
   };
@@ -136,7 +137,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
   // Fast safety timer: maximum 2.8s on desktop, 2.2s on mobile to guarantee immediate page access
   useEffect(() => {
     const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
-    const maxWaitTime = isMobileViewport ? 2200 : 2800;
+    const maxWaitTime = isMobileViewport ? 1500 : 2800;
 
     const safetyTimer = setTimeout(() => {
       if (!isExitingRef.current) {
@@ -197,7 +198,11 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
 
         {/* Micro Telemetry Status Line */}
         <div className="flex items-center justify-between w-full max-w-sm sm:max-w-md mt-3 font-mono text-[9px] sm:text-[10px] text-neutral-500 uppercase tracking-widest">
-          <span ref={telemetryStatusRef}>LOADING MACBOOK 3D & TEXTURES</span>
+          <span ref={telemetryStatusRef}>
+            {typeof window !== "undefined" && window.innerWidth < 768
+              ? "INITIALIZING DIGITAL STUDIO"
+              : "LOADING MACBOOK 3D & TEXTURES"}
+          </span>
           <span ref={telemetryPercentRef} className="text-neutral-300 font-semibold">0%</span>
         </div>
       </div>

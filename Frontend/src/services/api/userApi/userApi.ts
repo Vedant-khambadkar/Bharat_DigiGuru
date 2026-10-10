@@ -17,6 +17,10 @@ class UserApi {
     return api._get("/team");
   }
 
+  getFounder() {
+    return api._get("/founder");
+  }
+
   getStories() {
     return api._get("/stories");
   }

@@ -159,11 +159,31 @@ export interface IBlogItem {
   updatedAt?: string | Date;
 }
 
+export interface IFounderProfile {
+  id: string;
+  name: string;
+  role: string;
+  badge: string;
+  subtitle: string;
+  photoTag?: string;
+  image: string;
+  cityTag?: string;
+  bio: string;
+  bioSecondary: string;
+  quote: string;
+  specialties: string[];
+  linkedinUrl: string;
+  instagramUrl: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
 export interface IDatabaseSchema {
   portfolio: IPortfolioItem[];
   threed: IThreeDProject[];
   services?: IServiceItem[];
   team?: ITeamMember[];
+  founder?: IFounderProfile;
   stories?: IStoryItem[];
   blogs?: IBlogItem[];
   inquiries: IInquiry[];

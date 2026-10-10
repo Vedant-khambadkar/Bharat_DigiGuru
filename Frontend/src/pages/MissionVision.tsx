@@ -115,15 +115,17 @@ export const MissionVision: React.FC = () => {
       const phaseDuration = totalUnits / slideCount; // ~33.33 units per slide
       const fillPortion = phaseDuration * 0.6; // 60% of phase time on letter wipe
       const transitionPortion = phaseDuration * 0.4; // 40% shifting to next slide
+      const isMobile = window.innerWidth < 768;
+      const endScroll = isMobile ? `+=${slideCount * 650}` : `+=${slideCount * 1200}`;
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: el,
           start: "top top",
-          end: `+=${slideCount * 1200}`,
+          end: endScroll,
           pin: true,
           pinSpacing: true,
-          scrub: 0.8,
+          scrub: isMobile ? 0.4 : 0.8,
           anticipatePin: 1,
           fastScrollEnd: true,
           invalidateOnRefresh: true,

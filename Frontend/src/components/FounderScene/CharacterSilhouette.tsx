@@ -33,6 +33,9 @@ export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
   const phase = config.phaseOffset;
   const speed = config.idleSpeed;
 
+  const beaconLightRef = useRef<THREE.PointLight>(null);
+  const isApex = config.id === 'p_apex' || config.id === 'mp_apex' || config.id === 'mp1';
+
   useFrame((state, delta) => {
     if (!isVisible) return;
 
@@ -57,9 +60,10 @@ export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
 
     const progress = stateProgressRef.current;
 
-    // Subtle idle animation (micro-rotation)
+    // Subtle idle animation (micro-rotation and breathing float loop)
     const time = state.clock.getElapsedTime() * speed + phase;
-    const idleRot = Math.sin(time * 0.8) * 0.015;
+    const idleRot = Math.sin(time * 0.75) * 0.02;
+    const idleBob = Math.sin(time * 1.5) * 0.007;
 
     group.rotation.set(
       baseRotX,
@@ -70,23 +74,27 @@ export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
     if (progress > 0.0005) {
       // Push slightly backward when founder is focused
       const pushBackZ = -progress * 1.5;
-      group.position.set(baseX, baseY, baseZ + pushBackZ);
+      group.position.set(baseX, baseY + idleBob, baseZ + pushBackZ);
       // Scale down slightly during focus to emphasize depth of field
       const scaleFactor = 1 - progress * 0.08;
       group.scale.setScalar(baseScale * scaleFactor);
     } else {
-      group.position.set(baseX, baseY, baseZ);
+      group.position.set(baseX, baseY + idleBob, baseZ);
       group.scale.setScalar(baseScale);
     }
-  });
 
-  const isApex = config.id === 'p_apex' || config.id === 'mp1';
+    // Continuous beacon pulse on the apex leader
+    if (isApex && beaconLightRef.current) {
+      const pulse = Math.sin(state.clock.getElapsedTime() * 3.0) * 0.4 + 0.8;
+      beaconLightRef.current.intensity = pulse;
+    }
+  });
 
   return (
     <group ref={groupRef} position={config.position} rotation={[0, baseRotY, 0]}>
       <primitive object={clonedScene} />
 
-      {/* Apex Leader Vertical Light Line & Glowing Orange Bead */}
+      {/* Apex Leader Vertical Light Line & Glowing Orange Bead with Pulse Loop */}
       {isApex && sceneState === 'overview' && (
         <group position={[0, 1.8, 0]}>
           {/* Vertical Light Line */}
@@ -99,8 +107,8 @@ export const CharacterSilhouette: React.FC<CharacterSilhouetteProps> = memo(({
             <sphereGeometry args={[0.035, 16, 16]} />
             <meshBasicMaterial color="#ff5500" />
           </mesh>
-          {/* Subtle Point Light */}
-          <pointLight position={[0, 0.9, 0]} color="#ff5500" intensity={0.8} distance={2} />
+          {/* Continuous Pulsing Light */}
+          <pointLight ref={beaconLightRef} position={[0, 0.9, 0]} color="#ff5500" intensity={0.8} distance={2.5} />
         </group>
       )}
     </group>

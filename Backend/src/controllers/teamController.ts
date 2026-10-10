@@ -79,3 +79,25 @@ export const deleteTeamMember = async (req: Request, res: Response): Promise<voi
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// ==========================================
+// FOUNDER PROFILE CONTROLLERS
+// ==========================================
+export const getFounder = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const founder = await db.getFounder();
+    res.status(200).json(founder);
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const updateFounder = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const updated = await db.updateFounder(req.body);
+    emitEvent("founder:updated", updated);
+    res.status(200).json({ success: true, data: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

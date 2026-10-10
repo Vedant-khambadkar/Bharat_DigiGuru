@@ -132,6 +132,36 @@ class UserService {
     }
   }
 
+  private _founderPromise: Promise<any> | null = null;
+
+  async getFounder(forceRefresh = false) {
+    if (!forceRefresh) {
+      const cached = getApiCache<any>("founder_profile");
+      if (cached) {
+        if (!this._founderPromise) {
+          this._founderPromise = this._fetchFounderDirect();
+        }
+        return cached;
+      }
+    }
+
+    if (this._founderPromise) return this._founderPromise;
+    this._founderPromise = this._fetchFounderDirect();
+    return this._founderPromise;
+  }
+
+  private async _fetchFounderDirect() {
+    try {
+      const data = await userApi.getFounder();
+      if (data) {
+        setApiCache("founder_profile", data);
+      }
+      return data;
+    } finally {
+      this._founderPromise = null;
+    }
+  }
+
   private _storiesPromise: Promise<any> | null = null;
 
   async getStories(forceRefresh = false) {

@@ -847,5 +847,26 @@
       "bio": "Crafting bespoke digital interfaces, editorial layout systems, and typography.",
       "isActive": true
     }
-  ]
+  ],
+  "founder": {
+    "id": "founder-master-001",
+    "name": "SHUBHAM SINGH",
+    "role": "CREATIVE DIRECTOR & VISIONARY",
+    "badge": "MEET THE FOUNDER",
+    "subtitle": "LEADERSHIP & VISION",
+    "photoTag": "FOUNDER",
+    "image": "",
+    "cityTag": "VARANASI × GLOBAL",
+    "bio": "Born in India and raised in the city of artists, Varanasi, Shubham has been capturing stories and crafting visuals for as long as he can remember.",
+    "bioSecondary": "As an accomplished digital content creator and 3D visionary, he has collaborated with premier global mobile enterprises. His portfolio encompasses high-end commercial CGI, street photography stills, cinematic short films, and high-impact music videos.",
+    "quote": "\"His unique style, artistic training, and profound appreciation for light and architecture make every frame an unforgettable visual journey.\"",
+    "specialties": [
+      "3D CGI & ArchViz",
+      "Commercial Stills",
+      "Cinematic Direction",
+      "Creative Strategy"
+    ],
+    "linkedinUrl": "https://linkedin.com",
+    "instagramUrl": "https://instagram.com"
+  }
 }

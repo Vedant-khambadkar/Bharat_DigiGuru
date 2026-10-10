@@ -128,6 +128,71 @@ export function getLoadedTexture(url?: string): THREE.Texture | null {
 }
 
 /**
+ * Loads an image with asynchronous decoding and downsamples oversized images
+ * (e.g. 45MP / 8K camera raw textures) to a GPU-friendly maximum dimension before creating a Three.js texture.
+ * This slashes GPU VRAM from ~181MB down to ~2.8MB per texture and eliminates main-thread mipmap stalls.
+ */
+function loadOptimizedTextureImage(url: string): Promise<THREE.Texture | null> {
+  if (typeof window === "undefined") return Promise.resolve(null);
+
+  const isMobile = window.innerWidth < 768 || (typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches);
+  const maxDim = isMobile ? 1024 : 1600;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.decoding = "async";
+
+    img.onload = () => {
+      try {
+        const origW = img.naturalWidth || img.width;
+        const origH = img.naturalHeight || img.height;
+
+        let tex: THREE.Texture;
+
+        // If already within reasonable dimensions, wrap directly
+        if (origW <= maxDim && origH <= maxDim) {
+          tex = new THREE.Texture(img);
+        } else {
+          // Downsample via offscreen canvas to avoid 700MB+ VRAM exhaustion
+          const scale = Math.min(maxDim / origW, maxDim / origH);
+          const targetW = Math.max(1, Math.round(origW * scale));
+          const targetH = Math.max(1, Math.round(origH * scale));
+
+          const canvas = document.createElement("canvas");
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext("2d");
+
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, 0, 0, targetW, targetH);
+            tex = new THREE.CanvasTexture(canvas);
+          } else {
+            tex = new THREE.Texture(img);
+          }
+        }
+
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.generateMipmaps = true;
+        tex.minFilter = THREE.LinearMipmapLinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.flipY = true;
+        tex.needsUpdate = true;
+
+        resolve(tex);
+      } catch (_err) {
+        resolve(null);
+      }
+    };
+
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+/**
  * Loads and caches a Three.js Texture with complete request deduplication and persistent cache backing.
  */
 export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | null> {
@@ -148,6 +213,15 @@ export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | nul
 
   const promise = (async (): Promise<THREE.Texture | null> => {
     try {
+      // First try optimized downsampling loader
+      const optimizedTex = await loadOptimizedTextureImage(cleanUrl);
+      if (optimizedTex) {
+        textureCache.set(cleanUrl, optimizedTex);
+        preloadedUrls.add(cleanUrl);
+        return optimizedTex;
+      }
+
+      // Fallback to standard Three.js TextureLoader if canvas/async decoding encountered CORS restrictions
       const loader = new THREE.TextureLoader();
       loader.setCrossOrigin("anonymous");
 
@@ -167,25 +241,7 @@ export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | nul
             resolve(tex);
           },
           undefined,
-          () => {
-            // Fallback to original url
-            loader.load(
-              cleanUrl,
-              (tex) => {
-                tex.colorSpace = THREE.SRGBColorSpace;
-                tex.generateMipmaps = true;
-                tex.minFilter = THREE.LinearMipmapLinearFilter;
-                tex.magFilter = THREE.LinearFilter;
-                tex.flipY = true;
-                tex.needsUpdate = true;
-
-                textureCache.set(cleanUrl, tex);
-                resolve(tex);
-              },
-              undefined,
-              () => resolve(null)
-            );
-          }
+          () => resolve(null)
         );
       });
     } catch (_err) {

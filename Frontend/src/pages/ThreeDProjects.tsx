@@ -145,15 +145,39 @@ const ThreeDCard: React.FC<ThreeDCardProps> = ({
   );
 };
 
+const DEFAULT_THREED_PROJECTS: ThreeDProject[] = [
+  {
+    id: "hyperion-villa",
+    title: "Hyperion Ultra-Luxury Villa Walkthrough",
+    category: "Architecture & Interiors",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    posterUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=900&auto=format&fit=crop&fm=webp",
+    duration: "0:15 // 4K",
+  },
+  {
+    id: "chronos-watch-cgi",
+    title: "Chronos Tourbillon 3D Product Film",
+    category: "Product Visualization",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    posterUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=900&auto=format&fit=crop&fm=webp",
+    duration: "0:12 // 4K",
+  },
+  {
+    id: "lumina-car-reel",
+    title: "Aether EV Cinematic Launch Reel",
+    category: "Automotive CGI",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    posterUrl: "https://images.unsplash.com/photo-1617788138017-80ad40651399?q=80&w=900&auto=format&fit=crop&fm=webp",
+    duration: "0:18 // 4K",
+  },
+];
+
 export const ThreeDProjects: React.FC = () => {
   const [projects, setProjects] = useState<ThreeDProject[]>(() => {
     const cached = getApiCache<ThreeDProject[]>("threed_projects");
-    return cached && cached.length > 0 ? cached : [];
+    return cached && cached.length > 0 ? cached : DEFAULT_THREED_PROJECTS;
   });
-  const [isLoading, setIsLoading] = useState<boolean>(() => {
-    const cached = getApiCache<ThreeDProject[]>("threed_projects");
-    return !(cached && cached.length > 0);
-  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTheaterProject, setActiveTheaterProject] = useState<ThreeDProject | null>(null);
   const [playingStates, setPlayingStates] = useState<{ [key: string]: boolean }>({});
   const [mutedStates, setMutedStates] = useState<{ [key: string]: boolean }>({});
@@ -162,13 +186,6 @@ export const ThreeDProjects: React.FC = () => {
   // Initial fetch from API / Database only if not cached, + Socket.IO listener for real-time synchronization
   useEffect(() => {
     const fetchThreeD = async () => {
-      const cached = getApiCache<ThreeDProject[]>("threed_projects");
-      if (cached && cached.length > 0) {
-        setProjects(cached);
-        setIsLoading(false);
-        return; // Zero network call on page reload!
-      }
-
       try {
         const res = await userService.getThreeD();
         const items = Array.isArray(res)
@@ -178,10 +195,12 @@ export const ThreeDProjects: React.FC = () => {
           : Array.isArray((res as any)?.data)
           ? (res as any).data
           : [];
-        setProjects(items);
-        setApiCache("threed_projects", items);
+        if (items.length > 0) {
+          setProjects(items);
+          setApiCache("threed_projects", items);
+        }
       } catch (err) {
-        console.error("Error loading 3D projects from database:", err);
+        console.warn("Could not load 3D projects from database, using defaults:", err);
       } finally {
         setIsLoading(false);
       }

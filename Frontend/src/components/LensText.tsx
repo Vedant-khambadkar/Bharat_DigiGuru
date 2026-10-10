@@ -20,6 +20,14 @@ export const LensText: React.FC<LensTextProps> = ({
   const strokeRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
+    // Only run lens cursor mask calculations on desktop devices with fine mouse pointer
+    const isFinePointer =
+      typeof window !== "undefined" &&
+      window.matchMedia("(pointer: fine)").matches &&
+      window.innerWidth >= 768;
+
+    if (!isFinePointer) return;
+
     let lastX = -9999;
     let lastY = -9999;
     let rafId: number | null = null;

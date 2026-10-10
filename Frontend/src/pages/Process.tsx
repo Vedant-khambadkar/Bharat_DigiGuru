@@ -98,15 +98,17 @@ export const Process: React.FC = () => {
   const [activeStep, setActiveStep] = useState<number>(1);
   const scrollTriggerInstance = useRef<ScrollTrigger | null>(null);
 
-  // GSAP ScrollTrigger Horizontal Pin-Scroll Setup
+  // GSAP ScrollTrigger Horizontal Pin-Scroll Setup (Desktop only)
   useEffect(() => {
     const section = sectionRef.current;
     const container = containerRef.current;
     const track = trackRef.current;
     if (!section || !container || !track) return;
 
-    const ctx = gsap.context(() => {
-      // Calculate how far the horizontal track needs to travel
+    const mm = gsap.matchMedia();
+
+    // Desktop Layout (>= 1024px): Pinned Horizontal Glide
+    mm.add("(min-width: 1024px)", () => {
       const getScrollDistance = () => {
         return Math.max(track.scrollWidth - container.clientWidth + 80, 500);
       };
@@ -137,9 +139,15 @@ export const Process: React.FC = () => {
       });
 
       scrollTriggerInstance.current = tween.scrollTrigger || null;
-    }, section);
+    });
 
-    return () => ctx.revert();
+    // Mobile / Tablet (< 1024px): Fluid Native Touch Glide without pinning lock
+    mm.add("(max-width: 1023px)", () => {
+      gsap.set(track, { clearProps: "transform,x" });
+      scrollTriggerInstance.current = null;
+    });
+
+    return () => mm.revert();
   }, []);
 
   // Jump to specific step
@@ -149,6 +157,17 @@ export const Process: React.FC = () => {
       const progress = (stepNumber - 1) / (PROCESS_STEPS.length - 1);
       const targetScroll = st.start + progress * (st.end - st.start);
       (window as any).lenis?.scrollTo(targetScroll, { duration: 0.8 });
+    } else {
+      // Mobile direct scroll inside touch container
+      const container = containerRef.current;
+      const track = trackRef.current;
+      if (container && track) {
+        const stepNodes = track.querySelectorAll(".process-step-node");
+        const targetNode = stepNodes[stepNumber - 1] as HTMLElement;
+        if (targetNode) {
+          targetNode.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+        }
+      }
     }
     setActiveStep(stepNumber);
   };
@@ -187,16 +206,20 @@ export const Process: React.FC = () => {
 
         </div>
 
-        {/* Continuous Horizontal Pinned Track */}
-        <div ref={containerRef} className="relative w-full overflow-hidden pt-2 pb-4">
+        {/* Continuous Horizontal Track: On mobile it is a native touch swipeable row; on desktop it is pinned */}
+        <div
+          ref={containerRef}
+          className="relative w-full overflow-x-auto lg:overflow-hidden pt-2 pb-6 scrollbar-none touch-pan-x touch-pan-y"
+          style={{ overscrollBehaviorX: "contain" }}
+        >
 
           {/* Horizontal Timeline Connector Bar */}
-          <div className="absolute top-[38px] left-8 right-8 h-[2px]  pointer-events-none z-0" />
+          <div className="absolute top-[38px] left-8 right-8 h-[2px] pointer-events-none z-0" />
 
           {/* Animated Horizontal Track */}
           <div
             ref={trackRef}
-            className="flex gap-6 sm:gap-8 will-change-transform relative z-10"
+            className="flex gap-4 sm:gap-6 lg:gap-8 will-change-transform relative z-10 px-1 sm:px-2 lg:px-0"
             style={{ width: "max-content" }}
           >
             {PROCESS_STEPS.map((item) => {

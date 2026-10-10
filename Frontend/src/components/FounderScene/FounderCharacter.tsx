@@ -84,6 +84,9 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
   const baseRotZ = config.rotationZ ?? 0;
   const baseScale = config.scale;
 
+  const reticleOuterRef = useRef<THREE.Group>(null);
+  const reticleInnerRef = useRef<THREE.Group>(null);
+
   // Change cursor when hovering over the founder
   useEffect(() => {
     if (sceneState === 'overview' && !isMobile) {
@@ -101,6 +104,14 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
 
     const group = groupRef.current;
     if (!group) return;
+
+    // Continuous smooth rotation loop for HUD reticles
+    if (reticleOuterRef.current) {
+      reticleOuterRef.current.rotation.z += delta * 0.4;
+    }
+    if (reticleInnerRef.current) {
+      reticleInnerRef.current.rotation.z -= delta * 0.22;
+    }
 
     // Hover progress lerping
     const targetHover = hovered && sceneState === 'overview' && !isMobile ? 1 : 0;
@@ -132,13 +143,14 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
     const hoverVal = hoverProgressRef.current;
     const focusVal = focusProgressRef.current;
 
-    // Subtle idle rotation
-    const time = state.clock.getElapsedTime() * config.idleSpeed;
-    const idleRot = Math.sin(time * 0.75) * 0.012;
+    // Smooth idle breathing and micro-weight shift loop
+    const time = state.clock.getElapsedTime() * (config.idleSpeed || 0.85);
+    const idleRot = Math.sin(time * 0.75) * 0.02;
+    const idleBob = Math.sin(time * 1.5) * 0.008;
 
     group.position.set(
       baseX,
-      baseY,
+      baseY + idleBob,
       baseZ
     );
 
@@ -191,60 +203,62 @@ export const FounderCharacter: React.FC<FounderCharacterProps> = memo(({
         <meshBasicMaterial />
       </mesh>
 
-      {/* EXACT 1:1 FLOOR HUD CIRCULAR RETICLE SYSTEM */}
+      {/* EXACT 1:1 FLOOR HUD CIRCULAR RETICLE SYSTEM WITH CONTINUOUS ROTATION LOOP */}
       {sceneState === 'overview' && (
         <group
           position={[0, 0.002, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
           scale={isMobile ? 0.78 : 1.0}
         >
-          {/* 1. Inner Fine Orbit Ring */}
+          {/* 1. Base Static Orbit Rings */}
           <mesh material={RETICLE_INNER_MATERIAL}>
             <ringGeometry args={[0.78, 0.795, 64]} />
           </mesh>
 
-          {/* 2. Middle Segmented Ring Base */}
           <mesh material={RETICLE_MID_MATERIAL}>
             <ringGeometry args={[0.98, 0.995, 64]} />
           </mesh>
 
-          {/* 3. Outer Perimeter Ring */}
           <mesh material={RETICLE_OUTER_MATERIAL}>
             <ringGeometry args={[1.22, 1.235, 64]} />
           </mesh>
 
-          {/* 4. Glowing Orange Accent Arcs */}
-          <mesh rotation={[0, 0, 0.35]} material={RETICLE_ORANGE_ARC_1}>
-            <ringGeometry args={[0.96, 1.015, 32, 1, 0, Math.PI * 0.35]} />
-          </mesh>
-
-          <mesh rotation={[0, 0, Math.PI + 0.5]} material={RETICLE_ORANGE_ARC_1}>
-            <ringGeometry args={[0.96, 1.015, 32, 1, 0, Math.PI * 0.28]} />
-          </mesh>
-
-          <mesh rotation={[0, 0, -Math.PI * 0.4]} material={RETICLE_ORANGE_ARC_2}>
-            <ringGeometry args={[1.20, 1.25, 32, 1, 0, Math.PI * 0.18]} />
-          </mesh>
-
-          {/* 5. Four Cardinal Orange Accent Dots */}
-          {CARDINAL_ANGLES.map((angle, i) => (
-            <mesh
-              key={i}
-              position={[Math.cos(angle) * 1.23, Math.sin(angle) * 1.23, 0.001]}
-              material={RETICLE_ORANGE_DOT_MATERIAL}
-            >
-              <circleGeometry args={[0.022, 16]} />
+          {/* 2. Clockwise Spinning Outer Arcs & Cardinal Dots */}
+          <group ref={reticleOuterRef}>
+            <mesh rotation={[0, 0, 0.35]} material={RETICLE_ORANGE_ARC_1}>
+              <ringGeometry args={[0.96, 1.015, 32, 1, 0, Math.PI * 0.35]} />
             </mesh>
-          ))}
+
+            <mesh rotation={[0, 0, Math.PI + 0.5]} material={RETICLE_ORANGE_ARC_1}>
+              <ringGeometry args={[0.96, 1.015, 32, 1, 0, Math.PI * 0.28]} />
+            </mesh>
+
+            {CARDINAL_ANGLES.map((angle, i) => (
+              <mesh
+                key={i}
+                position={[Math.cos(angle) * 1.23, Math.sin(angle) * 1.23, 0.001]}
+                material={RETICLE_ORANGE_DOT_MATERIAL}
+              >
+                <circleGeometry args={[0.022, 16]} />
+              </mesh>
+            ))}
+          </group>
+
+          {/* 3. Counter-Clockwise Spinning Inner Accent Arc */}
+          <group ref={reticleInnerRef}>
+            <mesh rotation={[0, 0, -Math.PI * 0.4]} material={RETICLE_ORANGE_ARC_2}>
+              <ringGeometry args={[1.20, 1.25, 32, 1, 0, Math.PI * 0.22]} />
+            </mesh>
+          </group>
         </group>
       )}
 
       {/* EXACT 1:1 ANGLED LEADER LINE & CALLOUT HUD BADGE */}
       {sceneState === 'overview' && (
         <Html
-          position={isMobile ? [0.02, 0.95, 0] : [0.22, 0.95, 0]}
+          position={isMobile ? [0.18, 0.88, 0] : [0.22, 0.95, 0]}
           center={false}
-          distanceFactor={isMobile ? 12 : 10.5}
+          distanceFactor={isMobile ? 10.5 : 10.5}
           style={{
             pointerEvents: 'auto',
             cursor: 'pointer',

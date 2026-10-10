@@ -542,7 +542,7 @@ const Services: React.FC = () => {
 
     useEffect(() => {
         const preview = previewRef.current;
-        if (!preview) return;
+        if (!preview || !window.matchMedia("(pointer: fine)").matches) return;
 
         gsap.set(preview, {
             xPercent: -50,
@@ -658,12 +658,6 @@ const Services: React.FC = () => {
 
             <div className="relative z-10 flex flex-col justify-between">
                 <section className="relative sm:min-h-screen flex flex-col justify-between px-6 sm:px-10 md:px-12 lg:px-16 py-6 sm:py-8 max-w-8xl mx-auto w-full">
-                    {/* Top Bar */}
-                    <header className="flex items-center justify-between w-full pt-2">
-                        <span className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm uppercase tracking-widest text-neutral-400 select-none">
-                            SERVICES
-                        </span>
-                    </header>
 
                     <div className="my-auto py-12 sm:py-16 md:py-20 flex flex-col items-center text-center">
                         <div className="flex flex-col items-center w-full max-w-6xl font-neuropol">

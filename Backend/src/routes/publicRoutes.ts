@@ -2,7 +2,7 @@ import { Router } from "express";
 import { getPortfolio, getPortfolioById } from "../controllers/portfolioController.js";
 import { getThreeD, getThreeDById } from "../controllers/threedController.js";
 import { getServices, getServiceById } from "../controllers/servicesController.js";
-import { getTeamMembers, getTeamMemberById } from "../controllers/teamController.js";
+import { getTeamMembers, getTeamMemberById, getFounder } from "../controllers/teamController.js";
 import { getStories, getStoryById } from "../controllers/storyController.js";
 import { getBlogs, getBlogById } from "../controllers/blogsController.js";
 import { submitInquiry } from "../controllers/inquiriesController.js";
@@ -22,9 +22,10 @@ router.get("/threed/:id", getThreeDById);
 router.get("/services", getServices);
 router.get("/services/:id", getServiceById);
 
-// 4. Team Members Endpoints
+// 4. Team Members & Founder Endpoints
 router.get("/team", getTeamMembers);
 router.get("/team/:id", getTeamMemberById);
+router.get("/founder", getFounder);
 
 // 5. Stories Endpoints
 router.get("/stories", getStories);

@@ -32,6 +32,8 @@ import {
   createTeamMember,
   updateTeamMember,
   deleteTeamMember,
+  getFounder,
+  updateFounder,
 } from "../controllers/teamController.js";
 import {
   getStories,
@@ -99,11 +101,13 @@ router.post("/services", createService);
 router.put("/services/:id", updateService);
 router.delete("/services/:id", deleteService);
 
-// 4. Team Members CRUD (Managed Admin, Super Admin, Admin)
+// 4. Team Members & Founder Profile CRUD (Managed Admin, Super Admin, Admin)
 router.get("/team", getTeamMembersAdmin);
 router.post("/team", createTeamMember);
 router.put("/team/:id", updateTeamMember);
 router.delete("/team/:id", deleteTeamMember);
+router.get("/founder", getFounder);
+router.put("/founder", updateFounder);
 
 // 5. Stories CRUD (Managed Admin, Super Admin, Admin)
 router.get("/stories", getStories);

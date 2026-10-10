@@ -251,6 +251,30 @@ class AdminService {
     return res;
   }
 
+  // Founder Profile
+  async getFounder(forceRefresh = false) {
+    const key = "admin_founder_profile";
+    if (!forceRefresh) {
+      const cached = getApiCache<any>(key);
+      if (cached) return cached;
+    }
+    const res = await adminApi.getFounder();
+    if (res) {
+      setApiCache(key, res);
+      setApiCache("founder_profile", res);
+    }
+    return res;
+  }
+
+  async updateFounder(data: any) {
+    const res = await adminApi.updateFounder(data);
+    invalidateApiCache(["founder_profile", "admin_founder_profile"]);
+    if (data.image) {
+      invalidateMediaCache(data.image);
+    }
+    return res;
+  }
+
   // Stories
   async getStories(
     params?: { page?: number; limit?: number; search?: string; category?: string; isActive?: boolean },

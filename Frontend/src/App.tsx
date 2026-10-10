@@ -43,6 +43,9 @@ const MainLandingPage = () => {
 
   const handleMacReady = useCallback(() => {
     setMacReady(true);
+    if (typeof window !== "undefined" && (window as any).__BDG_PERF__) {
+      (window as any).__BDG_PERF__.metrics.heroMacReadyTime = performance.now();
+    }
   }, []);
 
   const handleMacError = useCallback((error: Error) => {
@@ -52,6 +55,9 @@ const MainLandingPage = () => {
 
   const handleBusinessmanReady = useCallback(() => {
     setBusinessmanReady(true);
+    if (typeof window !== "undefined" && (window as any).__BDG_PERF__) {
+      (window as any).__BDG_PERF__.metrics.businessmanReadyTime = performance.now();
+    }
   }, []);
 
   const handleBusinessmanError = useCallback((error: Error) => {
@@ -158,18 +164,84 @@ const MainLandingPage = () => {
     }
     window.scrollTo(0, 0);
 
-    const isMobile = window.innerWidth < 768;
+    const isTouchDevice =
+      typeof window !== "undefined" &&
+      (window.innerWidth < 768 || window.matchMedia("(pointer: coarse)").matches);
+
+    // On mobile touch devices, use native GPU-composited momentum scrolling to eliminate touch latency & freezing
+    if (isTouchDevice) {
+      const nativeLenisProxy = {
+        start: () => {},
+        stop: () => {},
+        resize: () => {
+          ScrollTrigger.refresh();
+        },
+        scrollTo: (target: any, options?: any) => {
+          let top = 0;
+          if (typeof target === "number") {
+            top = target;
+          } else if (target instanceof HTMLElement) {
+            top = target.getBoundingClientRect().top + window.scrollY + (options?.offset || 0);
+          } else if (typeof target === "string") {
+            const el = document.querySelector(target);
+            if (el) top = el.getBoundingClientRect().top + window.scrollY + (options?.offset || 0);
+          }
+          window.scrollTo({
+            top,
+            behavior: options?.immediate ? "instant" : "smooth",
+          });
+        },
+        raf: () => {},
+        on: () => {},
+        off: () => {},
+        destroy: () => {},
+      };
+
+      (window as any).lenis = nativeLenisProxy;
+
+      const handleResize = () => {
+        ScrollTrigger.refresh();
+      };
+      window.addEventListener("resize", handleResize, { passive: true });
+
+      const handleAnchorClick = (e: MouseEvent) => {
+        const target = (e.target as HTMLElement)?.closest("a[href^='#']");
+        if (!target) return;
+        const href = target.getAttribute("href");
+        if (href && href.startsWith("#") && href.length > 1) {
+          const targetEl = document.querySelector(href);
+          if (targetEl) {
+            e.preventDefault();
+            targetEl.scrollIntoView({ behavior: "smooth" });
+          }
+        }
+      };
+      document.addEventListener("click", handleAnchorClick);
+
+      return () => {
+        window.removeEventListener("resize", handleResize);
+        document.removeEventListener("click", handleAnchorClick);
+        delete (window as any).lenis;
+      };
+    }
 
     const lenis = new Lenis({
-      duration: isMobile ? 0.9 : 1.15,
+      duration: 1.15,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
       wheelMultiplier: 0.95,
-      touchMultiplier: 1.0,
+      touchMultiplier: 0,
+      syncTouch: false,
       infinite: false,
       autoRaf: false,
+      prevent: (node) => {
+        return Boolean(
+          node.closest?.("[data-lenis-prevent='true']") ||
+          document.body.classList.contains("modal-open")
+        );
+      },
     });
 
     (window as any).lenis = lenis;
@@ -181,7 +253,7 @@ const MainLandingPage = () => {
     lenis.stop();
     const lenisSafetyUnlock = window.setTimeout(() => {
       lenis.start();
-    }, 10000);
+    }, 5000);
 
     lenis.on("scroll", () => {
       ScrollTrigger.update();
@@ -361,7 +433,7 @@ const MainLandingPage = () => {
       {/* Red Cursor Box with GSAP Tracking & Targeting Lens */}
       <div
         ref={boxRef}
-        className="w-1 h-1 rounded-full z-50 fixed top-0 left-0 pointer-events-none flex items-center justify-center transition-opacity"
+        className="hidden md:flex w-1 h-1 rounded-full z-50 fixed top-0 left-0 pointer-events-none items-center justify-center transition-opacity"
       />
 
       {/* 3D Preloader Overlay (Strictly tracks 3D model & asset loading) */}

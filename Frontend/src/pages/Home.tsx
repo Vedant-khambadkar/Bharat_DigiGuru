@@ -77,6 +77,9 @@ function CanvasReadyNotifier({ onReady }: { onReady: () => void }) {
   return null;
 }
 
+import MobileHeroShowcase from '../components/Home_Animation/MobileHeroShowcase.tsx'
+import { useResponsiveTier } from '../hooks/useResponsiveTier.ts'
+
 interface HomeProps {
   onMacReady?: () => void;
   onMacError?: (error: Error) => void;
@@ -86,10 +89,11 @@ function Home({ onMacReady, onMacError }: HomeProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const progressRef = useRef<number>(0);
   const [isSectionVisible, setIsSectionVisible] = useState(true);
-  const isMobile = typeof window !== "undefined" ? window.innerWidth < 768 : false;
+  const { shouldRenderHero3D, isMobile } = useResponsiveTier();
 
-  // IntersectionObserver to pause MacBook WebGL rendering when Home section is scrolled past
+  // IntersectionObserver to pause MacBook WebGL rendering when Home section is scrolled past (Desktop only)
   useEffect(() => {
+    if (!shouldRenderHero3D) return;
     const el = sectionRef.current;
     if (!el) return;
 
@@ -102,7 +106,7 @@ function Home({ onMacReady, onMacError }: HomeProps) {
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [shouldRenderHero3D]);
 
   const handleCanvasReady = useCallback(() => {
     // Canvas WebGL context is initialized
@@ -118,8 +122,9 @@ function Home({ onMacReady, onMacError }: HomeProps) {
     onMacError?.(error);
   }, [onMacError]);
 
-  // GSAP ScrollTrigger Pinning for ultra-smooth 5-stage laptop animation
+  // GSAP ScrollTrigger Pinning for ultra-smooth 5-stage laptop animation (Desktop only)
   useEffect(() => {
+    if (!shouldRenderHero3D) return;
     const section = sectionRef.current;
     if (!section) return;
 
@@ -127,7 +132,7 @@ function Home({ onMacReady, onMacError }: HomeProps) {
       ScrollTrigger.create({
         trigger: section,
         start: "top top",
-        end: "+=3200", // Distance user scrolls through the 5 pages of 3D animation
+        end: "+=3200", // Full cinematic scroll journey on desktop
         pin: true,
         pinSpacing: true,
         scrub: 0.5,
@@ -141,8 +146,18 @@ function Home({ onMacReady, onMacError }: HomeProps) {
     }, section);
 
     return () => ctx.revert();
-  }, []);
+  }, [shouldRenderHero3D]);
 
+  // Mobile / Tablet: Render dedicated, lightweight, award-winning MobileHeroShowcase
+  if (!shouldRenderHero3D) {
+    return (
+      <div id="home-section" className="w-full">
+        <MobileHeroShowcase onReady={handleMacReady} />
+      </div>
+    );
+  }
+
+  // Desktop: Render full 3D interactive MacBook experience with GSAP 5-stage scroll journey
   return (
     <main
       id="home-section"

@@ -7,6 +7,7 @@ import ModelLoader from '../components/ModelLoader/ModelLoader';
 import ModelErrorBoundary from '../components/ModelLoader/ModelErrorBoundary';
 import desktopVignette from '../assets/Monochrome Vignette White Space.webp';
 import mobileVignette from '../assets/Minimalist Black and White Vignette  mobile.webp';
+import { useResponsiveTier } from '../hooks/useResponsiveTier';
 import type { SceneState } from '../types/scene';
 
 /**
@@ -36,12 +37,9 @@ export const OurTeam: React.FC<OurTeamProps> = ({
   const [sceneState, setSceneState] = useState<SceneState>('overview');
   const sectionRef = useRef<HTMLElement>(null);
   const [isSectionVisible, setIsSectionVisible] = useState(false);
-  const [isMobile, setIsMobile] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 768;
-    }
-    return false;
-  });
+  const { isMobile } = useResponsiveTier();
+
+  const [hasEnteredViewport, setHasEnteredViewport] = useState(false);
 
   // IntersectionObserver to pause all WebGL execution when OurTeam section is offscreen
   useEffect(() => {
@@ -51,29 +49,17 @@ export const OurTeam: React.FC<OurTeamProps> = ({
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsSectionVisible(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          setHasEnteredViewport(true);
+        }
       },
-      { rootMargin: "200px 0px" }
+      { rootMargin: "450px 0px" }
     );
 
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  // Optimized window resize listener with debounce
-  useEffect(() => {
-    let timeoutId: number;
-    const handleResize = () => {
-      window.clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(() => {
-        setIsMobile(window.innerWidth < 768);
-      }, 100);
-    };
-    window.addEventListener('resize', handleResize, { passive: true });
-    return () => {
-      window.clearTimeout(timeoutId);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
 
   // Handler to trigger cinematic camera zoom into Founder
   const handleSelectFounder = useCallback(() => {
@@ -101,8 +87,8 @@ export const OurTeam: React.FC<OurTeamProps> = ({
 
   // Memoized camera initial values
   const cameraProps = useMemo(() => ({
-    position: (isMobile ? [0, 4.8, 9.8] : [0, 5.6, 12.8]) as [number, number, number],
-    fov: isMobile ? 42 : 34,
+    position: (isMobile ? [0, 3.4, 9.6] : [0, 5.6, 12.8]) as [number, number, number],
+    fov: isMobile ? 44 : 34,
     near: 0.1,
     far: 50,
   }), [isMobile]);
@@ -114,28 +100,25 @@ export const OurTeam: React.FC<OurTeamProps> = ({
       className="relative w-full h-screen min-h-[640px] max-h-[1080px] overflow-hidden select-none bg-black text-black"
     >
       {/* Background Vignette Graphic Layer */}
-      <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden bg-white">
+      <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden">
         <img
           src={isMobile ? mobileVignette : desktopVignette}
-          alt=""
-          onError={(e) => {
-            (e.currentTarget as HTMLElement).style.display = 'none';
-          }}
+          alt="Our Team Vignette Background"
           className="w-full h-full object-fill select-none pointer-events-none"
         />
       </div>
 
-      {/* EXACT 1:1 TOP HEADER UI */}
-      <div className="pointer-events-none absolute inset-x-0 top-6 sm:top-8 z-30 flex flex-col items-center text-center select-none px-4">
+      {/* EXACT 1:1 TOP HEADER UI — Padded below mobile navbar with responsive typography */}
+      <div className="pointer-events-none absolute inset-x-0 top-14 sm:top-8 z-30 flex flex-col items-center text-center select-none px-4">
         {/* Title flanked by horizontal lines */}
-        <div className="flex items-center gap-3 sm:gap-4 text-[20px] sm:text-[28px] font-mono tracking-[0.32em] text-white uppercase font-normal">
-          <span className="w-6 sm:w-10 h-[1px] bg-white/40" />
+        <div className="flex items-center gap-2 sm:gap-4 text-[14px] sm:text-[28px] font-mono tracking-[0.22em] sm:tracking-[0.32em] text-white uppercase font-normal drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
+          <span className="w-4 sm:w-10 h-[1px] bg-white/40" />
           <span>THE COLLECTIVE & DIRECTION</span>
-          <span className="w-6 sm:w-10 h-[1px] bg-white/40" />
+          <span className="w-4 sm:w-10 h-[1px] bg-white/40" />
         </div>
-        
+
         {/* Subtitle */}
-        <span className="text-[10px] sm:text-[16px] font-mono tracking-[0.28em] uppercase text-neutral-400 mt-1.5 font-normal">
+        <span className="text-[9px] sm:text-[16px] font-mono tracking-[0.22em] sm:tracking-[0.28em] uppercase text-neutral-300 mt-1 sm:mt-1.5 font-normal drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">
           A VISION BUILT TOGETHER
         </span>
       </div>
@@ -173,9 +156,9 @@ export const OurTeam: React.FC<OurTeamProps> = ({
         <Canvas
           frameloop={isSectionVisible ? "always" : "never"}
           shadows={!isMobile ? { type: THREE.PCFShadowMap } : false}
-          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, isMobile ? 1.0 : 1.35)]}
+          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, isMobile ? 1.15 : 1.35)]}
           gl={{
-            antialias: !isMobile,
+            antialias: true,
             alpha: true,
             powerPreference: 'high-performance',
             toneMapping: THREE.NoToneMapping,
@@ -186,17 +169,19 @@ export const OurTeam: React.FC<OurTeamProps> = ({
           className="w-full h-full block touch-pan-y"
         >
           <ModelErrorBoundary fallback={null} onError={onBusinessmanError}>
-            <Suspense fallback={<ModelLoader theme="light" label="Loading 3D" />}>
-              <PeopleScene
-                sceneState={sceneState}
-                onSelectFounder={handleSelectFounder}
-                onTransitionComplete={handleTransitionComplete}
-                onReturnComplete={handleReturnComplete}
-                isMobile={isMobile}
-                isVisible={isSectionVisible}
-                onReady={onBusinessmanReady}
-              />
-            </Suspense>
+            {hasEnteredViewport ? (
+              <Suspense fallback={<ModelLoader theme="light" label="Loading 3D" />}>
+                <PeopleScene
+                  sceneState={sceneState}
+                  onSelectFounder={handleSelectFounder}
+                  onTransitionComplete={handleTransitionComplete}
+                  onReturnComplete={handleReturnComplete}
+                  isMobile={isMobile}
+                  isVisible={isSectionVisible}
+                  onReady={onBusinessmanReady}
+                />
+              </Suspense>
+            ) : null}
           </ModelErrorBoundary>
         </Canvas>
       </div>

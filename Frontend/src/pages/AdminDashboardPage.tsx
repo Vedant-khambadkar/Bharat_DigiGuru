@@ -43,6 +43,7 @@ import { socket, onSocketEvent } from "../utils/socket";
 import { ConfirmDeleteModal } from "../components/Admin/ConfirmDeleteModal";
 import CachedImage from "../components/CachedImage";
 import { getApiCache, setApiCache } from "../utils/apiCache";
+import founderPhoto from "../assets/Picture/Picture12.webp";
 
 type TabType = "overview" | "portfolio" | "services" | "team" | "blogs" | "threed" | "inquiries" | "admins";
 
@@ -230,10 +231,29 @@ export const AdminDashboardPage: React.FC = () => {
 
   // Edit / Create Modal State
   const [editingItem, setEditingItem] = useState<{
-    type: "portfolio" | "services" | "team" | "blogs" | "threed";
+    type: "portfolio" | "services" | "team" | "blogs" | "threed" | "founder";
     isNew: boolean;
     data: any;
   } | null>(null);
+
+  // Founder Profile State
+  const [founderProfile, setFounderProfile] = useState<any>(null);
+  const [founderLoading, setFounderLoading] = useState<boolean>(false);
+  const [teamSubTab, setTeamSubTab] = useState<"founder" | "members">("founder");
+
+  const fetchFounder = async (force = false) => {
+    try {
+      setFounderLoading(true);
+      const res = await adminService.getFounder(force);
+      if (res) {
+        setFounderProfile(res);
+      }
+    } catch (err) {
+      console.error("Failed to fetch founder profile:", err);
+    } finally {
+      setFounderLoading(false);
+    }
+  };
 
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -590,6 +610,7 @@ export const AdminDashboardPage: React.FC = () => {
     fetchPortfolio(portfolioPage, portfolioLimit, portfolioSearch, portfolioCategory, true);
     fetchServices(servicesPage, servicesLimit, servicesSearch, true);
     fetchTeam(teamPage, teamLimit, teamSearch, teamColumnFilter, true);
+    fetchFounder(true);
     fetchBlogs(blogsPage, blogsLimit, blogsSearch, blogsCategory, true);
     if (currentUser.role === "managedAdmin") {
       fetchThreeD(threeDPage, threeDLimit, threeDSearch, threeDCategory, true);
@@ -604,6 +625,7 @@ export const AdminDashboardPage: React.FC = () => {
     fetchPortfolio(1);
     fetchServices(1);
     fetchTeam(1);
+    fetchFounder(true);
     fetchBlogs(1);
     if (currentUser.role === "managedAdmin") {
       fetchThreeD(1);
@@ -769,6 +791,11 @@ export const AdminDashboardPage: React.FC = () => {
       fetchAdminUsers();
     });
 
+    const unsubFounderUpdated = onSocketEvent("founder:updated", (updated) => {
+      setFounderProfile(updated);
+      showNotification("Founder profile synchronized in real-time!", "success");
+    });
+
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
@@ -778,6 +805,7 @@ export const AdminDashboardPage: React.FC = () => {
       unsubTeamCreated();
       unsubTeamUpdated();
       unsubTeamDeleted();
+      unsubFounderUpdated();
       unsubBlogCreated();
       unsubBlogUpdated();
       unsubBlogDeleted();
@@ -950,6 +978,33 @@ export const AdminDashboardPage: React.FC = () => {
           showNotification("Team member updated!");
         }
         fetchTeam(teamPage, teamLimit, teamSearch, teamColumnFilter, true);
+      } else if (type === "founder") {
+        const founderPayload = {
+          ...data,
+          name: data.name || "SHUBHAM SINGH",
+          role: data.role || "CREATIVE DIRECTOR & VISIONARY",
+          badge: data.badge || "MEET THE FOUNDER",
+          subtitle: data.subtitle || "LEADERSHIP & VISION",
+          photoTag: data.photoTag || "FOUNDER",
+          cityTag: data.cityTag || "VARANASI × GLOBAL",
+          image: data.image || "",
+          bio: data.bio || "",
+          bioSecondary: data.bioSecondary || "",
+          quote: data.quote || "",
+          specialties: Array.isArray(data.specialties)
+            ? data.specialties
+            : typeof data.specialties === "string"
+            ? data.specialties.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : [],
+          linkedinUrl: data.linkedinUrl || "https://linkedin.com",
+          instagramUrl: data.instagramUrl || "https://instagram.com",
+        };
+        const updated = await adminService.updateFounder(founderPayload);
+        setFounderProfile(updated?.data || updated || founderPayload);
+        showNotification("Founder profile updated successfully!");
+        setEditingItem(null);
+        fetchFounder(true);
+        return;
       } else if (type === "blogs") {
         const blogPayload = {
           ...data,
@@ -2301,8 +2356,248 @@ export const AdminDashboardPage: React.FC = () => {
              ========================================================================= */}
           {activeTab === "team" && (
             <div className="flex flex-col gap-3.5 sm:gap-6">
-              {/* Top Controls */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[#11131b]/80 backdrop-blur-md p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-xl">
+              {/* Sub-tab Navigation between Founder Profile and Editorial Grid */}
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-[#11131b]/80 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/10 shadow-lg">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTeamSubTab("founder")}
+                    className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+                      teamSubTab === "founder"
+                        ? "bg-gradient-to-r from-[#ff3b30] to-[#ff5500] text-white shadow-[0_0_20px_rgba(255,59,48,0.35)]"
+                        : "bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <Crown size={14} />
+                    <span>Founder Profile (Live on Site)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTeamSubTab("members")}
+                    className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+                      teamSubTab === "members"
+                        ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.35)]"
+                        : "bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <Users size={14} />
+                    <span>Editorial Grid ({teamTotal})</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-neutral-400 hidden sm:inline">
+                    {teamSubTab === "founder" ? "Live Founder Dossier & Mobile Showcase" : "Editorial 5-Column Grid"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Founder Profile View */}
+              {teamSubTab === "founder" && (
+                <div className="flex flex-col gap-4 sm:gap-6">
+                  {/* Top Bar Card */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[#11131b]/80 backdrop-blur-md p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-xl">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="px-2.5 py-0.5 rounded-full bg-[#ff3b30]/15 border border-[#ff3b30]/30 text-[#ff3b30] text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
+                          <Crown size={12} /> Active Live Profile
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-stone-300 text-[10px] font-mono uppercase tracking-wider">
+                          Founder Dossier &amp; Mobile Showcase
+                        </span>
+                      </div>
+                      <h2 className="font-['Syne',sans-serif] font-bold text-xl sm:text-2xl text-white">
+                        Founder &amp; Leadership Management
+                      </h2>
+                      <p className="font-mono text-xs text-neutral-400 mt-0.5">
+                        Manage the founder credentials, bio, philosophy, specialties, and links displayed in the website modal and mobile showcase.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                      <button
+                        onClick={() => fetchFounder(true)}
+                        disabled={founderLoading}
+                        className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                        title="Refresh founder data"
+                      >
+                        <RefreshCw size={15} className={founderLoading ? "animate-spin text-white" : ""} />
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          setEditingItem({
+                            type: "founder",
+                            isNew: false,
+                            data: {
+                              name: founderProfile?.name || "SHUBHAM SINGH",
+                              role: founderProfile?.role || "CREATIVE DIRECTOR & VISIONARY",
+                              badge: founderProfile?.badge || "MEET THE FOUNDER",
+                              subtitle: founderProfile?.subtitle || "LEADERSHIP & VISION",
+                              photoTag: founderProfile?.photoTag || "FOUNDER",
+                              cityTag: founderProfile?.cityTag || "VARANASI × GLOBAL",
+                              image: founderProfile?.image || "",
+                              bio:
+                                founderProfile?.bio ||
+                                "Born in India and raised in the city of artists, Varanasi, Shubham has been capturing stories and crafting visuals for as long as he can remember.",
+                              bioSecondary:
+                                founderProfile?.bioSecondary ||
+                                "As an accomplished digital content creator and 3D visionary, he has collaborated with premier global mobile enterprises. His portfolio encompasses high-end commercial CGI, street photography stills, cinematic short films, and high-impact music videos.",
+                              quote:
+                                founderProfile?.quote ||
+                                '"His unique style, artistic training, and profound appreciation for light and architecture make every frame an unforgettable visual journey."',
+                              specialties:
+                                founderProfile?.specialties && founderProfile.specialties.length > 0
+                                  ? founderProfile.specialties
+                                  : [
+                                      "3D CGI & ArchViz",
+                                      "Commercial Stills",
+                                      "Cinematic Direction",
+                                      "Creative Strategy",
+                                    ],
+                              linkedinUrl: founderProfile?.linkedinUrl || "https://linkedin.com",
+                              instagramUrl: founderProfile?.instagramUrl || "https://instagram.com",
+                            },
+                          })
+                        }
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#ff3b30] to-[#ff5500] hover:brightness-110 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-[0_0_20px_rgba(255,59,48,0.35)] transition-all cursor-pointer active:scale-95"
+                      >
+                        <Edit2 size={15} />
+                        <span>Edit Founder Profile</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Founder Profile Live Preview Card */}
+                  <div className="bg-[#0e0e12]/95 border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl relative overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center">
+                      {/* Left: Founder Portrait Card */}
+                      <div className="md:col-span-5 relative w-full h-[280px] sm:h-[340px] md:h-[400px] rounded-2xl overflow-hidden bg-black/60 border border-white/10 shadow-2xl group">
+                        <img
+                          src={founderProfile?.image || founderPhoto}
+                          alt={founderProfile?.name || "Shubham Singh"}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                          style={{ objectPosition: "48% 36%" }}
+                        />
+                        <div className="absolute bottom-0 inset-x-0 h-28 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none" />
+
+                        {/* Floating Badge on Portrait */}
+                        <div className="absolute bottom-3 left-3 right-3 p-2.5 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 flex items-center justify-between z-10 shadow-lg">
+                          <div>
+                            <span className="text-xs font-mono uppercase text-white font-bold tracking-wider block">
+                              {founderProfile?.name || "SHUBHAM SINGH"}
+                            </span>
+                            <span className="text-[9px] font-mono text-neutral-400 block">
+                              {founderProfile?.cityTag || "VARANASI × GLOBAL"}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-[#ff5500] uppercase tracking-widest font-bold px-2 py-0.5 rounded-md bg-[#ff5500]/15 border border-[#ff5500]/30">
+                            {founderProfile?.photoTag || "FOUNDER"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right: Founder Editorial Dossier Content */}
+                      <div className="md:col-span-7 flex flex-col items-start space-y-3.5 sm:space-y-4">
+                        {/* Pill Badge & Subtitle */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] border border-white/10">
+                            <Sparkles className="w-3.5 h-3.5 text-[#ff3b30]" />
+                            <span className="text-[10px] sm:text-xs font-mono text-white tracking-wide uppercase font-semibold">
+                              {founderProfile?.badge || "MEET THE FOUNDER"}
+                            </span>
+                          </div>
+                          <span className="text-[10px] sm:text-xs font-mono uppercase text-[#e06b3a] tracking-widest font-semibold">
+                            {founderProfile?.role || "CREATIVE DIRECTOR & VISIONARY"}
+                          </span>
+                        </div>
+
+                        {/* Header Subtitle tag */}
+                        <div className="text-[11px] font-mono text-neutral-400 uppercase tracking-widest">
+                          {founderProfile?.subtitle || "LEADERSHIP & VISION"}
+                        </div>
+
+                        {/* Name */}
+                        <h3 className="font-['Syne',sans-serif] font-bold text-2xl sm:text-3xl text-white tracking-wide">
+                          {founderProfile?.name || "SHUBHAM SINGH"}
+                        </h3>
+
+                        {/* Bio Paragraphs */}
+                        <div className="space-y-2 text-xs sm:text-sm text-stone-300 font-sans leading-relaxed">
+                          <p>
+                            {founderProfile?.bio ||
+                              "Born in India and raised in the city of artists, Varanasi, Shubham has been capturing stories and crafting visuals for as long as he can remember."}
+                          </p>
+                          <p className="text-stone-400">
+                            {founderProfile?.bioSecondary ||
+                              "As an accomplished digital content creator and 3D visionary, he has collaborated with premier global mobile enterprises. His portfolio encompasses high-end commercial CGI, street photography stills, cinematic short films, and high-impact music videos."}
+                          </p>
+                        </div>
+
+                        {/* Credo / Quote Card */}
+                        <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/10 w-full">
+                          <p className="text-xs italic text-stone-300 m-0 leading-relaxed font-sans">
+                            {founderProfile?.quote ||
+                              '"His unique style, artistic training, and profound appreciation for light and architecture make every frame an unforgettable visual journey."'}
+                          </p>
+                        </div>
+
+                        {/* Specialties Tags */}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {(
+                            founderProfile?.specialties || [
+                              "3D CGI & ArchViz",
+                              "Commercial Stills",
+                              "Cinematic Direction",
+                              "Creative Strategy",
+                            ]
+                          ).map((tag: string) => (
+                            <span
+                              key={tag}
+                              className="px-2.5 py-1 rounded-md bg-white/[0.06] border border-white/10 text-[10px] font-mono uppercase tracking-wider text-stone-300"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Social Links */}
+                        <div className="flex items-center gap-3 pt-2">
+                          {founderProfile?.linkedinUrl && (
+                            <a
+                              href={founderProfile.linkedinUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white font-mono text-[10px] tracking-widest uppercase bg-white/5 hover:bg-[#ff3b30]/15 border border-white/10 hover:border-[#ff3b30]/30 transition-all cursor-pointer"
+                            >
+                              <span>LinkedIn</span>
+                              <ExternalLink size={11} />
+                            </a>
+                          )}
+                          {founderProfile?.instagramUrl && (
+                            <a
+                              href={founderProfile.instagramUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white font-mono text-[10px] tracking-widest uppercase bg-white/5 hover:bg-[#ff3b30]/15 border border-white/10 hover:border-[#ff3b30]/30 transition-all cursor-pointer"
+                            >
+                              <span>Instagram</span>
+                              <ExternalLink size={11} />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Editorial Team Members Grid View */}
+              {teamSubTab === "members" && (
+                <div className="flex flex-col gap-3.5 sm:gap-6">
+                  {/* Top Controls */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-[#11131b]/80 backdrop-blur-md p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-xl">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="px-2.5 py-0.5 rounded-full bg-white/10 border border-white/20 text-white text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
@@ -2579,6 +2874,8 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
 
           {/* =========================================================================
               BLOGS & EDITORIAL ARTICLES TAB (SERVER-SIDE PAGINATED & REALTIME SYNC)
@@ -3631,6 +3928,8 @@ export const AdminDashboardPage: React.FC = () => {
                   ? "Service Capability"
                   : editingItem.type === "team"
                   ? "Team Member"
+                  : editingItem.type === "founder"
+                  ? "Founder Profile"
                   : editingItem.type === "blogs"
                   ? "Blog Article"
                   : "3D Showcase Video"}
@@ -4807,6 +5106,361 @@ export const AdminDashboardPage: React.FC = () => {
                     <label htmlFor="team-active-toggle" className="text-xs font-mono text-neutral-300 cursor-pointer">
                       Show on public website (Active)
                     </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Founder Profile Specific Fields */}
+              {editingItem.type === "founder" && (
+                <div className="flex flex-col gap-4 text-left">
+                  <div className="p-3.5 rounded-2xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-[#ff3b30]/20 text-[#ff3b30] flex items-center justify-center shrink-0">
+                      <Crown size={18} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+                        Founder Profile Live Configuration
+                      </h4>
+                      <p className="text-[11px] text-neutral-400">
+                        Changes here are immediately reflected across the website in the Founder Dossier modal &amp; mobile showcases.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Name and Role */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        Founder Full Name <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editingItem.data.name || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, name: e.target.value },
+                          })
+                        }
+                        placeholder="SHUBHAM SINGH"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-[#ff3b30]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        Role &amp; Vision Title <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editingItem.data.role || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, role: e.target.value },
+                          })
+                        }
+                        placeholder="CREATIVE DIRECTOR & VISIONARY"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-[#ff3b30]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Badge & Subtitle & Location Tag */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        Pill Badge Text
+                      </label>
+                      <input
+                        type="text"
+                        value={editingItem.data.badge || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, badge: e.target.value },
+                          })
+                        }
+                        placeholder="MEET THE FOUNDER"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#ff3b30]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        Header Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={editingItem.data.subtitle || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, subtitle: e.target.value },
+                          })
+                        }
+                        placeholder="LEADERSHIP & VISION"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#ff3b30]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        Location / City Tag
+                      </label>
+                      <input
+                        type="text"
+                        value={editingItem.data.cityTag || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, cityTag: e.target.value },
+                          })
+                        }
+                        placeholder="VARANASI × GLOBAL"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#ff3b30]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Founder Portrait Photo Upload / URL */}
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        Founder Portrait Photo
+                      </label>
+                      {editingItem.data.image && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditingItem({
+                              ...editingItem,
+                              data: { ...editingItem.data, image: "" },
+                            })
+                          }
+                          className="text-[10px] font-mono text-red-400 hover:underline cursor-pointer flex items-center gap-1"
+                        >
+                          <Trash2 size={11} /> Reset to Default Photo
+                        </button>
+                      )}
+                    </div>
+
+                    {editingItem.data.image ? (
+                      <div className="relative rounded-2xl overflow-hidden border border-white/15 bg-black/40 p-2.5 flex items-center gap-3">
+                        <div className="w-16 h-20 sm:w-20 sm:h-24 rounded-xl overflow-hidden bg-black shrink-0 border border-white/10 relative">
+                          <img
+                            src={editingItem.data.image}
+                            alt="Founder Preview"
+                            className="w-full h-full object-cover"
+                            style={{ objectPosition: '48% 36%' }}
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1 min-w-0 flex-1">
+                          <span className="font-mono text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                            <CheckCircle size={12} /> Custom Photo Active
+                          </span>
+                          <p className="font-mono text-[10px] text-neutral-400 truncate max-w-full">
+                            {editingItem.data.image}
+                          </p>
+                          <div className="flex items-center gap-2 pt-1">
+                            <label className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white text-[10px] font-mono font-bold cursor-pointer transition-colors inline-flex items-center gap-1">
+                              <UploadCloud size={11} />
+                              <span>Replace Photo</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) handleFileUpload(f, "image");
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragActive(true);
+                        }}
+                        onDragLeave={() => setDragActive(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragActive(false);
+                          const f = e.dataTransfer.files?.[0];
+                          if (f) handleFileUpload(f, "image");
+                        }}
+                        className={`relative border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer flex flex-col items-center justify-center gap-1.5 transition-all ${
+                          dragActive ? "border-[#ff3b30] bg-[#ff3b30]/10" : "border-white/15 hover:border-white/30 bg-black/20"
+                        }`}
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleFileUpload(f, "image");
+                          }}
+                        />
+                        {isUploading ? (
+                          <div className="flex items-center gap-2 py-2">
+                            <Loader2 className="w-5 h-5 text-[#ff3b30] animate-spin" />
+                            <span className="text-xs font-mono text-neutral-300">{uploadProgress || "Uploading portrait..."}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <UploadCloud size={20} className="text-[#ff3b30]" />
+                            <p className="text-xs text-neutral-300">
+                              Drag portrait photo here or <span className="text-[#ff3b30] underline">browse</span>
+                            </p>
+                            <p className="text-[10px] font-mono text-neutral-500">
+                              Leave empty to use high-res default studio portrait (Picture12.webp)
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    <input
+                      type="text"
+                      value={editingItem.data.image || ""}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, image: e.target.value },
+                        })
+                      }
+                      placeholder="Or paste direct image URL (https://...)"
+                      className="w-full bg-[#181a24]/50 border border-white/5 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-[#ff3b30]"
+                    />
+                  </div>
+
+                  {/* Primary & Secondary Bio */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        Primary Bio Paragraph
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={editingItem.data.bio || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, bio: e.target.value },
+                          })
+                        }
+                        placeholder="Born in India and raised in the city of artists, Varanasi..."
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#ff3b30] resize-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        Secondary Bio Paragraph
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={editingItem.data.bioSecondary || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, bioSecondary: e.target.value },
+                          })
+                        }
+                        placeholder="As an accomplished digital content creator and 3D visionary..."
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#ff3b30] resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Credo / Quote */}
+                  <div className="flex flex-col gap-1">
+                    <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                      Credo / Highlight Quote
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={editingItem.data.quote || ""}
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, quote: e.target.value },
+                        })
+                      }
+                      placeholder="His unique style, artistic training, and profound appreciation for light..."
+                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs text-white italic focus:outline-none focus:border-[#ff3b30] resize-none"
+                    />
+                  </div>
+
+                  {/* Specialties Tags (comma separated) */}
+                  <div className="flex flex-col gap-1">
+                    <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                      Specialties &amp; Disciplines (comma-separated tags)
+                    </label>
+                    <input
+                      type="text"
+                      value={
+                        Array.isArray(editingItem.data.specialties)
+                          ? editingItem.data.specialties.join(", ")
+                          : editingItem.data.specialties || ""
+                      }
+                      onChange={(e) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: {
+                            ...editingItem.data,
+                            specialties: e.target.value.split(",").map((t) => t.trim()).filter(Boolean),
+                          },
+                        })
+                      }
+                      placeholder="3D CGI & ArchViz, Commercial Stills, Cinematic Direction, Creative Strategy"
+                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#ff3b30]"
+                    />
+                  </div>
+
+                  {/* Social URLs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        LinkedIn Profile URL
+                      </label>
+                      <input
+                        type="url"
+                        value={editingItem.data.linkedinUrl || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, linkedinUrl: e.target.value },
+                          })
+                        }
+                        placeholder="https://linkedin.com"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#ff3b30]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
+                        Instagram Profile URL
+                      </label>
+                      <input
+                        type="url"
+                        value={editingItem.data.instagramUrl || ""}
+                        onChange={(e) =>
+                          setEditingItem({
+                            ...editingItem,
+                            data: { ...editingItem.data, instagramUrl: e.target.value },
+                          })
+                        }
+                        placeholder="https://instagram.com"
+                        className="w-full bg-[#181a24] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#ff3b30]"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

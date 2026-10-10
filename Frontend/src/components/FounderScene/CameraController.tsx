@@ -29,9 +29,9 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   // Default camera setups (Matching the exact elevated perspective of the reference image)
   const defaultCam = isMobile
     ? {
-      pos: [0.0, 4.8, 9.8] as [number, number, number],
-      lookAt: [0.0, 0.7, 0.3] as [number, number, number],
-      fov: 42,
+      pos: [0.0, 3.4, 9.6] as [number, number, number],
+      lookAt: [0.0, 1.25, 0.4] as [number, number, number],
+      fov: 44,
     }
     : {
       pos: [0.0, 5.6, 12.8] as [number, number, number],
@@ -43,9 +43,9 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   const [fx, , fz] = founderConfig.position;
   const focusCam = isMobile
     ? {
-      pos: [fx * 0.4, 1.55, fz + 2.8] as [number, number, number],
+      pos: [fx * 0.4, 1.45, fz + 2.5] as [number, number, number],
       lookAt: [fx, 1.35, fz] as [number, number, number],
-      fov: 30,
+      fov: 32,
     }
     : {
       pos: [fx * 0.6, 1.6, fz + 3.2] as [number, number, number],

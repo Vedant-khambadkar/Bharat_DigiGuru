@@ -2,12 +2,13 @@ import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { IDatabaseSchema, IPortfolioItem, IThreeDProject, IServiceItem, ITeamMember, IStoryItem, IBlogItem, IInquiry } from "../types/index.js";
+import { IDatabaseSchema, IPortfolioItem, IThreeDProject, IServiceItem, ITeamMember, IFounderProfile, IStoryItem, IBlogItem, IInquiry } from "../types/index.js";
 import {
   PortfolioModel,
   ThreeDModel,
   ServiceModel,
   TeamMemberModel,
+  FounderModel,
   StoryModel,
   BlogModel,
   InquiryModel,
@@ -39,6 +40,28 @@ export interface PaginatedResult<T> {
   hasPrev: boolean;
 }
 
+export const DEFAULT_FOUNDER_PROFILE: IFounderProfile = {
+  id: "founder-master-001",
+  name: "SHUBHAM SINGH",
+  role: "CREATIVE DIRECTOR & VISIONARY",
+  badge: "MEET THE FOUNDER",
+  subtitle: "LEADERSHIP & VISION",
+  photoTag: "FOUNDER",
+  image: "",
+  cityTag: "VARANASI × GLOBAL",
+  bio: "Born in India and raised in the city of artists, Varanasi, Shubham has been capturing stories and crafting visuals for as long as he can remember.",
+  bioSecondary: "As an accomplished digital content creator and 3D visionary, he has collaborated with premier global mobile enterprises. His portfolio encompasses high-end commercial CGI, street photography stills, cinematic short films, and high-impact music videos.",
+  quote: '"His unique style, artistic training, and profound appreciation for light and architecture make every frame an unforgettable visual journey."',
+  specialties: [
+    "3D CGI & ArchViz",
+    "Commercial Stills",
+    "Cinematic Direction",
+    "Creative Strategy",
+  ],
+  linkedinUrl: "https://linkedin.com",
+  instagramUrl: "https://instagram.com",
+};
+
 class DatabaseStore {
   private localData: IDatabaseSchema;
   private isMongoConnected: boolean = false;
@@ -60,6 +83,7 @@ class DatabaseStore {
       threed: [],
       services: [],
       team: [],
+      founder: { ...DEFAULT_FOUNDER_PROFILE },
       stories: [],
       blogs: [],
       inquiries: [],
@@ -1061,6 +1085,44 @@ class DatabaseStore {
       return true;
     }
     return false;
+  }
+
+  // ==========================================
+  // FOUNDER PROFILE
+  // ==========================================
+  public async getFounder(): Promise<IFounderProfile> {
+    if (this.isMongoConnected) {
+      let doc = await FounderModel.findOne();
+      if (!doc) {
+        doc = await FounderModel.create(DEFAULT_FOUNDER_PROFILE);
+      }
+      return doc.toJSON() as unknown as IFounderProfile;
+    }
+
+    if (!this.localData.founder) {
+      this.localData.founder = { ...DEFAULT_FOUNDER_PROFILE };
+      this.persistLocal(this.localData);
+    }
+    return this.localData.founder;
+  }
+
+  public async updateFounder(data: Partial<IFounderProfile>): Promise<IFounderProfile> {
+    if (this.isMongoConnected) {
+      const doc = await FounderModel.findOneAndUpdate(
+        {},
+        { ...data, updatedAt: new Date() },
+        { new: true, upsert: true }
+      );
+      return doc.toJSON() as unknown as IFounderProfile;
+    }
+
+    this.localData.founder = {
+      ...(this.localData.founder || DEFAULT_FOUNDER_PROFILE),
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    this.persistLocal(this.localData);
+    return this.localData.founder;
   }
 
   // ==========================================

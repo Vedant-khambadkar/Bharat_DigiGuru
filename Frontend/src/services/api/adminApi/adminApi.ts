@@ -90,6 +90,15 @@ class AdminApi {
     return api._delete(`/admin/team/${id}`);
   }
 
+  // Founder Profile
+  getFounder() {
+    return api._get("/admin/founder");
+  }
+
+  updateFounder(data: any) {
+    return api._put("/admin/founder", data);
+  }
+
   // Stories
   getStories(params?: any) {
     return api._get("/admin/stories", { params } as any);

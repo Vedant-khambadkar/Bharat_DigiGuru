@@ -104,8 +104,8 @@ export const PeopleScene: React.FC<PeopleSceneProps> = memo(({
       />
 
       <group
-        position={isMobile ? [0, 0, -0.5] : [0, 0, -1]}
-        scale={isMobile ? 0.95 : 0.6}
+        position={isMobile ? [0, 0, -0.6] : [0, 0, -1]}
+        scale={isMobile ? 0.64 : 0.6}
         name="CrowdCollective"
       >
         {peopleList.map((person) => (

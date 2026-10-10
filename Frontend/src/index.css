@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Syne:wght@700;800&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
 @import "lenis/dist/lenis.css";
 @import "tailwindcss";
 @font-face {
@@ -72,6 +72,8 @@ body,
   scrollbar-width: none;
   /* Firefox */
   scroll-behavior: auto !important;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 /* Simple, clean sans-serif typography for Admin Portal & Dashboard */
@@ -104,6 +106,14 @@ body,
 html.lenis,
 html.lenis body {
   height: auto;
+}
+
+html {
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  overscroll-behavior-y: auto;
 }
 
 .lenis.lenis-smooth {
@@ -142,3 +152,13 @@ img {
 .smooth-render {
   contain: paint layout;
 }
+
+/* Modal Active State: Force all sticky headers, navbars and docks to z-index -1000 */
+body.modal-open header,
+body.modal-open nav,
+body.modal-open [data-nav-header] {
+  z-index: -1000 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}

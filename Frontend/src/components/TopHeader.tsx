@@ -2,8 +2,34 @@ import React, { useEffect, useState, useRef } from "react";
 
 export const TopHeader: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
+
+  // Modal detection so TopHeader never bleeds or overlaps over modals
+  useEffect(() => {
+    const checkModal = () => {
+      setIsModalOpen(document.body.classList.contains("modal-open"));
+    };
+    checkModal();
+
+    const handleModalState = (e: any) => {
+      if (e?.detail?.isOpen !== undefined) {
+        setIsModalOpen(Boolean(e.detail.isOpen));
+      } else {
+        checkModal();
+      }
+    };
+
+    window.addEventListener("app:modal-state", handleModalState);
+    const observer = new MutationObserver(checkModal);
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+
+    return () => {
+      window.removeEventListener("app:modal-state", handleModalState);
+      observer.disconnect();
+    };
+  }, []);
 
   // Scroll detection for sticky header transition
   useEffect(() => {
@@ -40,9 +66,14 @@ export const TopHeader: React.FC = () => {
     }
   };
 
+  if (isModalOpen) {
+    return null;
+  }
+
   return (
     <header
       ref={headerRef}
+      data-nav-header="true"
       className={`fixed top-0 inset-x-0 z-40 pointer-events-none transition-all duration-500 will-change-transform ${isScrolled
           ? "bg-[#050505]/90 backdrop-blur-2xl shadow-[0_12px_32px_rgba(0,0,0,0.65)] py-2.5 sm:py-3 px-6 sm:px-10 md:px-12 lg:px-16 pointer-events-auto"
           : "bg-transparent py-5 sm:py-6 lg:py-8 px-6 sm:px-10 md:px-12 lg:px-16"

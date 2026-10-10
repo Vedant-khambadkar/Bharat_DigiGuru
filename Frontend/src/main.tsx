@@ -2,10 +2,11 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { initThreeAssetCache } from "./utils/threeAssetCache.ts";
+import { initPerformanceMonitor } from "./utils/performanceMonitor.ts";
 
-// Initialize Three.js asset caching once before React mounts.
-// This function should be synchronous, lightweight, and idempotent.
+// Initialize Three.js asset caching and diagnostic telemetry once before React mounts
 initThreeAssetCache();
+initPerformanceMonitor();
 
 const rootElement = document.getElementById("root");
 

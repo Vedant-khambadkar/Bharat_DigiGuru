@@ -47,22 +47,28 @@ export const preloadBusinessmanModel = () => {
   }
 };
 
-// Immediate early preload of critical Hero assets
+// Immediate early preload of critical Hero assets (Desktop only — mobile bypasses GLB downloads)
 if (typeof window !== "undefined") {
-  if (!(window as any).__bdgMacStartTime) {
-    (window as any).__bdgMacStartTime = performance.now();
-  }
-  preloadHero3DAssets();
+  const isDesktop =
+    window.innerWidth >= 1024 &&
+    (typeof window.matchMedia === "function" ? !window.matchMedia("(pointer: coarse)").matches : true);
 
-  // Deferred preloading of below-the-fold businessman 3D model during idle scheduling
-  if ("requestIdleCallback" in window) {
-    (window as any).requestIdleCallback(
-      () => {
-        preloadBusinessmanModel();
-      },
-      { timeout: 4000 }
-    );
-  } else {
-    setTimeout(preloadBusinessmanModel, 1200);
+  if (isDesktop) {
+    if (!(window as any).__bdgMacStartTime) {
+      (window as any).__bdgMacStartTime = performance.now();
+    }
+    preloadHero3DAssets();
+
+    // Deferred preloading of below-the-fold businessman 3D model during idle scheduling
+    if ("requestIdleCallback" in window) {
+      (window as any).requestIdleCallback(
+        () => {
+          preloadBusinessmanModel();
+        },
+        { timeout: 4000 }
+      );
+    } else {
+      setTimeout(preloadBusinessmanModel, 1200);
+    }
   }
 }

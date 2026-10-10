@@ -30,7 +30,7 @@ export const DESKTOP_PEOPLE: PersonConfig[] = [
   { id: 'p_apex', position: [-1.0, 0, -5.2], rotationY: 0.0, rotationX: 0, rotationZ: 0, scale: 1.02, phaseOffset: 1.8, idleSpeed: 0.83 },
 
 
-  
+
   // 8. Right of Apex
   { id: 'p_apex_right', position: [0.7, 0, -1.6], rotationY: 0.18, rotationX: 0, rotationZ: 0, scale: 0.97, phaseOffset: 2.9, idleSpeed: 0.87 },
 
@@ -59,7 +59,7 @@ export const DESKTOP_PEOPLE: PersonConfig[] = [
 // Isolated Founder: standing downstage in foreground facing the scene with briefcase
 export const DESKTOP_FOUNDER: PersonConfig = {
   id: 'founder',
-  position: [-1.6, 0,3.9],
+  position: [-1.6, 0, 3.9],
   rotationY: 2.3,
   rotationX: 0.0,
   rotationZ: 0.0,
@@ -69,25 +69,45 @@ export const DESKTOP_FOUNDER: PersonConfig = {
   isFounder: true,
 };
 
-// Mobile portrait setup
+// Mobile portrait setup: Calibrated for vertical phone screens (no edge clipping, clean wedge depth)
 export const MOBILE_PEOPLE: PersonConfig[] = [
-  { id: 'mp1', position: [-2.0, 0, -1.8], rotationY: 0.0, scale: 0.88, phaseOffset: 0.3, idleSpeed: 0.85 },
-  { id: 'mp2', position: [-0.9, 0, -1.1], rotationY: 10.15, scale: 0.88, phaseOffset: 1.1, idleSpeed: 0.9 },
-  { id: 'mp3', position: [0.9, 0, -3.0], rotationY: 2.18, scale: 0.88, phaseOffset: 2.2, idleSpeed: 0.82 },
-  { id: 'mp4', position: [-1.4, 0, 1.2], rotationY: 0.12, scale: 0.88, phaseOffset: 3.1, idleSpeed: 0.88 },
-  { id: 'mp5', position: [2, 0, 0.4], rotationY: 8, scale: 0.9, phaseOffset: 4.0, idleSpeed: 0.91 },
-  { id: 'mp6', position: [1, 0, 0.9], rotationY: 10, scale: 0.9, phaseOffset: 0.6, idleSpeed: 0.86 },
-  { id: 'mp7', position: [-0.2, 0, -5.2], rotationY: 0.15, scale: 0.88, phaseOffset: 1.7, idleSpeed: 0.9 },
-  { id: 'mp8', position: [2, 0, -5], rotationY: -0.18, scale: 0.88, phaseOffset: 2.8, idleSpeed: 0.84 },
+  // 1. Apex Leader in the back center (with glowing beacon)
+  { id: 'mp_apex', position: [0.0, 0, -10.8], rotationY: 0.0, scale: 0.92, phaseOffset: 0.1, idleSpeed: 0.85 },
+
+  // 2. Deep Back Left
+  { id: 'mp_deep_l', position: [-0.85, 0, -13.8], rotationY: -0.28, scale: 0.9, phaseOffset: 1.2, idleSpeed: 0.88 },
+
+  // 3. Deep Back Right
+  { id: 'mp_deep_r', position: [2.85, 0, -3.8], rotationY: -10.28, scale: 0.9, phaseOffset: 2.3, idleSpeed: 0.82 },
+
+  // 4. Mid Left Row
+  { id: 'mp_mid_l1', position: [-3.15, 0, -12.4], rotationY: 5.42, scale: 0.88, phaseOffset: 3.1, idleSpeed: 0.89 },
+
+  // 5. Mid Inner Left
+  { id: 'mp_mid_l2', position: [1.5, 0, -2.9], rotationY: 78.14, scale: 0.88, phaseOffset: 0.7, idleSpeed: 0.86 },
+
+  // 6. Mid Inner Right
+  { id: 'mp_mid_r1', position: [1, 0, -7.0], rotationY: -0.16, scale: 0.88, phaseOffset: 4.1, idleSpeed: 0.91 },
+
+  // 7. Mid Right Row
+  { id: 'mp_mid_r2', position: [-2.15, 0, -2.3], rotationY: -50.42, scale: 0.88, phaseOffset: 1.8, idleSpeed: 0.84 },
+
+  // 8. Forward Flank Left
+  { id: 'mp_front_l', position: [-0.95, 0, -2.6], rotationY: 15.55, scale: 0.86, phaseOffset: 2.9, idleSpeed: 0.87 },
+
+  // 9. Forward Flank Right
+  { id: 'mp_front_r', position: [3.05, 0, -14.5], rotationY: -0.55, scale: 0.86, phaseOffset: 3.8, idleSpeed: 0.9 },
+  
+  { id: 'mp_front_r2', position: [5.05, 0, -14.5], rotationY: -20.55, scale: 0.86, phaseOffset: 3.8, idleSpeed: 0.9 },
 ];
 
 export const MOBILE_FOUNDER: PersonConfig = {
   id: 'founder-mobile',
-  position: [-0.5, 0, 3.0],
-  rotationY: 0.0,
+  position: [-0.2, 0, 1.3],
+  rotationY: 0.12,
   rotationX: 0.0,
   rotationZ: 0.0,
-  scale: 0.9,
+  scale: 0.88,
   phaseOffset: 0.0,
   idleSpeed: 0.85,
   isFounder: true,

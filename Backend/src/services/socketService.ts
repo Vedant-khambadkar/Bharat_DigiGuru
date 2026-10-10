@@ -47,6 +47,7 @@ export const initializeSocket = (httpServer: HttpServer, _corsOrigin?: any) => {
     socket.on("team:created", (data) => socket.broadcast.emit("team:created", data));
     socket.on("team:updated", (data) => socket.broadcast.emit("team:updated", data));
     socket.on("team:deleted", (id) => socket.broadcast.emit("team:deleted", id));
+    socket.on("founder:updated", (data) => socket.broadcast.emit("founder:updated", data));
 
     socket.on("blog:created", (data) => socket.broadcast.emit("blog:created", data));
     socket.on("blog:updated", (data) => socket.broadcast.emit("blog:updated", data));

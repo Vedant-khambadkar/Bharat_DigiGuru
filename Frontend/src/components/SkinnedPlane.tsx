@@ -131,9 +131,11 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
   const isHoveredRef = useRef(false);
   const hasBonesBent = useRef(false);
 
+  // Mesh, geometry, and bone hierarchy created once per dimensions, not recreated on textureUrl changes
   const { mesh, skeletonHelper } = useMemo(() => {
     return createSkinnedPlaneData(width, height, segments, textureUrl, color);
-  }, [width, height, segments, textureUrl, color]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [width, height, segments]);
 
   // Load texture using centralized deduplication cache with progressive loading
   useEffect(() => {
@@ -149,6 +151,18 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
 
     let isCancelled = false;
     const cleanUrl = textureUrl.trim();
+
+    // Check if immediately available in memory
+    const existing = getLoadedTexture(cleanUrl);
+    if (existing) {
+      const mat = (meshRef.current?.material || mesh.material) as THREE.MeshStandardMaterial;
+      if (mat) {
+        mat.map = existing;
+        mat.color.set("#ffffff");
+        mat.needsUpdate = true;
+      }
+      return;
+    }
 
     loadSharedThreeTexture(cleanUrl).then((tex) => {
       if (isCancelled || !tex) return;
@@ -296,7 +310,8 @@ export default function SkinnedPlane({
   // Pointer drag listeners for manual exploration
   useEffect(() => {
     const handlePointerDown = (e: PointerEvent) => {
-      // Only drag if left click
+      // Only drag if left click with mouse; touch devices should rely on page scroll
+      if (e.pointerType === "touch") return;
       if (e.button !== 0) return;
       isDragging.current = true;
       prevPointerX.current = e.clientX;
