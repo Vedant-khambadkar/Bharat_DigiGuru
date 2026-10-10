@@ -776,42 +776,76 @@
       "order": 6
     }
   ],
-  "missionVision": {
-    "id": "mission-vision-main",
-    "missionTitle": "OUR MISSION",
-    "missionDescription": "At Bharat DigiGuru, our mission is to deliver comprehensive and innovative digital solutions, combining expertise with personalized service to elevate brands and drive measurable success. Through strategic planning, innovative design, and data-driven insights, we empower businesses to thrive in the digital age, achieve their goals, and unlock new possibilities for sustainable growth.",
-    "missionPoints": [
-      "Deliver tailored 360-degree digital solutions",
-      "Empower businesses with innovative design & cutting-edge AI",
-      "Provide personalized service and strategic guidance",
-      "Achieve measurable outcomes and unlock new growth frontiers"
-    ],
-    "visionTitle": "OUR VISION",
-    "visionDescription": "Our vision is to be the premier catalyst for digital excellence, recognized for innovation, client-centric focus, and unwavering dedication to delivering results. We aspire to set the standard for digital agencies, continuously evolving to meet the dynamic needs of our clients and leading them to sustained prosperity in the digital realm.",
-    "visionPoints": [
-      "Be the leading pioneer in digital media & creative tech",
-      "Inspire brands to reach their fullest potential",
-      "Maintain a client-first approach grounded in transparency",
-      "Cultivate a culture of continuous learning and technological mastery"
-    ],
-    "coreValues": [
-      {
-        "title": "Excellence & Precision",
-        "description": "Striving for the highest quality in every deliverable, campaign, and render we produce."
-      },
-      {
-        "title": "Innovation First",
-        "description": "Embracing emerging AI, 3D render pipelines, and creative technologies to stay ahead."
-      },
-      {
-        "title": "Client Partnership",
-        "description": "Treating client objectives as our own with deep dedication, speed, and integrity."
-      },
-      {
-        "title": "Measurable Impact",
-        "description": "Grounding creative endeavors in real-world performance, conversions, and growth."
-      }
-    ],
-    "updatedAt": "2026-09-21T06:42:10.093Z"
-  }
+  "team": [
+    {
+      "id": "team-elena-rostova",
+      "name": "ELENA ROSTOVA",
+      "role": "BRAND STRATEGIST",
+      "column": 1,
+      "order": 1,
+      "image": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=85",
+      "bio": "Translating complex market intelligence into distinct brand identities and omni-channel narratives.",
+      "isActive": true
+    },
+    {
+      "id": "team-dmitry-sullivan",
+      "name": "DMITRY SULLIWAN",
+      "role": "FOUNDER & CD",
+      "column": 2,
+      "order": 1,
+      "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=85",
+      "bio": "Leading creative direction, cognitive branding, and digital growth systems.",
+      "isActive": true
+    },
+    {
+      "id": "team-alexei-voronov",
+      "name": "ALEXEI VORONOV",
+      "role": "3D ARCHITECT",
+      "column": 2,
+      "order": 2,
+      "image": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=85",
+      "bio": "Architecting interactive WebGL spatial experiences and photorealistic 3D products.",
+      "isActive": true
+    },
+    {
+      "id": "team-victoria-chen",
+      "name": "VICTORIA CHEN",
+      "role": "CREATIVE DIRECTOR",
+      "column": 3,
+      "order": 1,
+      "image": "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=85",
+      "bio": "Guiding high-fashion aesthetics, editorial campaigns, and cinematic visual design.",
+      "isActive": true
+    },
+    {
+      "id": "team-dmitry-korotevsky",
+      "name": "DMITRY KOROTEVSKY",
+      "role": "TECHNICAL DIRECTOR",
+      "column": 4,
+      "order": 1,
+      "image": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=85",
+      "bio": "Building hyper-scalable cloud pipelines, custom full-stack solutions, and automated infrastructure.",
+      "isActive": true
+    },
+    {
+      "id": "team-marcus-vance",
+      "name": "MARCUS VANCE",
+      "role": "PERFORMANCE LEAD",
+      "column": 4,
+      "order": 2,
+      "image": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=600&q=85",
+      "bio": "Managing multi-channel performance ad funnels with strict conversion targets and +280% ROAS.",
+      "isActive": true
+    },
+    {
+      "id": "team-sophie-noir",
+      "name": "SOPHIE NOIR",
+      "role": "ART DIRECTOR",
+      "column": 5,
+      "order": 1,
+      "image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=85",
+      "bio": "Crafting bespoke digital interfaces, editorial layout systems, and typography.",
+      "isActive": true
+    }
+  ]
 }

@@ -5,7 +5,6 @@ import { fileURLToPath } from "url";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import {
   uploadFileToS3,
-  getPresignedDownloadUrl,
   getPresignedUploadUrl,
   isS3Configured,
   processFileForUpload,

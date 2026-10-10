@@ -3,7 +3,6 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { IDatabaseSchema, IPortfolioItem, IThreeDProject, IServiceItem, ITeamMember, IStoryItem, IBlogItem, IInquiry } from "../types/index.js";
-import { getInitialSeedData } from "./seedData.js";
 import {
   PortfolioModel,
   ThreeDModel,
@@ -56,38 +55,42 @@ class DatabaseStore {
   }
 
   private loadLocalDatabase(): IDatabaseSchema {
+    const defaultSchema: IDatabaseSchema = {
+      portfolio: [],
+      threed: [],
+      services: [],
+      team: [],
+      stories: [],
+      blogs: [],
+      inquiries: [],
+      adminUser: {
+        id: "admin-master-001",
+        email: "admin@bharatdigiguru.com",
+        passwordHash: "",
+        name: "Bharat DigiGuru Administrator",
+        role: "managedAdmin",
+        createdAt: new Date().toISOString(),
+      },
+      adminUsers: [],
+    };
+
     try {
       if (fs.existsSync(DB_FILE)) {
         const fileContent = fs.readFileSync(DB_FILE, "utf-8");
         const parsed = JSON.parse(fileContent);
         if (parsed && typeof parsed === "object") {
-          const initialSeed = getInitialSeedData();
-          const merged: IDatabaseSchema = {
-            ...initialSeed,
+          return {
+            ...defaultSchema,
             ...parsed,
           };
-          // Ensure adminUsers exists
-          if (!Array.isArray(merged.adminUsers) || merged.adminUsers.length === 0) {
-            merged.adminUsers = [merged.adminUser || initialSeed.adminUser];
-          }
-          // Ensure services exists
-          if (!Array.isArray(merged.services) || merged.services.length === 0) {
-            merged.services = initialSeed.services || [];
-          }
-          // Ensure stories exists
-          if (!Array.isArray(merged.stories) || merged.stories.length === 0) {
-            merged.stories = initialSeed.stories || [];
-          }
-          return merged;
         }
       }
     } catch (err) {
-      console.warn("⚠️ Failed to parse db.json, generating fresh seed data:", err);
+      console.warn("⚠️ Failed to parse db.json:", err);
     }
 
-    const seed = getInitialSeedData();
-    this.persistLocal(seed);
-    return seed;
+    this.persistLocal(defaultSchema);
+    return defaultSchema;
   }
 
   private persistLocal(dataToSave: IDatabaseSchema) {
@@ -102,7 +105,7 @@ class DatabaseStore {
   }
 
   // ==========================================
-  // MONGODB CONNECTION & AUTO-SEEDING
+  // MONGODB CONNECTION
   // ==========================================
   public async connectMongo(uri?: string): Promise<boolean> {
     const mongoUri = uri || process.env.MONGODB_URI;
@@ -116,58 +119,11 @@ class DatabaseStore {
       });
 
       this.isMongoConnected = true;
-
-      // Auto-seed MongoDB collections if empty
-      await this.seedMongoIfEmpty();
       return true;
     } catch (err: any) {
       console.error("❌ [MONGODB CONNECTION ERROR]:", err.message);
       this.isMongoConnected = false;
       return false;
-    }
-  }
-
-  private async seedMongoIfEmpty() {
-    try {
-      const seed = getInitialSeedData();
-
-      // 1. Admin User
-      const adminCount = await AdminUserModel.countDocuments();
-      if (adminCount === 0) {
-        await AdminUserModel.create(seed.adminUser);
-      }
-
-      // 2. Portfolio
-      const portfolioCount = await PortfolioModel.countDocuments();
-      if (portfolioCount === 0) {
-        await PortfolioModel.insertMany(seed.portfolio);
-      }
-
-      // 3. 3D Studio
-      const threedCount = await ThreeDModel.countDocuments();
-      if (threedCount === 0) {
-        await ThreeDModel.insertMany(seed.threed);
-      }
-
-      // 4. Services
-      const servicesCount = await ServiceModel.countDocuments();
-      if (servicesCount === 0 && seed.services && seed.services.length > 0) {
-        await ServiceModel.insertMany(seed.services);
-      }
-
-      // 5. Inquiries
-      const inqCount = await InquiryModel.countDocuments();
-      if (inqCount === 0 && seed.inquiries.length > 0) {
-        await InquiryModel.insertMany(seed.inquiries);
-      }
-
-      // 6. Stories
-      const storiesCount = await StoryModel.countDocuments();
-      if (storiesCount === 0 && seed.stories && seed.stories.length > 0) {
-        await StoryModel.insertMany(seed.stories);
-      }
-    } catch (seedErr: any) {
-      console.error("⚠️ [MONGODB SEED ERROR]:", seedErr.message);
     }
   }
 

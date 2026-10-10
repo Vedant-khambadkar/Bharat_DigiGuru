@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { AdminRole } from "../types/index.js";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
