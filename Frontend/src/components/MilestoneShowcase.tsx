@@ -301,7 +301,7 @@ export const MilestoneShowcase: React.FC = () => {
     <section
       ref={containerRef}
       id="milestone-showcase"
-      className="relative w-full px-4 sm:px-6 md:px-10 lg:px-12 xl:px-16 py-12 sm:py-16 md:py-20 font-['Space_Grotesk',sans-serif] text-white overflow-hidden select-none"
+      className=" font-['DM_Sans'] relative w-full px-4 sm:px-6 md:px-10 lg:px-12 xl:px-16 py-12 sm:py-16 md:py-20  text-white overflow-hidden select-none"
     >
       {/* Ambient background glows */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -316,17 +316,17 @@ export const MilestoneShowcase: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 sm:gap-6 pb-4 border-b border-neutral-800/80">
           <div className="flex flex-col gap-1.5 max-w-2xl">
             <div className="flex items-center gap-2">
-              <span className="font-['Cormorant_Garamond',serif] italic text-sm sm:text-base text-neutral-400 tracking-wide">
+              <span className=" italic text-sm sm:text-base text-neutral-400 tracking-wide">
                 (Case Studies & Proven Impact)
               </span>
             </div>
-            <h2 className="font-neuropol text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider text-white leading-tight">
+            <h2 className=" text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider text-white leading-tight">
               Digital Milestones &{" "}
               <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
                 Analytics
               </span>
             </h2>
-            <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-400 max-w-xl leading-relaxed mt-1 font-normal">
+            <p className=" text-xs sm:text-sm text-neutral-400 max-w-xl leading-relaxed mt-1 font-normal">
               Real business metrics, reach performance, and verified data executed for our clients across digital channels.
             </p>
           </div>
@@ -391,7 +391,7 @@ export const MilestoneShowcase: React.FC = () => {
                     {item.step}
                   </span>
                   <span
-                    className={`px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold font-['Space_Grotesk',sans-serif] shrink-0 ${
+                    className={`px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold  shrink-0 ${
                       isActive
                         ? "bg-white text-black shadow-sm"
                         : "bg-neutral-800/90 text-neutral-300"
@@ -403,13 +403,13 @@ export const MilestoneShowcase: React.FC = () => {
 
                 <div className="w-full overflow-hidden">
                   <h4
-                    className={`font-neuropol text-xs sm:text-sm uppercase tracking-wider truncate transition-colors ${
+                    className={` text-xs sm:text-sm uppercase tracking-wider truncate transition-colors ${
                       isActive ? "text-white" : "text-neutral-300"
                     }`}
                   >
                     {item.title}
                   </h4>
-                  <p className="font-['Space_Grotesk',sans-serif] text-[10px] sm:text-[11px] text-neutral-500 truncate mt-0.5 font-normal">
+                  <p className=" text-[10px] sm:text-[11px] text-neutral-500 truncate mt-0.5 font-normal">
                     {item.subtitle}
                   </p>
                 </div>
@@ -435,17 +435,17 @@ export const MilestoneShowcase: React.FC = () => {
             {/* Header info */}
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-neutral-800/80 text-neutral-200 border border-neutral-700/60 font-['Space_Grotesk',sans-serif]">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-neutral-800/80 text-neutral-200 border border-neutral-700/60 ">
                   <Layers className="w-3 h-3 text-blue-400" />
                   {activeMilestone.tag}
                 </span>
                 <span className="text-neutral-600 hidden sm:inline">•</span>
-                <span className="text-xs text-neutral-400 font-medium font-['Space_Grotesk',sans-serif]">
+                <span className="text-xs text-neutral-400 font-medium ">
                   {activeMilestone.subtitle}
                 </span>
               </div>
 
-              <h3 className="font-neuropol text-xl sm:text-2xl md:text-3xl uppercase tracking-wider text-white leading-snug">
+              <h3 className=" text-xl sm:text-2xl md:text-3xl uppercase tracking-wider text-white leading-snug">
                 {activeMilestone.title}
               </h3>
             </div>
@@ -457,20 +457,20 @@ export const MilestoneShowcase: React.FC = () => {
                   <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                 </div>
                 <div>
-                  <div className="font-neuropol text-2xl sm:text-3xl text-white tracking-wide leading-none">
+                  <div className=" text-2xl sm:text-3xl text-white tracking-wide leading-none">
                     {activeMilestone.metric}
                   </div>
-                  <div className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm uppercase tracking-wider text-neutral-200 font-semibold mt-1">
+                  <div className=" text-xs sm:text-sm uppercase tracking-wider text-neutral-200 font-semibold mt-1">
                     {activeMilestone.metricLabel}
                   </div>
-                  <div className="font-['Space_Grotesk',sans-serif] text-[10px] sm:text-[11px] text-neutral-400 mt-0.5">
+                  <div className=" text-[10px] sm:text-[11px] text-neutral-400 mt-0.5">
                     {activeMilestone.metricSub}
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-col items-end shrink-0">
-                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 sm:px-2.5 py-1 rounded-full border border-emerald-500/20 uppercase tracking-wider font-['Space_Grotesk',sans-serif]">
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 sm:px-2.5 py-1 rounded-full border border-emerald-500/20 uppercase tracking-wider ">
                   <Sparkles className="w-3 h-3" />
                   <span className="hidden xs:inline">Verified</span>
                 </span>
@@ -484,10 +484,10 @@ export const MilestoneShowcase: React.FC = () => {
                   key={kIdx}
                   className="p-2.5 sm:p-3 rounded-lg bg-neutral-900/60 border border-neutral-800/80 text-center"
                 >
-                  <div className="font-neuropol text-xs sm:text-sm md:text-base text-white tracking-wider truncate">
+                  <div className=" text-xs sm:text-sm md:text-base text-white tracking-wider truncate">
                     {kpi.value}
                   </div>
-                  <div className="font-['Space_Grotesk',sans-serif] text-[9px] sm:text-[10px] text-neutral-400 mt-1 uppercase tracking-wider font-medium truncate">
+                  <div className=" text-[9px] sm:text-[10px] text-neutral-400 mt-1 uppercase tracking-wider font-medium truncate">
                     {kpi.label}
                   </div>
                 </div>
@@ -496,14 +496,14 @@ export const MilestoneShowcase: React.FC = () => {
 
             {/* Campaign Highlights */}
             <div className="flex flex-col gap-2 pt-1 border-t border-neutral-800/60">
-              <span className="font-['Space_Grotesk',sans-serif] text-[11px] uppercase tracking-wider font-bold text-neutral-400">
+              <span className=" text-[11px] uppercase tracking-wider font-bold text-neutral-400">
                 Key Strategic Deliverables
               </span>
               <ul className="flex flex-col gap-2">
                 {activeMilestone.highlights.map((item, hIdx) => (
                   <li
                     key={hIdx}
-                    className="flex items-start gap-2.5 text-xs sm:text-sm text-neutral-300 leading-relaxed font-['Space_Grotesk',sans-serif]"
+                    className="flex items-start gap-2.5 text-xs sm:text-sm text-neutral-300 leading-relaxed "
                   >
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                     <span>{item}</span>
@@ -517,7 +517,7 @@ export const MilestoneShowcase: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedMilestone(activeMilestone)}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all cursor-pointer shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-98 font-['Space_Grotesk',sans-serif]"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white text-black hover:bg-neutral-200 transition-all cursor-pointer shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-98 "
               >
                 <span>Inspect Verified Proof</span>
                 <Maximize2 className="w-3.5 h-3.5" />
@@ -526,7 +526,7 @@ export const MilestoneShowcase: React.FC = () => {
               <button
                 type="button"
                 onClick={handleNext}
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-3 sm:py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider bg-neutral-900 text-neutral-300 hover:text-white hover:bg-neutral-800 border border-neutral-800 transition-all cursor-pointer font-['Space_Grotesk',sans-serif]"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-3 sm:py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider bg-neutral-900 text-neutral-300 hover:text-white hover:bg-neutral-800 border border-neutral-800 transition-all cursor-pointer "
               >
                 <span>Next Case</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -579,7 +579,7 @@ export const MilestoneShowcase: React.FC = () => {
 
                 {/* Hover overlay hint for desktop & tap clue */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none backdrop-blur-[2px]">
-                  <div className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-black/90 border border-white/20 text-white text-[10px] sm:text-xs font-semibold flex items-center gap-2 shadow-2xl font-['Space_Grotesk',sans-serif] uppercase tracking-wider">
+                  <div className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-black/90 border border-white/20 text-white text-[10px] sm:text-xs font-semibold flex items-center gap-2 shadow-2xl  uppercase tracking-wider">
                     <Maximize2 className="w-3.5 h-3.5" />
                     <span>View High-Resolution Report</span>
                   </div>
@@ -616,7 +616,7 @@ export const MilestoneShowcase: React.FC = () => {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleModalTouchEnd}
-            className="relative w-full max-w-5xl max-h-[94vh] bg-[#0d0d10] border border-neutral-800 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col font-['Space_Grotesk',sans-serif]"
+            className="relative w-full max-w-5xl max-h-[94vh] bg-[#0d0d10] border border-neutral-800 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col "
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between px-4 sm:px-5 py-3 bg-[#121216] border-b border-neutral-800 gap-3">
@@ -625,7 +625,7 @@ export const MilestoneShowcase: React.FC = () => {
                   {selectedMilestone.step}
                 </span>
                 <div className="min-w-0">
-                  <h3 className="font-neuropol text-xs sm:text-sm md:text-base uppercase tracking-wider text-white truncate">
+                  <h3 className=" text-xs sm:text-sm md:text-base uppercase tracking-wider text-white truncate">
                     {selectedMilestone.title}
                   </h3>
                   <p className="text-[10px] sm:text-[11px] text-neutral-400 truncate">

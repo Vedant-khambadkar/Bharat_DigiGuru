@@ -8,10 +8,14 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 import { getApiCache, setApiCache } from "../utils/apiCache";
 import { preloadMediaList, useCachedMedia } from "../utils/mediaCache";
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface ThreeDProject {
   id: string;
@@ -293,16 +297,88 @@ export const ThreeDProjects: React.FC = () => {
     setActiveTheaterProject(null);
   }, []);
 
+  const sectionRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // GSAP ScrollTrigger: Section scales up to normal size & cards animate up from bottom with 3D rotation
+  useEffect(() => {
+    const section = sectionRef.current;
+    const container = containerRef.current;
+    if (!section || !container) return;
+
+    const ctx = gsap.context(() => {
+      const isMobile = window.innerWidth < 768;
+      const startY = isMobile ? 85 : 140;
+      const startRotX = isMobile ? 15 : 22;
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: section,
+          start: isMobile ? "top 88%" : "top 80%",
+          toggleActions: "play none none reverse",
+          invalidateOnRefresh: true,
+        },
+      });
+
+      // 1. Expand section from scale down to normal
+      tl.fromTo(
+        container,
+        {
+          scale: 0.88,
+          opacity: 0.45,
+          transformOrigin: "center top",
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          duration: 0.9,
+          ease: "power3.out",
+        }
+      );
+
+      // 2. Group of cards animate from bottom to original position with 3D rotation
+      tl.fromTo(
+        ".threed-card-item",
+        {
+          y: startY,
+          rotationX: startRotX,
+          rotationZ: (i) => (i % 2 === 0 ? -4 : 4),
+          rotationY: (i) => (i % 3 === 0 ? -3 : i % 3 === 2 ? 3 : 0),
+          scale: 0.92,
+          opacity: 0,
+          transformOrigin: "center bottom",
+        },
+        {
+          y: 0,
+          rotationX: 0,
+          rotationZ: 0,
+          rotationY: 0,
+          scale: 1,
+          opacity: 1,
+          duration: 0.95,
+          stagger: 0.12,
+          ease: "power3.out",
+          clearProps: "transform",
+        },
+        "-=0.6"
+      );
+    }, section);
+
+    return () => ctx.revert();
+  }, [projects.length]);
+
   return (
     <section
+      ref={sectionRef}
       id="threed-section"
       className="relative z-10 w-full px-6 sm:px-10 md:px-12 lg:px-16 pt-6 sm:pt-10 pb-16 sm:pb-24 bg-transparent text-[#121110] font-['Plus_Jakarta_Sans',sans-serif]"
     >
-      <div className="w-full max-w-8xl mx-auto flex flex-col gap-10 sm:gap-14">
-       
-
+      <div
+        ref={containerRef}
+        className="w-full max-w-8xl mx-auto flex flex-col gap-10 sm:gap-14 origin-top will-change-transform"
+      >
         {/* 3D Pure Videos Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 [perspective:1200px]">
           {isLoading ? (
             <div className="col-span-full py-20 flex flex-col items-center justify-center gap-3">
               <div className="w-8 h-8 rounded-full border-2 border-red-500/30 border-t-red-500 animate-spin" />
@@ -320,18 +396,22 @@ export const ThreeDProjects: React.FC = () => {
               const isMuted = mutedStates[project.id] ?? true;
 
               return (
-                <ThreeDCard
+                <div
                   key={project.id || index}
-                  project={project}
-                  isPlaying={isPlaying}
-                  isMuted={isMuted}
-                  onTogglePlay={(e) => toggleInlinePlay(project.id, e)}
-                  onToggleMute={(e) => toggleInlineMute(project.id, e)}
-                  onOpenTheater={() => setActiveTheaterProject(project)}
-                  setVideoRef={(el) => {
-                    videoRefs.current[project.id] = el;
-                  }}
-                />
+                  className="threed-card-item will-change-transform [transform-style:preserve-3d]"
+                >
+                  <ThreeDCard
+                    project={project}
+                    isPlaying={isPlaying}
+                    isMuted={isMuted}
+                    onTogglePlay={(e) => toggleInlinePlay(project.id, e)}
+                    onToggleMute={(e) => toggleInlineMute(project.id, e)}
+                    onOpenTheater={() => setActiveTheaterProject(project)}
+                    setVideoRef={(el) => {
+                      videoRefs.current[project.id] = el;
+                    }}
+                  />
+                </div>
               );
             })
           )}

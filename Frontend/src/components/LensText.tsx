@@ -167,10 +167,10 @@ export const LensText: React.FC<LensTextProps> = ({
     <span
       ref={containerRef}
       data-lens-text="true"
-      className={`relative inline-block ${className}`}
+      className={`relative  inline-block ${className}`}
     >
       {/* Base Solid Fill Layer */}
-      <span ref={fillRef} className="inline-block  text-white select-none ">
+      <span ref={fillRef} className="inline-block font-['DM_Sans'] text-white select-none ">
         {text}
       </span>
 

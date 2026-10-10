@@ -177,7 +177,7 @@ export const Process: React.FC = () => {
     <section
       ref={sectionRef}
       id="process-section"
-      className="relative w-full min-h-screen bg-transparent text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none flex flex-col justify-center py-10 lg:py-0"
+      className="relative w-full min-h-screen bg-transparent text-white font-['DM_Sans']  overflow-hidden select-none flex flex-col justify-center py-10 lg:py-0"
     >
       {/* Background Subtle Ambient Lighting */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -190,10 +190,10 @@ export const Process: React.FC = () => {
         {/* Top Header Row */}
         <div className="process-header flex flex-col sm:flex-row sm:items-start justify-between gap-6 border-b border-neutral-900 pb-6">
           <div className="flex flex-col gap-2">
-            <span className="font-['Space_Grotesk',sans-serif] text-xs uppercase tracking-widest text-neutral-500 select-none">
+            <span className="font-['DM_Sans'] text-xs uppercase tracking-widest text-neutral-500 select-none">
               Execution Roadmap
             </span>
-            <h2 className="font-neuropol uppercase text-3xl sm:text-4xl md:text-5xl  tracking-tight text-white flex items-center gap-3">
+            <h2 className="font-['DM_Sans'] uppercase text-3xl sm:text-4xl md:text-5xl  tracking-tight text-white flex items-center gap-3">
               <span>Our Process</span>
               <span className="inline-block translate-y-1 text-3xl sm:text-4xl font-light text-neutral-500">
                 ↴

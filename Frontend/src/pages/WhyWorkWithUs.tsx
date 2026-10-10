@@ -183,7 +183,7 @@ export const WhyWorkWithUs: React.FC = () => {
              ========================================================================= */}
           <div className="why-us-left-col lg:col-span-4 flex flex-col justify-between gap-6 sm:gap-10">
             <div className="flex flex-col gap-4 sm:gap-6">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-neuropol uppercase tracking-tight text-white leading-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-['DM_Sans']  uppercase tracking-tight text-white leading-tight">
                 Why us
               </h2>
 

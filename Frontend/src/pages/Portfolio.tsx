@@ -226,6 +226,24 @@ export const Portfolio: React.FC = () => {
           }
         },
       });
+
+      // Entrance animation for header and branding labels
+      gsap.fromTo(
+        [".portfolio-header-text", ".portfolio-tagline-text", ".portfolio-desc-text"],
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          stagger: 0.12,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: section,
+            start: "top 80%",
+            toggleActions: "play none none reverse",
+          },
+        }
+      );
     }, section);
 
     return () => ctx.revert();
@@ -235,7 +253,7 @@ export const Portfolio: React.FC = () => {
     <section
       ref={sectionRef}
       id="portfolio-section"
-      className="relative w-full min-h-[100svh] md:h-screen md:min-h-[640px] overflow-x-clip md:overflow-hidden bg-[#050505] text-white font-['Italiana','Cormorant_Garamond',serif] select-none"
+      className="relative w-full min-h-[100svh] md:h-screen md:min-h-[640px] overflow-x-clip md:overflow-hidden bg-[#050505] text-white font-['DM_Sans'] select-none"
     >
       {/* Background Subtle Dot-Matrix Texture matching MissionVision */}
       <div
@@ -270,8 +288,8 @@ export const Portfolio: React.FC = () => {
           </div>
 
           {/* 1. Upper Left Section: PORTFOLIO Header */}
-          <div className="absolute top-16 sm:top-20 md:top-[110px] lg:top-[125px] left-4 sm:left-8 md:left-12 z-10 pointer-events-none select-none">
-            <div className="font-neuropol text-3xl sm:text-5xl md:text-6xl font-normal leading-[0.88] tracking-wider text-white m-0 uppercase">
+          <div className="portfolio-header-text absolute top-16 sm:top-20 md:top-[110px] lg:top-[125px] left-4 sm:left-8 md:left-12 z-10 pointer-events-none select-none">
+            <div className=" text-3xl sm:text-5xl md:text-6xl font-normal leading-[0.88] tracking-wider text-white m-0 uppercase">
               PORTFOLIO
             </div>
           </div>
@@ -286,8 +304,8 @@ export const Portfolio: React.FC = () => {
                 ← BACK TO CARDS
               </button>
             )}
-            <div className="hidden md:block max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] text-right pointer-events-none select-none">
-              <h2 className="font-neuropol text-sm sm:text-base md:text-lg lg:text-[20px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
+            <div className="portfolio-tagline-text hidden md:block max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] text-right pointer-events-none select-none">
+              <h2 className=" text-sm sm:text-base md:text-lg lg:text-[20px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
                 Shaping Your Vision
                 <br />
                 Into Immersive Reality.
@@ -352,8 +370,8 @@ export const Portfolio: React.FC = () => {
           </div>
 
           {/* 4. Bottom Left Responsive Statement Branding */}
-          <div className="absolute bottom-0 left-4 sm:left-8 md:left-12 pb-3 sm:pb-4 md:pb-6 max-w-[calc(100vw-2rem)] sm:max-w-[300px] md:max-w-[350px] lg:max-w-[390px] flex flex-col items-start gap-1 sm:gap-1.5 z-10 pointer-events-none select-none">
-            <h1 className="font-neuropol text-xs sm:text-sm md:text-base lg:text-lg xl:text-[20px] font-normal leading-[1.25] tracking-wider text-white uppercase m-0">
+          <div className="portfolio-desc-text absolute bottom-0 left-4 sm:left-8 md:left-12 pb-3 sm:pb-4 md:pb-6 max-w-[calc(100vw-2rem)] sm:max-w-[300px] md:max-w-[350px] lg:max-w-[390px] flex flex-col items-start gap-1 sm:gap-1.5 z-10 pointer-events-none select-none">
+            <h1 className=" text-xs sm:text-sm md:text-base lg:text-lg xl:text-[20px] font-normal leading-[1.25] tracking-wider text-white uppercase m-0">
               Crafting Digital
               <br />
               Experiences That Speak.
