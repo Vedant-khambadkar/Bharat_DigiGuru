@@ -14,8 +14,8 @@ interface Preloader3DProps {
 export const Preloader3D: React.FC<Preloader3DProps> = ({
   isReady = false,
   macReady = false,
-  businessmanReady = false,
-  portfolioReady = false,
+  businessmanReady: _businessmanReady = false,
+  portfolioReady: _portfolioReady = false,
   onStartExit,
   onComplete,
 }) => {
@@ -42,13 +42,9 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       if (val >= 100) {
         telemetryStatusRef.current.textContent = "3D ENVIRONMENT & HARDWARE READY";
       } else if (!macReady) {
-        telemetryStatusRef.current.textContent = "LOADING MACBOOK 3D & TEXTURES";
-      } else if (!businessmanReady) {
-        telemetryStatusRef.current.textContent = "LOADING 3D TEAM & CHARACTERS";
-      } else if (!portfolioReady) {
-        telemetryStatusRef.current.textContent = "LOADING 100% PORTFOLIO 3D TEXTURES";
+        telemetryStatusRef.current.textContent = "INITIALIZING 3D ENVIRONMENT";
       } else {
-        telemetryStatusRef.current.textContent = "INITIALIZING 3D ASSETS & HARDWARE";
+        telemetryStatusRef.current.textContent = "INITIALIZING HARDWARE ACCELERATION";
       }
     }
   };
@@ -94,13 +90,13 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     );
   }, [onStartExit, onComplete]);
 
-  // Progress interpolation strictly driven by ALL 3D Models & Drei Asset Readiness
+  // Progress interpolation driven by Hero 3D & Drei Asset Readiness
   useEffect(() => {
-    if (isReady) {
+    if (isReady || macReady) {
       hasFinishedRef.current = true;
       const tween = gsap.to(counterRef.current, {
         value: 100,
-        duration: 0.45,
+        duration: 0.35,
         ease: "power2.out",
         onUpdate: () => {
           const val = Math.round(counterRef.current.value);
@@ -110,7 +106,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
           updateDisplay(100);
           const timer = setTimeout(() => {
             triggerExit();
-          }, 200);
+          }, 150);
           return () => clearTimeout(timer);
         },
       });
@@ -119,24 +115,12 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       };
     }
 
-    // Multiple assets readiness: clamp progress strictly < 98% until MacBook & all 3D models are ready
-    let target = 25;
-    const readyCount =
-      (macReady ? 1 : 0) + (businessmanReady ? 1 : 0) + (portfolioReady ? 1 : 0);
-
-    if (readyCount === 2) {
-      target = Math.max(80, Math.min(94, Math.round(dreiProgress * 0.94)));
-    } else if (readyCount === 1) {
-      target = Math.max(55, Math.min(75, Math.round(dreiProgress * 0.75)));
-    } else if (dreiProgress > 0) {
-      target = Math.min(50, Math.max(counterRef.current.value, Math.round(dreiProgress * 0.5)));
-    } else {
-      target = Math.max(counterRef.current.value, 20);
-    }
+    let target = Math.max(35, Math.min(88, Math.round(dreiProgress * 0.88)));
+    if (target < counterRef.current.value) target = counterRef.current.value;
 
     const tween = gsap.to(counterRef.current, {
       value: target,
-      duration: 0.5,
+      duration: 0.4,
       ease: "power2.out",
       onUpdate: () => {
         const val = Math.round(counterRef.current.value);
@@ -147,16 +131,19 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     return () => {
       tween.kill();
     };
-  }, [dreiProgress, isReady, macReady, businessmanReady, portfolioReady, triggerExit]);
+  }, [dreiProgress, isReady, macReady, triggerExit]);
 
-  // Fallback timer: only trigger if network completely stalls (20 seconds)
+  // Fast safety timer: maximum 2.8s on desktop, 2.2s on mobile to guarantee immediate page access
   useEffect(() => {
+    const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
+    const maxWaitTime = isMobileViewport ? 2200 : 2800;
+
     const safetyTimer = setTimeout(() => {
       if (!isExitingRef.current) {
         updateDisplay(100);
         triggerExit();
       }
-    }, 20000);
+    }, maxWaitTime);
 
     return () => clearTimeout(safetyTimer);
   }, [triggerExit]);

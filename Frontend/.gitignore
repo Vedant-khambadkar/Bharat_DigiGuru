@@ -28,3 +28,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.backup_orig
+src/assets/.backup_orig

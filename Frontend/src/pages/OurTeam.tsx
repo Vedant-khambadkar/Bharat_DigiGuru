@@ -172,8 +172,8 @@ export const OurTeam: React.FC<OurTeamProps> = ({
       <div className="relative z-10 w-full h-full touch-pan-y">
         <Canvas
           frameloop={isSectionVisible ? "always" : "never"}
-          shadows={{ type: THREE.PCFShadowMap }}
-          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, isMobile ? 1.15 : 1.5)]}
+          shadows={!isMobile ? { type: THREE.PCFShadowMap } : false}
+          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, isMobile ? 1.0 : 1.35)]}
           gl={{
             antialias: !isMobile,
             alpha: true,

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -41,21 +41,37 @@ const SLIDES: readonly SlideItem[] = [
   },
 ] as const;
 
-const CachedVideoSlide: React.FC<{ slide: SlideItem; idx: number }> = ({ slide, idx }) => {
+const CachedVideoSlide: React.FC<{ slide: SlideItem; idx: number; isVisible: boolean }> = ({
+  slide,
+  idx,
+  isVisible,
+}) => {
   const cachedSrc = useCachedVideo(slide.videoSrc);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isVisible) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [isVisible]);
 
   return (
     <div
       className={`bg-slide-${idx} absolute inset-0 w-full h-full pointer-events-none overflow-hidden will-change-[opacity,transform]`}
     >
       <video
+        ref={videoRef}
         key={cachedSrc}
         src={cachedSrc}
-        autoPlay
         loop
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         className="w-full h-full object-cover select-none pointer-events-none"
       />
 
@@ -69,6 +85,22 @@ const CachedVideoSlide: React.FC<{ slide: SlideItem; idx: number }> = ({ slide, 
 
 export const MissionVision: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
+  const [isSectionVisible, setIsSectionVisible] = useState(false);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsSectionVisible(entry.isIntersecting);
+      },
+      { rootMargin: "200px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -265,7 +297,7 @@ export const MissionVision: React.FC = () => {
     >
       {/* Background Video Layers with High-Contrast Vignette Overlays & Persistent Disk/Blob Cache */}
       {SLIDES.map((slide, idx) => (
-        <CachedVideoSlide key={slide.id} slide={slide} idx={idx} />
+        <CachedVideoSlide key={slide.id} slide={slide} idx={idx} isVisible={isSectionVisible} />
       ))}
 
       {/* Ambient Geometric Grid Overlay */}

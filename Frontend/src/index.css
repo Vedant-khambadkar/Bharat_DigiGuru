@@ -9,12 +9,6 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'Material Symbols Rounded';
-  src: url('/Font/MaterialSymbolsRounded[FILL,GRAD,opsz,wght].ttf') format('truetype');
-  font-display: swap;
-}
-
 @theme {
   --font-serif: 'Italiana', 'Cormorant Garamond', serif;
   --font-italiana: 'Italiana', 'Cormorant Garamond', serif;
@@ -22,7 +16,6 @@
   --font-display: 'Italiana', 'Cormorant Garamond', serif;
   --font-sans: 'Italiana', 'Cormorant Garamond', serif;
   --font-neuropol: 'Italiana', 'Cormorant Garamond', serif;
-  --font-symbols: 'Material Symbols Rounded', sans-serif;
   --font-archivo: 'Archivo Black', sans-serif;
   --font-bebas: 'Bebas Neue', sans-serif;
   --font-lato: 'Lato', sans-serif;

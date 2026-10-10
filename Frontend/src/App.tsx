@@ -8,9 +8,8 @@ import Navbar from "./components/Navbar";
 import TopHeader from "./components/TopHeader";
 import Preloader3D from "./components/Preloader/Preloader3D";
 
-import OurTeam, { preloadOurTeamAssets } from "./pages/OurTeam";
-
 // Code-Split Below-The-Fold Sections to eliminate initial load bottleneck
+const OurTeam = lazy(() => import("./pages/OurTeam"));
 const PlatformsWeManage = lazy(() => import("./pages/PlatformsWeManage"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
 const ThreeDProjects = lazy(() => import("./pages/ThreeDProjects"));
@@ -39,15 +38,9 @@ const MainLandingPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [macReady, setMacReady] = useState(false);
   const [businessmanReady, setBusinessmanReady] = useState(false);
-  const [portfolioReady, setPortfolioReady] = useState(false);
   const [macFailed, setMacFailed] = useState(false);
-  const [businessmanFailed, setBusinessmanFailed] = useState(false);
-  const [portfolioFailed, setPortfolioFailed] = useState(false);
 
-  const all3DReady =
-    (macReady || macFailed) &&
-    (businessmanReady || businessmanFailed) &&
-    (portfolioReady || portfolioFailed);
+  const hero3DReady = macReady || macFailed;
 
   const handleMacReady = useCallback(() => {
     setMacReady(true);
@@ -64,7 +57,6 @@ const MainLandingPage = () => {
 
   const handleBusinessmanError = useCallback((error: Error) => {
     console.error("[TEAM] Businessman model failed:", error);
-    setBusinessmanFailed(true);
   }, []);
 
 
@@ -156,24 +148,27 @@ const MainLandingPage = () => {
     };
   }, [handleOpenAdminPortal]);
 
-  // Preload 100% of portfolio 3D textures before preloader finishes
+  // Defer below-the-fold 3D preloads until hero is mounted and interactive
   useEffect(() => {
-    import("./pages/Portfolio")
-      .then((m) => {
-        if (m.preloadPortfolioAssets) {
-          return m.preloadPortfolioAssets();
-        }
-      })
-      .then(() => {
-        setPortfolioReady(true);
-      })
-      .catch((err) => {
-        console.warn("Portfolio preload notice:", err);
-        setPortfolioFailed(true);
-      });
+    if (isLoading) return;
 
-    preloadOurTeamAssets().catch(() => { });
-  }, []);
+    const idleHandler = () => {
+      import("./pages/Portfolio")
+        .then((m) => m.preloadPortfolioAssets?.())
+        .catch(() => {});
+      import("./pages/OurTeam")
+        .then((m) => m.preloadOurTeamAssets?.())
+        .catch(() => {});
+    };
+
+    if ("requestIdleCallback" in window) {
+      const id = (window as any).requestIdleCallback(idleHandler, { timeout: 3500 });
+      return () => (window as any).cancelIdleCallback?.(id);
+    } else {
+      const timer = setTimeout(idleHandler, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   // Global Lenis Smooth Momentum Scrolling synchronized with GSAP ScrollTrigger
   useEffect(() => {
@@ -251,10 +246,22 @@ const MainLandingPage = () => {
     };
     document.addEventListener("click", handleAnchorClick);
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        lenis.stop();
+        gsap.ticker.sleep();
+      } else {
+        lenis.start();
+        gsap.ticker.wake();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("click", handleAnchorClick);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       clearTimeout(resizeTimer);
       clearTimeout(lenisSafetyUnlock);
       gsap.ticker.remove(tickerCallback);
@@ -379,10 +386,9 @@ const MainLandingPage = () => {
       {/* 3D Preloader Overlay (Strictly tracks 3D model & asset loading) */}
       {isLoading && (
         <Preloader3D
-          isReady={all3DReady}
+          isReady={hero3DReady}
           macReady={macReady}
           businessmanReady={businessmanReady}
-          portfolioReady={portfolioReady}
           onStartExit={handleStartPageReveal}
           onComplete={handlePreloaderComplete}
         />
@@ -408,11 +414,11 @@ const MainLandingPage = () => {
           <About />
           <MissionVision />
           <MilestoneShowcase />
+          <OurTeam
+            onBusinessmanReady={handleBusinessmanReady}
+            onBusinessmanError={handleBusinessmanError}
+          />
         </Suspense>
-        <OurTeam
-          onBusinessmanReady={handleBusinessmanReady}
-          onBusinessmanError={handleBusinessmanError}
-        />
         <Suspense fallback={null}>
           <WorkWithUs />
           <Blogs />

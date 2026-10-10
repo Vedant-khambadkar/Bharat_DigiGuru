@@ -36,76 +36,7 @@ async function getMediaCache(): Promise<Cache | null> {
 export async function getCachedMediaUrl(url?: string): Promise<string> {
   if (!url || typeof url !== "string") return "";
   const cleanUrl = url.trim();
-  if (!cleanUrl) return "";
-
-  // Data URLs and local blob URLs don't need caching
-  if (cleanUrl.startsWith("data:") || cleanUrl.startsWith("blob:")) {
-    return cleanUrl;
-  }
-
-  // 1. Check in-memory Blob URL cache (Instant synchronous access)
-  const inMemoryBlobUrl = blobUrlMemoryCache.get(cleanUrl);
-  if (inMemoryBlobUrl) {
-    return inMemoryBlobUrl;
-  }
-
-  // 2. In-flight request deduplication
-  const inFlightPromise = inFlightFetchPromises.get(cleanUrl);
-  if (inFlightPromise) {
-    return inFlightPromise;
-  }
-
-  const fetchAndCachePromise = (async (): Promise<string> => {
-    try {
-      const cache = await getMediaCache();
-
-      // 3. Check persistent CacheStorage (Preserved across page reloads & browser restarts)
-      if (cache) {
-        const cachedResponse = await cache.match(cleanUrl);
-        if (cachedResponse && cachedResponse.ok) {
-          const blob = await cachedResponse.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          blobUrlMemoryCache.set(cleanUrl, blobUrl);
-          preloadedUrls.add(cleanUrl);
-          return blobUrl;
-        }
-      }
-
-      // 4. Fetch from CloudFront CDN once
-      const response = await fetch(cleanUrl, {
-        mode: "cors",
-        credentials: "omit",
-      });
-
-      if (!response.ok) {
-        // Fallback to original URL if fetch fails
-        return cleanUrl;
-      }
-
-      // 5. Store in persistent CacheStorage
-      if (cache) {
-        try {
-          await cache.put(cleanUrl, response.clone());
-        } catch (putErr) {
-          console.warn("Could not cache response in CacheStorage:", putErr);
-        }
-      }
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      blobUrlMemoryCache.set(cleanUrl, blobUrl);
-      preloadedUrls.add(cleanUrl);
-      return blobUrl;
-    } catch (_err) {
-      // Fallback silently to direct URL for standard browser <img> tag loading
-      return cleanUrl;
-    } finally {
-      inFlightFetchPromises.delete(cleanUrl);
-    }
-  })();
-
-  inFlightFetchPromises.set(cleanUrl, fetchAndCachePromise);
-  return fetchAndCachePromise;
+  return cleanUrl;
 }
 
 /**
@@ -122,7 +53,11 @@ async function preloadSingleImage(url: string): Promise<void> {
   inFlightPreloads.add(url);
 
   try {
-    await getCachedMediaUrl(url);
+    if (typeof window !== "undefined") {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = url;
+    }
     preloadedUrls.add(url);
   } catch (_e) {
     // Non-blocking
@@ -213,15 +148,12 @@ export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | nul
 
   const promise = (async (): Promise<THREE.Texture | null> => {
     try {
-      // First resolve the cached persistent Blob URL (from CacheStorage)
-      const resolvedMediaUrl = await getCachedMediaUrl(cleanUrl);
-
       const loader = new THREE.TextureLoader();
       loader.setCrossOrigin("anonymous");
 
       return await new Promise<THREE.Texture | null>((resolve) => {
         loader.load(
-          resolvedMediaUrl,
+          cleanUrl,
           (tex) => {
             tex.colorSpace = THREE.SRGBColorSpace;
             tex.generateMipmaps = true;

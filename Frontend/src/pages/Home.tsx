@@ -18,6 +18,28 @@ gsap.registerPlugin(ScrollTrigger);
 const RAD_CAM_ROT_X = THREE.MathUtils.degToRad(-2);
 const RAD_CAM_ROT_Y = THREE.MathUtils.degToRad(6);
 
+function HomeWebGLContextLossHandler() {
+  const { gl } = useThree();
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      console.warn("[Hero WebGL] Context lost, pausing rendering");
+    };
+    const handleContextRestored = () => {
+      console.log("[Hero WebGL] Context restored");
+      gl.renderLists?.dispose();
+    };
+    canvas.addEventListener("webglcontextlost", handleContextLost, false);
+    canvas.addEventListener("webglcontextrestored", handleContextRestored, false);
+    return () => {
+      canvas.removeEventListener("webglcontextlost", handleContextLost);
+      canvas.removeEventListener("webglcontextrestored", handleContextRestored);
+    };
+  }, [gl]);
+  return null;
+}
+
 function ResponsiveCamera() {
   const { camera, size } = useThree();
 
@@ -139,7 +161,7 @@ function Home({ onMacReady, onMacError }: HomeProps) {
         <div className="w-full h-full pointer-events-none">
           <Canvas
             frameloop={isSectionVisible ? "always" : "never"}
-            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, isMobile ? 1.15 : 1.5)]}
+            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, isMobile ? 1.0 : 1.35)]}
             gl={{
               antialias: !isMobile,
               alpha: true,
@@ -152,6 +174,7 @@ function Home({ onMacReady, onMacError }: HomeProps) {
             style={{ touchAction: "pan-y", pointerEvents: "none" }}
             className="w-full h-full block pointer-events-none touch-pan-y"
           >
+            <HomeWebGLContextLossHandler />
             <ResponsiveCamera />
             <CanvasReadyNotifier onReady={handleCanvasReady} />
             <ambientLight intensity={1.8} />
