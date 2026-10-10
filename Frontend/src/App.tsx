@@ -8,20 +8,19 @@ import Navbar from "./components/Navbar";
 import TopHeader from "./components/TopHeader";
 import Preloader3D from "./components/Preloader/Preloader3D";
 
-// Code-Split Below-The-Fold Sections to eliminate initial load bottleneck
-const OurTeam = lazy(() => import("./pages/OurTeam"));
-const PlatformsWeManage = lazy(() => import("./pages/PlatformsWeManage"));
+import OurTeam from "./pages/OurTeam";
+import PlatformsWeManage from "./pages/PlatformsWeManage";
 const Portfolio = lazy(() => import("./pages/Portfolio"));
-const ThreeDProjects = lazy(() => import("./pages/ThreeDProjects"));
-const ToolsAndTechnology = lazy(() => import("./pages/ToolsAndTechnology"));
-const Process = lazy(() => import("./pages/Process"));
-const About = lazy(() => import("./pages/About"));
-const MissionVision = lazy(() => import("./pages/MissionVision"));
-const MilestoneShowcase = lazy(() => import("./components/MilestoneShowcase"));
-const WorkWithUs = lazy(() => import("./pages/WhyWorkWithUs"));
-const Blogs = lazy(() => import("./pages/Blogs"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Footer = lazy(() => import("./components/Footer"));
+import ThreeDProjects from "./pages/ThreeDProjects";
+import ToolsAndTechnology from "./pages/ToolsAndTechnology";
+import Process from "./pages/Process";
+import About from "./pages/About";
+import MissionVision from "./pages/MissionVision";
+import MilestoneShowcase from "./components/MilestoneShowcase";
+import WorkWithUs from "./pages/WhyWorkWithUs";
+import Blogs from "./pages/Blogs";
+import Contact from "./pages/Contact";
+import Footer from "./components/Footer";
 
 // Lazy-load Admin routes & modals so they don't bloat the main landing page bundle
 const AdminAuthModal = lazy(() => import("./components/Admin/AdminAuthModal"));
@@ -67,15 +66,15 @@ const MainLandingPage = () => {
     if (homeSection) {
       gsap.fromTo(
         homeSection,
-        { opacity: 0.3, scale: 0.96 },
+        { opacity: 0.4 },
         {
           opacity: 1,
-          scale: 1,
-          duration: 1.5,
+          duration: 1.2,
           ease: "power3.out",
-          clearProps: "all",
           onComplete: () => {
-            ScrollTrigger.refresh();
+            requestAnimationFrame(() => {
+              ScrollTrigger.refresh();
+            });
           },
         }
       );
@@ -87,7 +86,9 @@ const MainLandingPage = () => {
     window.dispatchEvent(new CustomEvent("start-hero-letters"));
     (window as any).lenis?.scrollTo(0, { immediate: true });
     window.scrollTo(0, 0);
-    ScrollTrigger.refresh();
+    requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+    });
   }, []);
 
   // Admin Portal State (for modal fallback if triggered from main site)
@@ -148,27 +149,7 @@ const MainLandingPage = () => {
     };
   }, [handleOpenAdminPortal]);
 
-  // Defer below-the-fold 3D preloads until hero is mounted and interactive
-  useEffect(() => {
-    if (isLoading) return;
 
-    const idleHandler = () => {
-      import("./pages/Portfolio")
-        .then((m) => m.preloadPortfolioAssets?.())
-        .catch(() => {});
-      import("./pages/OurTeam")
-        .then((m) => m.preloadOurTeamAssets?.())
-        .catch(() => {});
-    };
-
-    if ("requestIdleCallback" in window) {
-      const id = (window as any).requestIdleCallback(idleHandler, { timeout: 3500 });
-      return () => (window as any).cancelIdleCallback?.(id);
-    } else {
-      const timer = setTimeout(idleHandler, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
 
   // Global Lenis Smooth Momentum Scrolling synchronized with GSAP ScrollTrigger
   useEffect(() => {
@@ -404,27 +385,22 @@ const MainLandingPage = () => {
       <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
         <Home onMacReady={handleMacReady} onMacError={handleMacError} />
         <Services />
-        <Suspense fallback={null}>
-          <PlatformsWeManage />
-          <Portfolio
-          />
-          <ThreeDProjects />
-          <ToolsAndTechnology />
-          <Process />
-          <About />
-          <MissionVision />
-          <MilestoneShowcase />
-          <OurTeam
-            onBusinessmanReady={handleBusinessmanReady}
-            onBusinessmanError={handleBusinessmanError}
-          />
-        </Suspense>
-        <Suspense fallback={null}>
-          <WorkWithUs />
-          <Blogs />
-          <Contact />
-          <Footer />
-        </Suspense>
+        <PlatformsWeManage />
+        <Portfolio />
+        <ThreeDProjects />
+        <ToolsAndTechnology />
+        <Process />
+        <About />
+        <MissionVision />
+        <MilestoneShowcase />
+        <OurTeam
+          onBusinessmanReady={handleBusinessmanReady}
+          onBusinessmanError={handleBusinessmanError}
+        />
+        <WorkWithUs />
+        <Blogs />
+        <Contact />
+        <Footer />
       </main>
 
       {/* Admin Auth Modal */}

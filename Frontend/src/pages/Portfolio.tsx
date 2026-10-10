@@ -1,32 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import SkinnedPlane, { type PlaneItem } from "../components/SkinnedPlane";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
-
-function WebGLContextLossHandler() {
-  const { gl } = useThree();
-  useEffect(() => {
-    const canvas = gl.domElement;
-    const handleContextLost = (e: Event) => {
-      e.preventDefault();
-      console.warn("[Portfolio WebGL] Context lost, pausing rendering");
-    };
-    const handleContextRestored = () => {
-      console.log("[Portfolio WebGL] Context restored");
-      gl.renderLists?.dispose();
-    };
-    canvas.addEventListener("webglcontextlost", handleContextLost, false);
-    canvas.addEventListener("webglcontextrestored", handleContextRestored, false);
-    return () => {
-      canvas.removeEventListener("webglcontextlost", handleContextLost);
-      canvas.removeEventListener("webglcontextrestored", handleContextRestored);
-    };
-  }, [gl]);
-  return null;
-}
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -35,25 +13,8 @@ export const Portfolio: React.FC = () => {
   const [selectedPlane, setSelectedPlane] = useState<PlaneItem | null>(null);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isSectionVisible, setIsSectionVisible] = useState<boolean>(false);
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
-  const isMobile = typeof window !== "undefined" ? window.innerWidth < 768 : false;
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsSectionVisible(entry.isIntersecting);
-      },
-      { rootMargin: "250px 0px" }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   // Helper to resolve full image URLs
   const getFullUrl = (url?: string): string => {
@@ -246,16 +207,6 @@ export const Portfolio: React.FC = () => {
       <div className="absolute inset-0 z-[1]">
         {planes.length > 0 ? (
           <Canvas
-            frameloop={isSectionVisible ? "always" : "never"}
-            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, isMobile ? 1.0 : 1.35)]}
-            gl={{
-              antialias: !isMobile,
-              alpha: false,
-              powerPreference: "high-performance",
-              stencil: false,
-              depth: true,
-              preserveDrawingBuffer: false,
-            }}
             camera={{
               position: [0, 0.4, 8.8],
               fov: 46,
@@ -263,7 +214,6 @@ export const Portfolio: React.FC = () => {
               far: 100,
             }}
           >
-            <WebGLContextLossHandler />
             {/* Dark Background matching website */}
             <color attach="background" args={["#050505"]} />
 
