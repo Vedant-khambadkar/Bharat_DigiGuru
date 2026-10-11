@@ -100,25 +100,25 @@ export const Contact: React.FC = () => {
   return (
     <section
       id="contact-section"
-      className="relative font-['monospace'] z-10 bg-transparent text-white w-full px-6 sm:px-10 md:px-12 lg:px-16 py-16 sm:py-20 lg:py-24 overflow-hidden"
+      className="relative font-['DM_Sans'] z-10 bg-transparent text-white w-full px-6 sm:px-10 md:px-12 lg:px-16 py-16 sm:py-20 lg:py-24 overflow-hidden"
     >
-      <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col gap-12 sm:gap-16">
+      <div className="relative z-10 w-full max-w-8xl mx-auto flex flex-col gap-12 sm:gap-16">
         {/* =========================================================================
             HEADER SECTION: Simple, Crisp Editorial
            ========================================================================= */}
         <div className="flex flex-col gap-4 max-w-3xl">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-white/70" />
-            <span className="text-[11px] font-mono tracking-[0.2em] uppercase text-neutral-400">
+            <span className="text-[11px] tracking-[0.2em] uppercase text-neutral-400">
               Get in Touch
             </span>
           </div>
 
-          <h2 className="font-neuropol text-3xl sm:text-4xl lg:text-5xl uppercase tracking-wider text-white leading-none select-none">
+          <h2 className="font-['DM_Sans'] text-3xl sm:text-4xl lg:text-5xl uppercase tracking-wider text-white leading-none select-none">
             <LensText text="CONTACT US" strokeWidth="2px" strokeColor="#ffffff" />
           </h2>
 
-          <p className="text-sm sm:text-base text-neutral-400 leading-relaxed max-w-2xl font-['Space_Grotesk',sans-serif]">
+          <p className="text-sm sm:text-base text-neutral-400 leading-relaxed max-w-2xl ">
             Have an ambitious project or looking to scale your brand presence?
             Tell us about your goals and our team will get back to you with a tailored roadmap.
           </p>
@@ -135,7 +135,7 @@ export const Contact: React.FC = () => {
                 <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white mb-2">
                   <CheckCircle2 className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="font-bold text-2xl text-white uppercase tracking-tight font-['Space_Grotesk',sans-serif]">
+                <h3 className="font-bold text-2xl text-white uppercase tracking-tight ">
                   Message Received
                 </h3>
                 <p className="text-sm text-neutral-400 max-w-md leading-relaxed">
@@ -147,7 +147,7 @@ export const Contact: React.FC = () => {
                     setIsSubmitted(false);
                     setFormData({ name: "", email: "", phone: "", company: "", message: "" });
                   }}
-                  className="mt-4 px-6 py-2.5 rounded-lg border border-neutral-700 bg-neutral-900 text-xs uppercase tracking-wider text-neutral-200 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer font-medium"
+                  className="mt-4 px-6 py-2.5 rounded-lg border border-neutral-700 bg-neutral-900 text-xs uppercase tracking-wider text-neutral-200 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer "
                 >
                   Send Another Message
                 </button>
@@ -156,7 +156,7 @@ export const Contact: React.FC = () => {
               <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                 {/* 1. Services Selector */}
                 <div className="flex flex-col gap-2.5">
-                  <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                  <label className="text-xs uppercase tracking-wider text-neutral-400 ">
                     What services do you need?
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -167,7 +167,7 @@ export const Contact: React.FC = () => {
                           key={srv}
                           type="button"
                           onClick={() => toggleService(srv)}
-                          className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer border ${
+                          className={`px-3.5 py-1.5 rounded-lg text-xs  transition-all duration-150 cursor-pointer border ${
                             active
                               ? "bg-white text-black border-white shadow-sm"
                               : "bg-neutral-900/60 text-neutral-400 border-neutral-800 hover:text-white hover:border-neutral-600"
@@ -183,7 +183,7 @@ export const Contact: React.FC = () => {
                 {/* 2. Form Inputs */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                    <label className="text-xs uppercase tracking-wider text-neutral-400 ">
                       Your Name <span className="text-neutral-500">*</span>
                     </label>
                     <input
@@ -197,7 +197,7 @@ export const Contact: React.FC = () => {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                    <label className="text-xs uppercase tracking-wider text-neutral-400 ">
                       Work Email <span className="text-neutral-500">*</span>
                     </label>
                     <input
@@ -211,7 +211,7 @@ export const Contact: React.FC = () => {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                    <label className="text-xs uppercase tracking-wider text-neutral-400 ">
                       Phone / WhatsApp <span className="text-neutral-500">*</span>
                     </label>
                     <input
@@ -225,7 +225,7 @@ export const Contact: React.FC = () => {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                    <label className="text-xs uppercase tracking-wider text-neutral-400 ">
                       Brand / Company
                     </label>
                     <input
@@ -240,7 +240,7 @@ export const Contact: React.FC = () => {
 
                 {/* 3. Message */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs uppercase tracking-wider text-neutral-400 font-medium">
+                  <label className="text-xs uppercase tracking-wider text-neutral-400 ">
                     Project Overview <span className="text-neutral-500">*</span>
                   </label>
                   <textarea
@@ -284,7 +284,7 @@ export const Contact: React.FC = () => {
             {/* Direct Email Card */}
             <div className="bg-[#0b0b0b] border border-neutral-800/80 rounded-2xl p-6 sm:p-7 flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono uppercase tracking-widest text-neutral-400 font-medium">
+                <span className="text-xs font-mono uppercase tracking-widest text-neutral-400 ">
                   Direct Contact
                 </span>
                 <button
@@ -316,7 +316,7 @@ export const Contact: React.FC = () => {
                     <span className="text-xs text-neutral-500">Email us directly</span>
                     <a
                       href={`mailto:${clientEmail}`}
-                      className="font-medium text-xs sm:text-sm text-white hover:underline truncate"
+                      className=" text-xs sm:text-sm text-white hover:underline truncate"
                     >
                       {clientEmail}
                     </a>
@@ -331,7 +331,7 @@ export const Contact: React.FC = () => {
                     <span className="text-xs text-neutral-500">India Contact</span>
                     <a
                       href="tel:+918682858584"
-                      className="font-mono font-medium text-xs sm:text-sm text-white hover:text-[#ff3b30] transition-colors"
+                      className="font-mono  text-xs sm:text-sm text-white hover:text-[#ff3b30] transition-colors"
                     >
                       +91 86828 58584
                     </a>
@@ -346,7 +346,7 @@ export const Contact: React.FC = () => {
                     <span className="text-xs text-neutral-500">Global Contact</span>
                     <a
                       href="tel:+5927667700"
-                      className="font-mono font-medium text-xs sm:text-sm text-white hover:text-emerald-400 transition-colors"
+                      className="font-mono  text-xs sm:text-sm text-white hover:text-emerald-400 transition-colors"
                     >
                       +592 766 7700
                     </a>
@@ -400,7 +400,7 @@ export const Contact: React.FC = () => {
 
             {/* Simple Next Steps Card */}
             <div className="bg-[#0b0b0b] border border-neutral-800/80 rounded-2xl p-6 sm:p-7 flex flex-col gap-3">
-              <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-medium">
+              <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 ">
                 How We Collaborate
               </span>
               <div className="flex flex-col gap-3 pt-1 text-xs text-neutral-400">
