@@ -238,14 +238,15 @@ export const Portfolio: React.FC = () => {
       gsap.fromTo(
         introAnimRef.current,
         {
-          y: -4.2,
-          rotation: Math.PI * 10.75,
+          y: -6.2,
+          rotation: Math.PI * 6.75,
           scale: 0,
         },
         {
           y: 0,
           rotation: 0,
           scale: 1,
+          delay:0.5,
           duration: 1,
           ease: "power2.out",
           scrollTrigger: {
@@ -336,7 +337,7 @@ export const Portfolio: React.FC = () => {
 
           {/* 1. Upper Left Section: PORTFOLIO Header */}
           <div className="portfolio-header-text absolute top-16 sm:top-20 md:top-[110px] lg:top-[125px] left-4 sm:left-8 md:left-12 z-10 pointer-events-none select-none">
-            <div className=" text-3xl sm:text-5xl md:text-6xl font-normal leading-[0.88] tracking-wider text-white m-0 uppercase">
+            <div className="font-['DM_Sans'] text-3xl sm:text-5xl md:text-6xl font-bold leading-[0.88] tracking-wider text-white m-0 uppercase">
               PORTFOLIO
             </div>
           </div>
@@ -346,13 +347,13 @@ export const Portfolio: React.FC = () => {
             {isMobile && mobile3DMode && (
               <button
                 onClick={() => setMobile3DMode(false)}
-                className="pointer-events-auto px-3 py-1 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-mono text-white uppercase tracking-wider shadow-lg active:scale-95 transition-all"
+                className="pointer-events-auto px-3 py-1 rounded-full bg-neutral-900/90 border border-white/20 text-[10px] font-['DM_Sans'] text-white uppercase tracking-wider shadow-lg active:scale-95 transition-all"
               >
                 ← BACK TO CARDS
               </button>
             )}
             <div className="portfolio-tagline-text hidden md:block max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] text-right pointer-events-none select-none">
-              <h2 className=" text-sm sm:text-base md:text-lg lg:text-[20px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
+              <h2 className="font-['DM_Sans'] text-sm sm:text-base md:text-lg lg:text-[20px] font-normal leading-snug tracking-wide m-0 text-stone-200 uppercase">
                 Shaping Your Vision
                 <br />
                 Into Immersive Reality.
@@ -409,10 +410,10 @@ export const Portfolio: React.FC = () => {
                 {isLoading ? (
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 rounded-full border-2 border-red-500/30 border-t-red-500 animate-spin" />
-                    <span className="text-xs font-mono uppercase tracking-widest text-neutral-400">Loading Portfolio...</span>
+                    <span className="text-xs font-['DM_Sans'] uppercase tracking-widest text-neutral-400">Loading Portfolio...</span>
                   </div>
                 ) : (
-                  <div className="text-stone-500 text-sm font-mono uppercase tracking-widest">
+                  <div className="text-stone-500 text-sm font-['DM_Sans'] uppercase tracking-widest">
                     No portfolio items available in the database.
                   </div>
                 )}
@@ -421,13 +422,13 @@ export const Portfolio: React.FC = () => {
           </div>
 
           {/* 4. Bottom Left Responsive Statement Branding */}
-          <div className="portfolio-desc-text absolute bottom-0 left-4 sm:left-8 md:left-12 pb-3 sm:pb-4 md:pb-6 max-w-[calc(100vw-2rem)] sm:max-w-[300px] md:max-w-[350px] lg:max-w-[390px] flex flex-col items-start gap-1 sm:gap-1.5 z-10 pointer-events-none select-none">
-            <h1 className=" text-xs sm:text-sm md:text-base lg:text-lg xl:text-[20px] font-normal leading-[1.25] tracking-wider text-white uppercase m-0">
+          <div className="portfolio-desc-text hidden md:flex absolute bottom-0 left-4 sm:left-8 md:left-12 pb-3 sm:pb-4 md:pb-6 max-w-[calc(100vw-2rem)] sm:max-w-[300px] md:max-w-[350px] lg:max-w-[390px] flex-col items-start gap-1 sm:gap-1.5 z-10 pointer-events-none select-none font-['DM_Sans']">
+            <h1 className="font-['DM_Sans'] text-xs sm:text-sm md:text-base lg:text-lg xl:text-[20px] font-normal leading-[1.25] tracking-wider text-white uppercase m-0">
               Crafting Digital
               <br />
               Experiences That Speak.
             </h1>
-            <p className="text-[9px] sm:text-[10px] md:text-[11px] lg:text-xs leading-relaxed text-stone-300 m-0 tracking-[0.01em]">
+            <p className="font-['DM_Sans'] text-[9px] sm:text-[10px] md:text-[11px] lg:text-xs leading-relaxed text-stone-300 m-0 tracking-[0.01em]">
               At Bharat DigiGuru, we engineer photorealistic 3D CGI, immersive visual media, and next-generation interactive architectures tailored for world-class enterprises.
             </p>
           </div>
