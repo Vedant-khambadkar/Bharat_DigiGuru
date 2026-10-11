@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import SkinnedPlane, { type PlaneItem } from "../components/SkinnedPlane";
+import SkinnedPlane, { type PlaneItem, type SkinnedPlaneIntroState } from "../components/SkinnedPlane";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 
@@ -106,6 +106,12 @@ export const Portfolio: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const introAnimRef = useRef<SkinnedPlaneIntroState>({
+    y: -4.2,
+    rotation: Math.PI * 0.75,
+    scale: 0.5,
+  });
   const { shouldRenderPortfolio3D, isMobile } = useResponsiveTier();
   const [mobile3DMode, setMobile3DMode] = useState<boolean>(false);
 
@@ -227,6 +233,47 @@ export const Portfolio: React.FC = () => {
         },
       });
 
+      // 3D Card Canvas Entrance Animation using GSAP ScrollTrigger:
+      // When reaching this section: animates from bottom to center with rotation and from scale 0.5 to 1.0
+      gsap.fromTo(
+        introAnimRef.current,
+        {
+          y: -4.2,
+          rotation: Math.PI * 10.75,
+          scale: 0,
+        },
+        {
+          y: 0,
+          rotation: 0,
+          scale: 1,
+          duration: 1,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: section,
+            start: "top 80%",
+            toggleActions: "play none none reverse",
+          },
+        }
+      );
+
+      // Smooth opacity fade-in for 3D Canvas container
+      if (canvasContainerRef.current) {
+        gsap.fromTo(
+          canvasContainerRef.current,
+          { opacity: 0 },
+          {
+            opacity: 1,
+            duration: 1.0,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: section,
+              start: "top 80%",
+              toggleActions: "play none none reverse",
+            },
+          }
+        );
+      }
+
       // Entrance animation for header and branding labels
       gsap.fromTo(
         [".portfolio-header-text", ".portfolio-tagline-text", ".portfolio-desc-text"],
@@ -314,7 +361,10 @@ export const Portfolio: React.FC = () => {
           </div>
 
           {/* 3. Center 3D Interactive SkinnedMesh Carousel */}
-          <div className="absolute inset-0 z-[1]">
+          <div
+            ref={canvasContainerRef}
+            className="portfolio-canvas-container absolute inset-0 z-[1] will-change-transform"
+          >
             {planes.length > 0 ? (
               <Canvas
                 frameloop={isSectionVisible ? "always" : "never"}
@@ -351,6 +401,7 @@ export const Portfolio: React.FC = () => {
                   selectedId={selectedPlane?.id}
                   scrollProgress={scrollProgress}
                   onSelectPlane={setSelectedPlane}
+                  introStateRef={introAnimRef}
                 />
               </Canvas>
             ) : (

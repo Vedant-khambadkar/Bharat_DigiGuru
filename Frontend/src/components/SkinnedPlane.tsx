@@ -267,6 +267,12 @@ export const SingleSkinnedPlane: React.FC<SingleSkinnedPlaneProps> = ({
   );
 };
 
+export interface SkinnedPlaneIntroState {
+  y: number;
+  rotation: number;
+  scale: number;
+}
+
 interface SkinnedPlaneProps {
   showSkeleton?: boolean;
   radius?: number;
@@ -275,6 +281,7 @@ interface SkinnedPlaneProps {
   scrollProgressRef?: React.MutableRefObject<number>;
   planes?: PlaneItem[];
   onSelectPlane?: (plane: PlaneItem) => void;
+  introStateRef?: React.MutableRefObject<SkinnedPlaneIntroState>;
 }
 
 export default function SkinnedPlane({
@@ -284,6 +291,7 @@ export default function SkinnedPlane({
   scrollProgressRef,
   planes = [],
   onSelectPlane,
+  introStateRef,
 }: SkinnedPlaneProps) {
   // Dynamically derive geometry count directly from the API planes array
   const activePlanes = planes || [];
@@ -298,10 +306,10 @@ export default function SkinnedPlane({
   const bendState = useRef(0);
   const isRotatingRef = useRef(false);
 
-  // Direct instant resting pose (no 4-second spin lag or slow rise)
-  const introY = useRef(0);
-  const introRotation = useRef(0);
-  const introScale = useRef(1.0);
+  // Intro entrance animation state (driven by GSAP ScrollTrigger via introStateRef or resting pose)
+  const introY = useRef(introStateRef?.current ? introStateRef.current.y : 0);
+  const introRotation = useRef(introStateRef?.current ? introStateRef.current.rotation : 0);
+  const introScale = useRef(introStateRef?.current ? introStateRef.current.scale : 1.0);
 
   // Scroll rotation damped state (full 360 degree revolution = 2 * PI)
   const scrollRotDamped = useRef(0);
@@ -355,6 +363,13 @@ export default function SkinnedPlane({
 
   // Frame loop: smooth scroll-driven 360 degree rotation, drag damping, and bone flexing physics
   useFrame((_, delta) => {
+    // 0. Synchronize intro animation values driven by GSAP ScrollTrigger
+    if (introStateRef?.current) {
+      introY.current = introStateRef.current.y;
+      introRotation.current = introStateRef.current.rotation;
+      introScale.current = introStateRef.current.scale;
+    }
+
     // 1. Scroll-driven 360-degree rotation (progress 0..1 maps to 0..2*PI)
     const currentProgress = scrollProgressRef ? scrollProgressRef.current : scrollProgress;
     const targetScrollRot = -currentProgress * Math.PI * 2;
