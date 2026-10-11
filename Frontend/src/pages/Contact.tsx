@@ -284,13 +284,13 @@ export const Contact: React.FC = () => {
             {/* Direct Email Card */}
             <div className="bg-[#0b0b0b] border border-neutral-800/80 rounded-2xl p-6 sm:p-7 flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono uppercase tracking-widest text-neutral-400 ">
+                <span className="text-xs uppercase tracking-widest text-neutral-400">
                   Direct Contact
                 </span>
                 <button
                   type="button"
                   onClick={handleCopyEmail}
-                  className="px-3 py-1 rounded-md bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-white text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-1 rounded-md bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 hover:text-white text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
                   title="Copy email address"
                 >
                   {copiedEmail ? (
@@ -316,7 +316,7 @@ export const Contact: React.FC = () => {
                     <span className="text-xs text-neutral-500">Email us directly</span>
                     <a
                       href={`mailto:${clientEmail}`}
-                      className=" text-xs sm:text-sm text-white hover:underline truncate"
+                      className="text-xs sm:text-sm text-white hover:underline truncate"
                     >
                       {clientEmail}
                     </a>
@@ -331,7 +331,7 @@ export const Contact: React.FC = () => {
                     <span className="text-xs text-neutral-500">India Contact</span>
                     <a
                       href="tel:+918682858584"
-                      className="font-mono  text-xs sm:text-sm text-white hover:text-[#ff3b30] transition-colors"
+                      className="text-xs sm:text-sm text-white hover:text-[#ff3b30] transition-colors"
                     >
                       +91 86828 58584
                     </a>
@@ -346,7 +346,7 @@ export const Contact: React.FC = () => {
                     <span className="text-xs text-neutral-500">Global Contact</span>
                     <a
                       href="tel:+5927667700"
-                      className="font-mono  text-xs sm:text-sm text-white hover:text-emerald-400 transition-colors"
+                      className="text-xs sm:text-sm text-white hover:text-emerald-400 transition-colors"
                     >
                       +592 766 7700
                     </a>
@@ -363,7 +363,7 @@ export const Contact: React.FC = () => {
                   <MapPin className="w-4 h-4 text-neutral-300" />
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
-                  <span className="text-xs font-mono uppercase tracking-wider text-neutral-400">
+                  <span className="text-xs uppercase tracking-wider text-neutral-400">
                     Location & Reach
                   </span>
                   <p className="text-sm text-neutral-200">
@@ -384,10 +384,10 @@ export const Contact: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono uppercase tracking-wider text-neutral-400">
+                    <span className="text-xs uppercase tracking-wider text-neutral-400">
                       Response Time
                     </span>
-                    <span className="text-[10px] font-mono uppercase text-neutral-300 bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded">
+                    <span className="text-[10px] uppercase text-neutral-300 bg-neutral-900 border border-neutral-800 px-2 py-0.5 rounded">
                       &lt; 2 Hours
                     </span>
                   </div>
@@ -400,20 +400,20 @@ export const Contact: React.FC = () => {
 
             {/* Simple Next Steps Card */}
             <div className="bg-[#0b0b0b] border border-neutral-800/80 rounded-2xl p-6 sm:p-7 flex flex-col gap-3">
-              <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 ">
+              <span className="text-xs uppercase tracking-wider text-neutral-400">
                 How We Collaborate
               </span>
               <div className="flex flex-col gap-3 pt-1 text-xs text-neutral-400">
                 <div className="flex items-start gap-3">
-                  <span className="font-mono text-neutral-500">01</span>
+                  <span className="text-neutral-500">01</span>
                   <span><strong className="text-neutral-200 font-normal">Initial Brief:</strong> We understand your brand goals and requirements.</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="font-mono text-neutral-500">02</span>
+                  <span className="text-neutral-500">02</span>
                   <span><strong className="text-neutral-200 font-normal">Strategy Blueprint:</strong> We propose a clear production timeline & scope.</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <span className="font-mono text-neutral-500">03</span>
+                  <span className="text-neutral-500">03</span>
                   <span><strong className="text-neutral-200 font-normal">Launch & Growth:</strong> Seamless execution with continuous performance optimization.</span>
                 </div>
               </div>
