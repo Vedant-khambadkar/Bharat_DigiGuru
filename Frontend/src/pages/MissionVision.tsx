@@ -295,7 +295,7 @@ export const MissionVision: React.FC = () => {
       id="analytics-section"
       ref={sectionRef}
       aria-label="Corporate Vision, Mission, and Strategy Showcase"
-      className="relative z-20 w-full h-screen min-h-[600px] overflow-hidden bg-[#050505] text-white select-none isolate font-['Outfit',sans-serif]"
+      className="relative z-20 w-full h-screen min-h-[600px] overflow-hidden bg-[#050505] text-white select-none isolate font-['DM_Sans']"
     >
       {/* Background Video Layers with High-Contrast Vignette Overlays & Persistent Disk/Blob Cache */}
       {SLIDES.map((slide, idx) => (
@@ -319,7 +319,7 @@ export const MissionVision: React.FC = () => {
             </div>
 
             {/* "OUR" Label positioned aligned with the active word */}
-            <span className="text-[11px] md:text-xs tracking-[0.25em] font-extrabold uppercase text-white/90 select-none shrink-0 font-['Chakra_Petch',sans-serif] mt-[215px]">
+            <span className="text-[11px] md:text-xs tracking-[0.25em]  uppercase text-white/90 select-none shrink-0  mt-[215px]">
               OUR
             </span>
 
@@ -333,7 +333,7 @@ export const MissionVision: React.FC = () => {
                 >
                   <div className="relative inline-block">
                     {/* Base Muted Layer */}
-                    <h2 className="text-[52px] sm:text-[70px] md:text-[84px] lg:text-[96px] leading-none font-black tracking-wider uppercase font-['Chakra_Petch',sans-serif] text-white/40 select-none">
+                    <h2 className="text-[52px] sm:text-[70px] md:text-[84px] lg:text-[96px] leading-none font-black tracking-wider uppercase  text-white/40 select-none">
                       {slide.name}
                     </h2>
 
@@ -342,7 +342,7 @@ export const MissionVision: React.FC = () => {
                       aria-hidden="true"
                       className={`fill-layer-${idx} absolute inset-0 overflow-hidden will-change-[clip-path] pointer-events-none`}
                     >
-                      <span className="text-[52px] sm:text-[70px] md:text-[84px] lg:text-[96px] leading-none font-black tracking-wider uppercase font-['Chakra_Petch',sans-serif] text-white select-none whitespace-nowrap">
+                      <span className="text-[52px] sm:text-[70px] md:text-[84px] lg:text-[96px] leading-none font-black tracking-wider uppercase  text-white select-none whitespace-nowrap">
                         {slide.name}
                       </span>
                     </div>

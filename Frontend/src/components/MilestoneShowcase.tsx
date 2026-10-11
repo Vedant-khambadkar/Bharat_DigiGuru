@@ -301,7 +301,7 @@ export const MilestoneShowcase: React.FC = () => {
     <section
       ref={containerRef}
       id="milestone-showcase"
-      className="relative w-full px-4 sm:px-6 md:px-10 lg:px-12 xl:px-16 py-12 sm:py-16 md:py-20  text-white overflow-hidden select-none"
+      className="relative w-full px-4 sm:px-6 md:px-10 lg:px-12 xl:px-16 py-12 sm:py-16 md:py-20 text-white overflow-hidden select-none font-['DM_Sans']"
     >
       {/* Ambient background glows */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -609,7 +609,7 @@ export const MilestoneShowcase: React.FC = () => {
       {selectedMilestone && (
         <div
           onClick={() => setSelectedMilestone(null)}
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/90 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/90 backdrop-blur-md animate-fade-in font-['DM_Sans']"
         >
           <div
             onClick={(e) => e.stopPropagation()}
