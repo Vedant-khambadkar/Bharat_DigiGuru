@@ -3,12 +3,26 @@ import { Server as HttpServer } from "http";
 
 let io: SocketIOServer | null = null;
 
-export const initializeSocket = (httpServer: HttpServer, _corsOrigin?: any) => {
+export const initializeSocket = (httpServer: HttpServer, allowedOrigins: string[] = []) => {
   io = new SocketIOServer(httpServer, {
     cors: {
       origin: (origin, callback) => {
-        // Dynamically reflect incoming origin to support credentials across localhost and all domains
-        callback(null, origin || true);
+        // Dynamically reflect incoming origin for credentials
+        if (!origin) return callback(null, true);
+        const normalized = origin.trim().replace(/\/+$/, "");
+        const isAllowed =
+          process.env.NODE_ENV !== "production" ||
+          allowedOrigins.includes("*") ||
+          allowedOrigins.includes(normalized) ||
+          normalized.endsWith(".vercel.app") ||
+          normalized.includes("localhost") ||
+          normalized.includes("127.0.0.1") ||
+          /^https?:\/\/(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(normalized);
+
+        if (isAllowed) {
+          return callback(null, origin);
+        }
+        return callback(null, origin);
       },
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       credentials: true,

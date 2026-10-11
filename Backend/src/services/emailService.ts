@@ -459,10 +459,27 @@ export async function sendAdminCredentialsEmail({
     `"Bharat DigiGuru" <no-reply@bharatdigiguru.com>`;
 
   const { attachments, logoSrc } = getLogoAttachment();
-  const portalUrl =
-    process.env.ADMIN_PORTAL_URL ||
-    process.env.FRONTEND_URL ||
-    "https://bharatdigiguru.com/admin/login";
+  const getPrimaryPortalUrl = (): string => {
+    if (process.env.ADMIN_PORTAL_URL) {
+      const first = process.env.ADMIN_PORTAL_URL.split(",")[0].trim().replace(/\/+$/, "");
+      if (first) return first;
+    }
+    if (process.env.FRONTEND_URL) {
+      const first = process.env.FRONTEND_URL.split(",")[0].trim().replace(/\/+$/, "");
+      if (first) return `${first}/admin/login`;
+    }
+    if (process.env.CORS_ORIGIN) {
+      const origins = process.env.CORS_ORIGIN.split(",")
+        .map((s) => s.trim().replace(/\/+$/, ""))
+        .filter(Boolean);
+      const prodOrigin = origins.find(
+        (o) => !o.includes("localhost") && !o.includes("127.0.0.1")
+      );
+      if (prodOrigin) return `${prodOrigin}/admin/login`;
+    }
+    return "https://bharatdigiguru.com/admin/login";
+  };
+  const portalUrl = getPrimaryPortalUrl();
 
   const formattedDate = new Date().toLocaleDateString("en-IN", {
     month: "short",
