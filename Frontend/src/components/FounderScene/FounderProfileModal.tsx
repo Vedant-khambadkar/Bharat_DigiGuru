@@ -79,20 +79,18 @@ export const FounderProfileModal: React.FC<FounderProfileModalProps> = ({
 
   if (!isOpen) return null;
 
-  const founderName = founder?.name || 'SHUBHAM SINGH';
-  const founderRole = founder?.role || 'CREATIVE DIRECTOR & VISIONARY';
-  const founderBadge = founder?.badge || 'MEET THE FOUNDER';
-  const founderSubtitle = founder?.subtitle || 'LEADERSHIP & VISION';
-  const founderPhotoTag = founder?.photoTag || 'FOUNDER';
+  const founderName = founder?.name || '';
+  const founderRole = founder?.role || '';
+  const founderBadge = founder?.badge || '';
+  const founderSubtitle = founder?.subtitle || '';
+  const founderPhotoTag = founder?.photoTag || '';
   const founderImg = founder?.image || founderPhoto;
-  const founderBio = founder?.bio || 'Born in India and raised in the city of artists, Varanasi, Shubham has been capturing stories and crafting visuals for as long as he can remember.';
-  const founderBioSec = founder?.bioSecondary || 'As an accomplished digital content creator and 3D visionary, he has collaborated with premier global mobile enterprises. His portfolio encompasses high-end commercial CGI, street photography stills, cinematic short films, and high-impact music videos.';
-  const founderQuote = founder?.quote || '"His unique style, artistic training, and profound appreciation for light and architecture make every frame an unforgettable visual journey."';
-  const founderSpecialties = Array.isArray(founder?.specialties) && founder.specialties.length > 0
-    ? founder.specialties
-    : ['3D CGI & ArchViz', 'Commercial Stills', 'Cinematic Direction', 'Creative Strategy'];
-  const founderLinkedin = founder?.linkedinUrl || 'https://linkedin.com';
-  const founderInstagram = founder?.instagramUrl || 'https://instagram.com';
+  const founderBio = founder?.bio || '';
+  const founderBioSec = founder?.bioSecondary || '';
+  const founderQuote = founder?.quote || '';
+  const founderSpecialties = Array.isArray(founder?.specialties) ? founder.specialties : [];
+  const founderLinkedin = founder?.linkedinUrl || '';
+  const founderInstagram = founder?.instagramUrl || '';
 
   const modalNode = (
     <div

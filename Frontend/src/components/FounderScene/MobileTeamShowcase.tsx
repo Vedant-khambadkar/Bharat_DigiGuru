@@ -37,12 +37,12 @@ export const MobileTeamShowcase: React.FC<MobileTeamShowcaseProps> = ({
     };
   }, [onReady]);
 
-  const founderName = founder?.name || "SHUBHAM SINGH";
-  const founderRole = founder?.role || "FOUNDER & CREATIVE DIRECTOR";
-  const founderSubtitle = founder?.subtitle || "LEADERSHIP & VISION";
-  const founderCityTag = founder?.cityTag || "VARANASI × GLOBAL";
+  const founderName = founder?.name || "";
+  const founderRole = founder?.role || "";
+  const founderSubtitle = founder?.subtitle || "";
+  const founderCityTag = founder?.cityTag || "";
   const founderImg = founder?.image || founderPhoto;
-  const founderQuote = founder?.quote || '"Crafting visuals that redefine the boundaries of light, space, and emotion for visionary global brands."';
+  const founderQuote = founder?.quote || "";
 
   return (
     <div className="relative w-full h-full min-h-[100svh] flex flex-col justify-between py-12 px-4 select-none overflow-hidden bg-black">

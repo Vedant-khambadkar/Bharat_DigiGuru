@@ -1,11 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import DigitalMediaImg1 from "../../assets/DigitalMedia/DigitalMedia-1.webp";
-import pic4 from "../../assets/Picture/Picture4.webp";
-import pic7 from "../../assets/Picture/Picture7.webp";
-import pic10 from "../../assets/Picture/Picture10.webp";
-import pic13 from "../../assets/Picture/Picture13.webp";
-import pic3 from "../../assets/Picture/Picture3.webp";
 import vignetteBg from "../../assets/Minimalist Black and White Vignette  mobile.webp";
 import { userService } from "../../services/service/userService";
 import { onSocketEvent } from "../../utils/socket";
@@ -21,15 +15,6 @@ interface ServiceTab {
   targetSection: string;
 }
 
-const DEFAULT_SERVICE_TABS: ServiceTab[] = [
-  { id: "digital-media-services", label: "Digital Media", image: DigitalMediaImg1, targetSection: "services-section" },
-  { id: "photography-services", label: "Photography", image: pic4, targetSection: "services-section" },
-  { id: "videography-services", label: "Videography", image: pic7, targetSection: "services-section" },
-  { id: "content-generation", label: "Content Generation", image: pic10, targetSection: "services-section" },
-  { id: "ai-art-generation", label: "Art Generation", image: pic13, targetSection: "services-section" },
-  { id: "ai-video-generation", label: "AI Video", image: pic3, targetSection: "services-section" },
-];
-
 const formatLabel = (rawTitle: string): string => {
   if (!rawTitle) return "";
   const cleaned = rawTitle
@@ -40,8 +25,8 @@ const formatLabel = (rawTitle: string): string => {
 
 export const MobileHeroShowcase: React.FC<MobileHeroShowcaseProps> = ({ onReady }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [tabs, setTabs] = useState<ServiceTab[]>(DEFAULT_SERVICE_TABS);
-  const [activeTabId, setActiveTabId] = useState<string>(DEFAULT_SERVICE_TABS[0].id);
+  const [tabs, setTabs] = useState<ServiceTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string>("");
   const [isPressed, setIsPressed] = useState<boolean>(false);
 
   // Notify parent of readiness
@@ -49,7 +34,7 @@ export const MobileHeroShowcase: React.FC<MobileHeroShowcaseProps> = ({ onReady 
     onReady?.();
   }, [onReady]);
 
-  // Load dynamic services from website API/database with fallback
+  // Load dynamic services purely from website API/database
   useEffect(() => {
     let isMounted = true;
 
@@ -58,22 +43,19 @@ export const MobileHeroShowcase: React.FC<MobileHeroShowcaseProps> = ({ onReady 
         const data = await userService.getServices();
         const items = Array.isArray(data) ? data : data?.items || [];
         if (isMounted && Array.isArray(items) && items.length > 0) {
-          const mappedTabs: ServiceTab[] = items.map((item: any, idx: number) => {
-            const fallbackTab = DEFAULT_SERVICE_TABS[idx] || DEFAULT_SERVICE_TABS[0];
-            return {
-              id: item.id || `service-${idx}`,
-              label: formatLabel(item.title || fallbackTab.label),
-              image: item.image || fallbackTab.image,
-              targetSection: "services-section",
-            };
-          });
+          const mappedTabs: ServiceTab[] = items.map((item: any, idx: number) => ({
+            id: item.id || `service-${idx}`,
+            label: formatLabel(item.title || "Service"),
+            image: item.image || "",
+            targetSection: "services-section",
+          }));
           setTabs(mappedTabs);
-          if (mappedTabs.length > 0 && !mappedTabs.some(t => t.id === activeTabId)) {
+          if (mappedTabs.length > 0 && !mappedTabs.some((t) => t.id === activeTabId)) {
             setActiveTabId(mappedTabs[0].id);
           }
         }
       } catch (err) {
-        console.warn("[MobileHeroShowcase] Using fallback services:", err);
+        console.warn("[MobileHeroShowcase] Could not fetch live services:", err);
       }
     };
 

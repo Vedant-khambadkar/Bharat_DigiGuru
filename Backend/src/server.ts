@@ -96,7 +96,7 @@ app.get("/", (_req, res) => {
     name: "Bharat DigiGuru Backend API",
     status: "online",
     port: PORT,
-    database: process.env.MONGODB_URI ? "MongoDB Atlas" : "Local JSON",
+    database: "MongoDB Atlas",
     endpoints: {
       health: "/api/health",
       portfolio: "/api/portfolio",
@@ -120,7 +120,7 @@ const startServer = async () => {
   if (isMongo) {
     console.log("📦 Connected to MongoDB Atlas");
   } else {
-    console.log("ℹ️ Connected to local JSON database store");
+    console.warn("⚠️ Warning: MongoDB Atlas not connected; running in-memory mode");
   }
 
   // In standalone server mode (not serverless lambda), bind to port

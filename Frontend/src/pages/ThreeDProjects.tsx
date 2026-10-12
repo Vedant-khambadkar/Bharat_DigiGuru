@@ -149,39 +149,12 @@ const ThreeDCard: React.FC<ThreeDCardProps> = ({
   );
 };
 
-const DEFAULT_THREED_PROJECTS: ThreeDProject[] = [
-  {
-    id: "hyperion-villa",
-    title: "Hyperion Ultra-Luxury Villa Walkthrough",
-    category: "Architecture & Interiors",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=900&auto=format&fit=crop&fm=webp",
-    duration: "0:15 // 4K",
-  },
-  {
-    id: "chronos-watch-cgi",
-    title: "Chronos Tourbillon 3D Product Film",
-    category: "Product Visualization",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=900&auto=format&fit=crop&fm=webp",
-    duration: "0:12 // 4K",
-  },
-  {
-    id: "lumina-car-reel",
-    title: "Aether EV Cinematic Launch Reel",
-    category: "Automotive CGI",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1617788138017-80ad40651399?q=80&w=900&auto=format&fit=crop&fm=webp",
-    duration: "0:18 // 4K",
-  },
-];
-
 export const ThreeDProjects: React.FC = () => {
   const [projects, setProjects] = useState<ThreeDProject[]>(() => {
     const cached = getApiCache<ThreeDProject[]>("threed_projects");
-    return cached && cached.length > 0 ? cached : DEFAULT_THREED_PROJECTS;
+    return cached && cached.length > 0 ? cached : [];
   });
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(() => projects.length === 0);
   const [activeTheaterProject, setActiveTheaterProject] = useState<ThreeDProject | null>(null);
   const [playingStates, setPlayingStates] = useState<{ [key: string]: boolean }>({});
   const [mutedStates, setMutedStates] = useState<{ [key: string]: boolean }>({});

@@ -9,47 +9,9 @@ import { onSocketEvent } from "../utils/socket";
 import MobilePortfolioDeck from "../components/Portfolio/MobilePortfolioDeck";
 import { useResponsiveTier } from "../hooks/useResponsiveTier";
 import { backendUrl } from "../utils/constants";
+import { getApiCache } from "../utils/apiCache";
 
 gsap.registerPlugin(ScrollTrigger);
-
-// High-fidelity fallback portfolio items to ensure mobile devices and offline clients always display 3D cards
-const DEFAULT_PORTFOLIO_ITEMS = [
-  {
-    id: 1,
-    title: "3D Visualization",
-    category: "3D & Architecture",
-    image: "https://d1mou18mn47yy7.cloudfront.net/uploads/1790526355023-706815681-RSP_1603.webp",
-    color: "#ff2d55",
-  },
-  {
-    id: 2,
-    title: "AI Services",
-    category: "Generative Media",
-    image: "https://d1mou18mn47yy7.cloudfront.net/uploads/1790526252510-826764892-RSP_7331.webp",
-    color: "#ff5e3a",
-  },
-  {
-    id: 3,
-    title: "Brand Videography",
-    category: "Motion & Film",
-    image: "https://d1mou18mn47yy7.cloudfront.net/uploads/1790526293619-962725542-RSP_2418.webp",
-    color: "#ff9500",
-  },
-  {
-    id: 4,
-    title: "Commercial Photography",
-    category: "Creative Production",
-    image: "https://d1mou18mn47yy7.cloudfront.net/uploads/1790526150900-843055738-RSP_2416_yn.webp",
-    color: "#af52de",
-  },
-  {
-    id: 6,
-    title: "Interactive Web Design",
-    category: "Web & Interactive",
-    image: "https://d1mou18mn47yy7.cloudfront.net/uploads/1790504336708-954012812-Picture27.webp",
-    color: "#007aff",
-  },
-];
 
 // Helper to resolve full image URLs across local development and mobile network IP
 const getFullUrl = (url?: string): string => {
@@ -96,13 +58,21 @@ const formatPortfolioItem = (item: any, index: number): PlaneItem => {
 
 export const Portfolio: React.FC = () => {
   const [planes, setPlanes] = useState<PlaneItem[]>(() => {
-    return DEFAULT_PORTFOLIO_ITEMS.map((item, idx) => formatPortfolioItem(item, idx));
+    const cached = getApiCache<any[]>("portfolio_items");
+    if (Array.isArray(cached) && cached.length > 0) {
+      return cached.map((item, idx) => formatPortfolioItem(item, idx));
+    }
+    return [];
   });
   const [selectedPlane, setSelectedPlane] = useState<PlaneItem | null>(() => {
-    return formatPortfolioItem(DEFAULT_PORTFOLIO_ITEMS[0], 0);
+    const cached = getApiCache<any[]>("portfolio_items");
+    if (Array.isArray(cached) && cached.length > 0) {
+      return formatPortfolioItem(cached[0], 0);
+    }
+    return null;
   });
   const [scrollProgress, setScrollProgress] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(() => planes.length === 0);
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);

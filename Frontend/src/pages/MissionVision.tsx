@@ -22,14 +22,14 @@ const SLIDES: readonly SlideItem[] = [
     id: "vision",
     name: "VISION",
     description:
-      "To pioneer the future of digital commerce and brand storytelling by fusing next-generation AI intelligence, immersive 3D architectures, and hyper-scalable technologies that elevate businesses worldwide.",
+      "Our vision is to transform the digital marketing realm through cutting-edge solutions and to empower businesses for success in the digital age.",
     videoSrc: `${CDN_BASE}/assets/Videos/vission.webm`,
   },
   {
     id: "mission",
     name: "MISSION",
     description:
-      "To empower visionary founders and enterprises through high-velocity creative engineering, data-backed growth systems, and robust digital ecosystems that consistently compound real enterprise value.",
+      "Our mission is to empower businesses, regardless of size, by employing advanced digital marketing strategies, unmatched creativity, and data-driven insights.",
     videoSrc: `${CDN_BASE}/assets/Videos/mission.webm`,
   },
   {

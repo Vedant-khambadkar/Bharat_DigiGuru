@@ -4,149 +4,42 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { X, Clock, Calendar, CheckCircle2 } from "lucide-react";
 import BlogCard from "../components/BlogCard";
 import type { BlogItem } from "../components/BlogCard";
+import CachedImage from "../components/CachedImage";
 import LensText from "../components/LensText";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
+import { getApiCache } from "../utils/apiCache";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const BLOGS_DATA: BlogItem[] = [
-  {
-    id: "empower-brands-digital-journey",
-    number: "(01)",
-    category: "Digital Acceleration",
-    title: "Empower Your Brand's Digital Journey with Bharat DigiGuru",
-    description:
-      "In today's digital landscape, establishing a formidable online presence is essential for businesses striving to excel in competitive markets.",
-    readTime: "6 MIN READ",
-    date: "AUG 2026",
-    content: [
-      "In today's digital landscape, establishing a formidable online presence is essential for businesses striving to excel in competitive markets. The ever-evolving nature of digital media can be overwhelming, but Bharat DigiGuru serves as a steadfast ally in navigating this dynamic terrain. Our extensive range of digital media services is meticulously crafted to enhance the brand's visibility, engagement, and profitability.",
-      "Specializing in Social Media Marketing (SMM), Website Design and development, and more, Bharat DigiGuru tailors solutions to meet your business requirements. Whether seeking increased organic traffic, optimizing social media engagement, or streamlining lead generation, our team of experts is dedicated to realizing clients' objectives.",
-      "In conclusion, Bharat DigiGuru is synonymous with innovation and expertise in digital media services. Our comprehensive offerings empower businesses to harness the full potential of the digital landscape, unlocking new opportunities for growth and success. Embark confidently on the brand's digital journey, backed by Bharat DigiGuru's unwavering commitment to excellence.",
-    ],
-    bullets: [
-      "Elevate the brand's social media presence with expert Social Media Marketing Strategies",
-      "Boost website visibility and organic traffic through tailored Search Engine Optimization (SEO) Services",
-      "Enhance social media engagement and brand visibility with strategic Social Media Optimization (SMO) techniques",
-      "Safeguard and manage online reputation effectively with Online Reputation Management (ORM) solutions",
-      "Reach target audience and drive conversions with targeted Facebook, Google, and Instagram advertising campaigns",
-      "Amplify brand presence and reach through innovative promotional strategies",
-      "Increase video visibility and engagement with specialized YouTube promotion services",
-      "Foster meaningful connections and engagement with the audience through WhatsApp Community management",
-      "Streamline lead generation processes and drive efficiency with advanced Lead Automation services",
-      "Generate high-quality leads and drive conversions with targeted lead-generation strategies",
-      "Ensure consistency in messaging across all digital platforms with comprehensive Content Management solutions",
-      "Boost customer relationships and drive conversions with personalized Email Marketing campaigns that resonate with the audience",
-      "Create visually stunning, user-friendly websites that reflect the brand's identity and convert visitors into customers",
-      "Support the website running smoothly and up-to-date with reliable Website Maintenance Services",
-    ],
-  },
-  {
-    id: "vital-role-digital-media-tech-era",
-    number: "(02)",
-    category: "Tech Era & Culture",
-    title: "Embracing the Vital Role of Digital Media in the Technological Era",
-    description:
-      "The significance of digital media in the contemporary world cannot be overstated, serving as the cornerstone of our technological revolution.",
-    readTime: "8 MIN READ",
-    date: "AUG 2026",
-    image: "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=1000&auto=format&fit=crop&fm=webp",
-    content: [
-      "The significance of digital media in the contemporary world cannot be overstated. Technology permeates every aspect of our lives, and digital media stands as the cornerstone of this technological revolution. From communication and entertainment to education and commerce, digital media plays a pivotal role in shaping our daily experiences and interactions.",
-      "One of the primary reasons for digital media's importance lies in its unparalleled reach and accessibility. Unlike traditional media forms such as print or broadcast, digital media transcends geographical boundaries and time constraints. High-speed internet and the advent of smartphones have opened up possibilities for people to access information and engage in entertainment anytime and anywhere. This accessibility has democratized the dissemination of knowledge and enabled individuals from diverse backgrounds to participate in the global discourse.",
-      "Moreover, digital media serves as a powerful tool for communication and expression. Facebook, Twitter, and Instagram have revolutionized connecting and sharing information. These platforms have empowered individuals to amplify their voices, mobilize communities, and catalyze social change. From grassroots movements to viral trends, digital media has become the catalyst for shaping public opinion and driving conversations on important issues.",
-      "Furthermore, digital media has transformed the landscape of education and learning. With the proliferation of online courses, tutorials, and educational resources, individuals now have unprecedented access to knowledge and skills development. Additionally, digital media has revolutionized the classroom experience, enabling educators to leverage interactive multimedia content and collaborative tools to enhance student engagement and comprehension.",
-      "Digital media has ushered in an era of creativity and innovation in entertainment. Streaming platforms like Netflix, Hulu, and Spotify have disrupted traditional entertainment models, offering consumers a vast array of content tailored to their preferences. New-age technologies like Virtual Reality (VR) and Augmented Reality (AR) are pushing the boundaries of immersive storytelling, allowing audiences to experience narratives in unprecedented ways.",
-      "From a business standpoint, digital media has become indispensable for marketing and commerce. E-commerce platforms like Amazon and Alibaba have transformed how we shop. Today, digital marketing strategies like search engine optimization (SEO), social media advertising, and content marketing are necessary for businesses to reach their target audiences and drive sales. In order to remain competitive and relevant, organizations must adapt and leverage digital media in a digital-first world.",
-      "In conclusion, digital media is here to stay in this technological era, and its importance cannot be overstated. From communication and education to entertainment and commerce, digital media permeates every aspect of our lives, shaping how we interact, learn, and engage with the world.",
-    ],
-  },
-  {
-    id: "smm-seo-orm-synergy",
-    number: "(03)",
-    category: "SMM & ORM",
-    title: "Safeguarding Reputation & Amplifying Social Footprint",
-    description:
-      "How integrated SMM, SMO, and Online Reputation Management build untouchable brand authority.",
-    readTime: "5 MIN READ",
-    date: "JUL 2026",
-    image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1000&auto=format&fit=crop&fm=webp",
-    content: [
-      "A brand's reputation takes years to build and seconds to tarnish in the viral social landscape. Online Reputation Management (ORM) is not damage control; it is proactive sentiment architecture.",
-      "By harmonizing Social Media Optimization (SMO) with continuous sentiment monitoring, review curation, and proactive crisis protocols, we keep your brand's digital perception authoritative, credible, and pristine.",
-      "Paired with targeted Social Media Marketing (SMM) strategies, your audience evolves from passive observers into vocal brand advocates.",
-    ],
-  },
-  {
-    id: "targeted-advertising-meta-google",
-    number: "(04)",
-    category: "Paid Media",
-    title: "Precision Ads: Meta, Google, Instagram & YouTube",
-    description:
-      "High-return campaign architecture designed to capture high-intent buyers and scale customer acquisition.",
-    readTime: "7 MIN READ",
-    date: "JUL 2026",
-    content: [
-      "Throwing ad budget at generic audience buckets is a relic of the past. Modern algorithmic advertising requires precision segmentation, dynamic creative variations, and cross-channel remarketing.",
-      "We build synchronized ad funnels spanning Meta (Facebook & Instagram Ads), Google Search & Display, and YouTube Promotions. Every dollar is tracked against downstream revenue metrics.",
-      "Our campaigns do not just generate clicks — they capture qualified leads and drive direct sales with predictable, compounding ROI.",
-    ],
-  },
-  {
-    id: "lead-automation-nurturing",
-    number: "(05)",
-    category: "Lead Systems",
-    title: "Lead Automation & WhatsApp Community Architecture",
-    description:
-      "Transforming cold traffic into warm relationships through automated workflows and direct messaging.",
-    readTime: "6 MIN READ",
-    date: "JUN 2026",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop&fm=webp",
-    content: [
-      "Speed to lead is the single most critical factor in modern sales conversion. Leads contacted within 5 minutes are 21 times more likely to enter the sales pipeline.",
-      "With Bharat DigiGuru's advanced Lead Automation and WhatsApp Community management, new inquiries are instantly qualified, routed, and engaged with personalized value.",
-      "Coupled with targeted email nurturing sequences, our systems turn intermittent prospect interest into loyal, repeat customer relationships.",
-    ],
-  },
-  {
-    id: "conversion-web-development",
-    number: "(06)",
-    category: "Web Engineering",
-    title: "Visually Stunning, High-Conversion Web Architecture",
-    description:
-      "Creating modern digital storefronts that reflect your identity, captivate visitors, and convert traffic.",
-    readTime: "5 MIN READ",
-    date: "JUN 2026",
-    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop&fm=webp",
-    content: [
-      "Your website is the ultimate digital flagship of your business. If it loads slowly, confuses navigation, or lacks aesthetic distinction, visitors bounce within seconds.",
-      "Bharat DigiGuru designs and develops visually stunning, responsive, and ultra-fast websites engineered specifically to reflect your brand's unique identity while driving seamless conversions.",
-      "Backed by ongoing Website Maintenance Services, we ensure your digital presence remains secure, up-to-date, and performing at peak efficiency 24/7.",
-    ],
-  },
-];
-
 export const Blogs: React.FC = () => {
-  const [blogs, setBlogs] = useState<BlogItem[]>(BLOGS_DATA);
+  const [blogs, setBlogs] = useState<BlogItem[]>(() => {
+    const cached = getApiCache<BlogItem[]>("blogs_items");
+    return Array.isArray(cached) && cached.length > 0 ? cached : [];
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(() => blogs.length === 0);
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeBlog, setActiveBlog] = useState<BlogItem | null>(null);
 
+  // Load and refresh blogs purely from backend API + WebSocket synchronization
   useEffect(() => {
     let isMounted = true;
 
     const loadBlogs = async (forceRefresh = false) => {
       try {
+        if (blogs.length === 0) setIsLoading(true);
         const data = await userService.getBlogs(forceRefresh);
         if (!isMounted || !data) return;
         const items = Array.isArray(data) ? data : data.items || [];
-        if (Array.isArray(items) && items.length > 0) {
+        if (Array.isArray(items)) {
           setBlogs(items);
         }
       } catch (err) {
-        console.warn("Could not fetch blogs from API, using fallback data:", err);
+        console.warn("Could not fetch blogs from API:", err);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     };
 
@@ -168,6 +61,7 @@ export const Blogs: React.FC = () => {
 
     const unsubDeleted = onSocketEvent("blog:deleted", (deletedId: string) => {
       setBlogs((prev) => prev.filter((b) => b.id !== deletedId));
+      setActiveBlog((current) => (current && current.id === deletedId ? null : current));
       loadBlogs(true);
     });
 
@@ -179,6 +73,56 @@ export const Blogs: React.FC = () => {
     };
   }, []);
 
+  // Deep-linking: auto-open blog if URL matches /blogs/:id or hash
+  useEffect(() => {
+    const checkDeepLink = () => {
+      const path = window.location.pathname;
+      const match = path.match(/^\/blogs\/([^/]+)/);
+      const blogId = match ? decodeURIComponent(match[1]) : "";
+      if (blogId) {
+        const found = blogs.find(
+          (b) => String(b.id) === blogId || (b as any)._id === blogId
+        );
+        if (found) {
+          setActiveBlog(found);
+        }
+      }
+    };
+
+    checkDeepLink();
+    window.addEventListener("popstate", checkDeepLink);
+    return () => window.removeEventListener("popstate", checkDeepLink);
+  }, [blogs]);
+
+  // Keep activeBlog in sync if blogs array is updated while viewing
+  useEffect(() => {
+    if (activeBlog) {
+      const refreshed = blogs.find(
+        (b) => String(b.id) === String(activeBlog.id) || (b as any)._id === (activeBlog as any)._id
+      );
+      if (
+        refreshed &&
+        (refreshed.title !== activeBlog.title ||
+          refreshed.image !== activeBlog.image ||
+          refreshed.description !== activeBlog.description ||
+          refreshed.bullets?.length !== activeBlog.bullets?.length ||
+          refreshed.content?.length !== activeBlog.content?.length)
+      ) {
+        setActiveBlog(refreshed);
+      }
+    }
+  }, [blogs, activeBlog]);
+
+  // Keyboard accessibility: ESC closes modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && activeBlog) {
+        setActiveBlog(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeBlog]);
 
   // Dynamic GSAP Horizontal Scroll Engine that adapts seamlessly to any number of stories from Admin Panel
   useEffect(() => {
@@ -327,18 +271,42 @@ export const Blogs: React.FC = () => {
             className="flex gap-4 sm:gap-6 lg:gap-8 items-center will-change-transform pl-1 sm:pl-4 lg:pl-6 pr-6 lg:pr-32 select-none"
             style={{ width: "max-content" }}
           >
-            {blogs.map((blog) => (
-              <div key={blog.id} className="snap-start shrink-0">
-                <BlogCard
-                  blog={blog}
-                  onClick={(selected) => setActiveBlog(selected)}
-                />
+            {isLoading && blogs.length === 0 ? (
+              [1, 2, 3].map((n) => (
+                <div
+                  key={`skeleton-${n}`}
+                  className="w-[280px] sm:w-[340px] md:w-[380px] h-[480px] rounded-2xl bg-white/[0.03] border border-white/10 p-6 flex flex-col justify-between animate-pulse shrink-0"
+                >
+                  <div className="space-y-4">
+                    <div className="w-20 h-4 rounded bg-white/10" />
+                    <div className="w-full h-8 rounded bg-white/10" />
+                    <div className="w-3/4 h-8 rounded bg-white/10" />
+                  </div>
+                  <div className="w-full h-44 rounded-xl bg-white/5" />
+                  <div className="w-1/2 h-4 rounded bg-white/10" />
+                </div>
+              ))
+            ) : blogs.length === 0 ? (
+              <div className="py-16 px-8 text-neutral-400 font-['Space_Grotesk',sans-serif] text-sm tracking-wider uppercase border border-white/10 rounded-2xl bg-white/[0.02]">
+                No articles published yet. Publications from the Admin Dashboard will appear here.
               </div>
-            ))}
+            ) : (
+              blogs.map((blog) => (
+                <div key={blog.id} className="snap-start shrink-0">
+                  <BlogCard
+                    blog={blog}
+                    onClick={(selected) => setActiveBlog(selected)}
+                  />
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
 
+      {/* =========================================================================
+          DETAILED BLOG ARTICLE READER MODAL (Displays Full Editorial Breakdown)
+         ========================================================================= */}
       {activeBlog && (
         <div
           role="dialog"
@@ -369,15 +337,13 @@ export const Blogs: React.FC = () => {
               </button>
             </div>
 
-            {/* Article Cover Image (if available) */}
+            {/* Article Cover Image (Cached & Responsive) */}
             {activeBlog.image && (
               <div className="w-full aspect-[21/9] rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 shadow-xl">
-                <img
+                <CachedImage
                   src={activeBlog.image}
                   alt={activeBlog.title}
                   className="w-full h-full object-cover"
-                  loading="lazy"
-                  decoding="async"
                 />
               </div>
             )}
@@ -402,6 +368,16 @@ export const Blogs: React.FC = () => {
               </div>
             </div>
 
+            {/* Short Summary / Executive Overview (if available) */}
+            {activeBlog.description && (
+              <div className="p-3.5 sm:p-4 rounded-xl bg-neutral-900/80 border border-neutral-800/90 text-neutral-300 text-xs sm:text-sm font-['Space_Grotesk',sans-serif] leading-relaxed border-l-2 border-l-orange-500 shadow-sm">
+                <span className="block font-bold text-[10px] sm:text-[11px] uppercase tracking-wider text-orange-400 mb-1">
+                  Executive Summary:
+                </span>
+                <p className="italic text-neutral-300">{activeBlog.description}</p>
+              </div>
+            )}
+
             {/* Editorial Body Content */}
             <div className="flex flex-col gap-4 sm:gap-5 text-xs sm:text-sm md:text-base text-neutral-300 leading-relaxed font-['Space_Grotesk',sans-serif] pt-2 border-t border-neutral-800/80">
               {activeBlog.content?.map((paragraph, idx) => (
@@ -411,14 +387,14 @@ export const Blogs: React.FC = () => {
               ))}
             </div>
 
-            {/* Bullet Points Checklist (for full solution breakdown) */}
+            {/* Bullet Points Checklist (Key Strategic Highlights & Solutions) */}
             {activeBlog.bullets && activeBlog.bullets.length > 0 && (
               <div className="flex flex-col gap-3 pt-4 border-t border-neutral-800/80">
                 <h3 className="font-['Syne',sans-serif] text-xs sm:text-sm md:text-base font-bold uppercase tracking-wider text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#ff3b30]" />
-                  Explore Our Comprehensive Array of Solutions:
+                  Key Strategic Highlights & Solutions ({activeBlog.bullets.length}):
                 </h3>
-                <ul className="grid grid-cols-1 gap-2 sm:gap-2.5 pt-2">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 pt-2">
                   {activeBlog.bullets.map((bullet, i) => (
                     <li
                       key={i}

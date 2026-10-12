@@ -288,7 +288,7 @@ export const Footer: React.FC = () => {
             <ul className="flex flex-col gap-2.5 text-xs sm:text-sm text-neutral-400 font-normal">
               <li>
                 <a
-                  href="https://www.facebook.com/banarasichap"
+                  href="https://www.facebook.com/bharatdigiguru/"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-white transition-colors inline-flex items-center gap-1 group hover:translate-x-1 duration-200"
@@ -298,7 +298,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="https://www.linkedin.com/in/shubhsingh04/"
+                  href="https://www.linkedin.com/company/bharatdigiguru/"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-white transition-colors inline-flex items-center gap-1 group hover:translate-x-1 duration-200"
@@ -308,7 +308,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="https://www.instagram.com/banarasi_chap/"
+                  href="https://www.instagram.com/bharat.digiguru/"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-white transition-colors inline-flex items-center gap-1 group hover:translate-x-1 duration-200"
@@ -318,7 +318,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="https://twitter.com"
+                  href="https://x.com/Bharat_digiguru"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-white transition-colors inline-flex items-center gap-1 group hover:translate-x-1 duration-200"
@@ -328,7 +328,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="https://www.youtube.com/@banarasichap"
+                  href="https://www.youtube.com/@YourBharatDigiGuru"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-white transition-colors inline-flex items-center gap-1 group hover:translate-x-1 duration-200"

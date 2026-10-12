@@ -1,7 +1,4 @@
 import mongoose from "mongoose";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import { IDatabaseSchema, IPortfolioItem, IThreeDProject, IServiceItem, ITeamMember, IFounderProfile, IStoryItem, IBlogItem, IInquiry } from "../types/index.js";
 import {
   PortfolioModel,
@@ -14,13 +11,6 @@ import {
   InquiryModel,
   AdminUserModel,
 } from "../models/index.js";
-
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const DATA_DIR = path.join(__dirname, "../../data");
-const DB_FILE = path.join(DATA_DIR, "db.json");
 
 export interface PaginationParams {
   page?: number;
@@ -67,18 +57,11 @@ class DatabaseStore {
   private isMongoConnected: boolean = false;
 
   constructor() {
-    this.ensureDataDir();
     this.localData = this.loadLocalDatabase();
   }
 
-  private ensureDataDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  }
-
   private loadLocalDatabase(): IDatabaseSchema {
-    const defaultSchema: IDatabaseSchema = {
+    return {
       portfolio: [],
       threed: [],
       services: [],
@@ -97,35 +80,10 @@ class DatabaseStore {
       },
       adminUsers: [],
     };
-
-    try {
-      if (fs.existsSync(DB_FILE)) {
-        const fileContent = fs.readFileSync(DB_FILE, "utf-8");
-        const parsed = JSON.parse(fileContent);
-        if (parsed && typeof parsed === "object") {
-          return {
-            ...defaultSchema,
-            ...parsed,
-          };
-        }
-      }
-    } catch (err) {
-      console.warn("⚠️ Failed to parse db.json:", err);
-    }
-
-    this.persistLocal(defaultSchema);
-    return defaultSchema;
   }
 
-  private persistLocal(dataToSave: IDatabaseSchema) {
-    try {
-      this.ensureDataDir();
-      const tmpFile = `${DB_FILE}.tmp`;
-      fs.writeFileSync(tmpFile, JSON.stringify(dataToSave, null, 2), "utf-8");
-      fs.renameSync(tmpFile, DB_FILE);
-    } catch (err) {
-      console.error("❌ Failed to persist local db.json:", err);
-    }
+  private persistLocal(_dataToSave: IDatabaseSchema) {
+    // In-memory only; all persistent records are stored in MongoDB Atlas
   }
 
   // ==========================================
@@ -1399,13 +1357,15 @@ class DatabaseStore {
     return [...this.localData.blogs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }
 
-  public async getBlogById(id: string): Promise<IBlogItem | null> {
+  public async getBlogById(id: string | number): Promise<IBlogItem | null> {
     if (this.isMongoConnected) {
-      const doc = await BlogModel.findOne({ id });
+      const doc = await BlogModel.findOne(this.buildIdQuery(id));
       return doc ? (doc.toJSON() as unknown as IBlogItem) : null;
     }
     if (!this.localData.blogs) this.localData.blogs = [];
-    const item = this.localData.blogs.find((b) => String(b.id) === String(id));
+    const item = this.localData.blogs.find(
+      (b) => String(b.id) === String(id) || (b as any)._id === String(id)
+    );
     return item ? { ...item } : null;
   }
 
@@ -1439,10 +1399,10 @@ class DatabaseStore {
     return newBlog;
   }
 
-  public async updateBlog(id: string, data: Partial<IBlogItem>): Promise<IBlogItem | null> {
+  public async updateBlog(id: string | number, data: Partial<IBlogItem>): Promise<IBlogItem | null> {
     if (this.isMongoConnected) {
       const doc = await BlogModel.findOneAndUpdate(
-        { id },
+        this.buildIdQuery(id),
         { ...data, updatedAt: new Date() },
         { new: true }
       );
@@ -1450,7 +1410,9 @@ class DatabaseStore {
     }
 
     if (!this.localData.blogs) this.localData.blogs = [];
-    const idx = this.localData.blogs.findIndex((b) => String(b.id) === String(id));
+    const idx = this.localData.blogs.findIndex(
+      (b) => String(b.id) === String(id) || (b as any)._id === String(id)
+    );
     if (idx === -1) return null;
 
     this.localData.blogs[idx] = {
@@ -1462,15 +1424,17 @@ class DatabaseStore {
     return this.localData.blogs[idx];
   }
 
-  public async deleteBlog(id: string): Promise<boolean> {
+  public async deleteBlog(id: string | number): Promise<boolean> {
     if (this.isMongoConnected) {
-      const res = await BlogModel.deleteOne({ id });
+      const res = await BlogModel.deleteOne(this.buildIdQuery(id));
       return res.deletedCount > 0;
     }
 
     if (!this.localData.blogs) return false;
     const initialLen = this.localData.blogs.length;
-    this.localData.blogs = this.localData.blogs.filter((b) => String(b.id) !== String(id));
+    this.localData.blogs = this.localData.blogs.filter(
+      (b) => String(b.id) !== String(id) && (b as any)._id !== String(id)
+    );
     if (this.localData.blogs.length !== initialLen) {
       this.persistLocal(this.localData);
       return true;
