@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { X, Clock, Calendar, CheckCircle2 } from "lucide-react";
+import { X, Clock, Calendar, CheckCircle2, Sparkles, Bookmark } from "lucide-react";
 import BlogCard from "../components/BlogCard";
 import type { BlogItem } from "../components/BlogCard";
 import CachedImage from "../components/CachedImage";
@@ -124,6 +125,32 @@ export const Blogs: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeBlog]);
 
+  // Lock background scroll, halt Lenis smooth scrolling, and broadcast modal-state to hide TopHeader
+  useEffect(() => {
+    if (activeBlog) {
+      document.body.classList.add("modal-open");
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+      (window as any).lenis?.stop();
+      window.dispatchEvent(new CustomEvent("app:modal-state", { detail: { isOpen: true } }));
+    } else {
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      (window as any).lenis?.start();
+      window.dispatchEvent(new CustomEvent("app:modal-state", { detail: { isOpen: false } }));
+    }
+
+    return () => {
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+      (window as any).lenis?.start();
+      window.dispatchEvent(new CustomEvent("app:modal-state", { detail: { isOpen: false } }));
+    };
+  }, [activeBlog]);
+
+  
   // Dynamic GSAP Horizontal Scroll Engine that adapts seamlessly to any number of stories from Admin Panel
   useEffect(() => {
     const track = trackRef.current;
@@ -307,123 +334,195 @@ export const Blogs: React.FC = () => {
       {/* =========================================================================
           DETAILED BLOG ARTICLE READER MODAL (Displays Full Editorial Breakdown)
          ========================================================================= */}
-      {activeBlog && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 md:p-10 bg-black/90 backdrop-blur-2xl"
-          onClick={() => setActiveBlog(null)}
-        >
+      {activeBlog && (() => {
+        const contentParagraphs: string[] = Array.isArray(activeBlog.content)
+          ? activeBlog.content.map((p) => String(p || "").trim()).filter(Boolean)
+          : typeof activeBlog.content === "string"
+          ? (activeBlog.content as string).split(/\n\s*\n|\n/).map((p) => p.trim()).filter(Boolean)
+          : [];
+
+        const bulletItems: string[] = Array.isArray(activeBlog.bullets)
+          ? activeBlog.bullets.map((b) => String(b || "").trim().replace(/^[•\-\*]\s*/, "")).filter(Boolean)
+          : typeof activeBlog.bullets === "string"
+          ? (activeBlog.bullets as string).split(/\n|,/).map((b) => b.trim().replace(/^[•\-\*]\s*/, "")).filter(Boolean)
+          : [];
+
+        const modalNode = (
           <div
-            onClick={(e) => e.stopPropagation()}
-            data-lenis-prevent="true"
-            className="relative w-full max-w-4xl max-h-[88vh] overflow-y-auto rounded-2xl bg-[#0d0d0d] border border-neutral-800 p-5 sm:p-8 md:p-10 shadow-2xl flex flex-col gap-5 sm:gap-6 text-neutral-200 animate-in fade-in zoom-in-95 duration-300"
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-[999999] flex items-center justify-center p-2.5 sm:p-5 md:p-8 bg-black/95 backdrop-blur-2xl overflow-y-auto overscroll-contain animate-in fade-in duration-200 select-text"
+            onClick={() => setActiveBlog(null)}
           >
-            {/* Modal Top Navigation */}
-            <div className="flex items-center justify-between border-b border-neutral-800 pb-4 sticky top-0 bg-[#0d0d0d]/95 backdrop-blur-md z-20">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#ff3b30] shadow-[0_0_8px_#ff3b30]" />
-                <span className="px-3 py-1 rounded-full text-xs font-['Space_Grotesk',sans-serif] uppercase tracking-wider bg-neutral-900 border border-neutral-800 text-neutral-300">
-                  {activeBlog.category}
-                </span>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              data-lenis-prevent="true"
+              className="relative w-full max-w-4xl my-auto max-h-[92vh] sm:max-h-[88vh] rounded-2xl sm:rounded-3xl bg-[#0c0d12] border border-white/10 shadow-[0_25px_80px_rgba(0,0,0,0.95),0_0_50px_rgba(255,59,48,0.12)] flex flex-col text-neutral-200 overflow-hidden animate-in zoom-in-95 duration-200"
+            >
+              {/* Sticky Top Navigation Bar */}
+              <div className="sticky top-0 z-30 px-4 sm:px-8 py-3 sm:py-4 bg-[#0c0d12]/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#ff3b30] shadow-[0_0_10px_#ff3b30] shrink-0 animate-pulse" />
+                  <span className="px-3 py-1 rounded-full text-[10px] sm:text-xs font-mono uppercase tracking-wider bg-white/5 border border-white/10 text-neutral-300 shrink-0">
+                    {activeBlog.category}
+                  </span>
+                  <span className="hidden md:inline font-['Cormorant_Garamond',serif] italic text-xs text-neutral-400 truncate">
+                    {activeBlog.number} · Bharat DigiGuru Editorial
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setActiveBlog(null)}
+                    aria-label="Close article modal"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-white/10 hover:border-white/25 bg-white/5 hover:bg-white/15 flex items-center justify-center text-neutral-400 hover:text-white transition-all cursor-pointer active:scale-95"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveBlog(null)}
-                aria-label="Close article modal"
-                className="w-8 h-8 rounded-full border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            {/* Article Cover Image (Cached & Responsive) */}
-            {activeBlog.image && (
-              <div className="w-full aspect-[21/9] rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 shadow-xl">
-                <CachedImage
-                  src={activeBlog.image}
-                  alt={activeBlog.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
+              {/* Scrollable Article Body */}
+              <div className="overflow-y-auto px-4 sm:px-8 md:px-10 py-5 sm:py-8 flex flex-col gap-6 sm:gap-8 text-neutral-200">
+                {/* Cover Media Banner */}
+                {activeBlog.image ? (
+                  <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] rounded-2xl overflow-hidden bg-black/60 border border-white/10 shadow-2xl group shrink-0">
+                    <CachedImage
+                      src={activeBlog.image}
+                      alt={activeBlog.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c0d12] via-transparent to-transparent pointer-events-none opacity-85" />
+                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-10 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] sm:text-xs font-mono text-neutral-300 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]" />
+                      <span>Editorial Visual Asset</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative w-full h-28 sm:h-36 rounded-2xl overflow-hidden bg-gradient-to-r from-orange-600/15 via-red-600/10 to-[#12141c] border border-white/10 p-5 sm:p-6 flex flex-col justify-end shrink-0">
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl pointer-events-none" />
+                    <span className="font-['Cormorant_Garamond',serif] italic text-xs text-orange-400/90 uppercase tracking-widest">
+                      Official Thought Leadership
+                    </span>
+                    <p className="font-['Syne',sans-serif] font-bold text-base sm:text-lg text-white/95">
+                      {activeBlog.category} Strategy Publication
+                    </p>
+                  </div>
+                )}
 
-            {/* Title & Metadata */}
-            <div className="flex flex-col gap-2.5 sm:gap-3">
-              <span className="font-['Cormorant_Garamond',serif] italic text-xs sm:text-sm text-neutral-400">
-                {activeBlog.number} · Bharat DigiGuru Official Editorial
-              </span>
-              <h2 className="font-['Syne',sans-serif] font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl uppercase tracking-tight text-white leading-tight">
-                {activeBlog.title}
-              </h2>
-              <div className="flex items-center gap-4 text-[11px] sm:text-xs font-['Space_Grotesk',sans-serif] uppercase tracking-wider text-neutral-400 pt-1">
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {activeBlog.date}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  {activeBlog.readTime}
-                </span>
-              </div>
-            </div>
+                {/* Title & Editorial Metadata */}
+                <div className="flex flex-col gap-2.5 sm:gap-3.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-['Cormorant_Garamond',serif] italic text-xs sm:text-sm text-neutral-400 tracking-wider">
+                      {activeBlog.number} · Bharat DigiGuru Official Publication
+                    </span>
+                  </div>
+                  <h1 className="font-['Syne',sans-serif] font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl uppercase tracking-tight text-white leading-tight sm:leading-snug">
+                    {activeBlog.title}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-[11px] sm:text-xs font-mono uppercase tracking-wider text-neutral-400 pt-1">
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/5">
+                      <Calendar className="w-3.5 h-3.5 text-orange-400" />
+                      {activeBlog.date}
+                    </span>
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/5">
+                      <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                      {activeBlog.readTime}
+                    </span>
+                    {bulletItems.length > 0 && (
+                      <span className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/5 text-amber-300">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        {bulletItems.length} Key Insights
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-            {/* Short Summary / Executive Overview (if available) */}
-            {activeBlog.description && (
-              <div className="p-3.5 sm:p-4 rounded-xl bg-neutral-900/80 border border-neutral-800/90 text-neutral-300 text-xs sm:text-sm font-['Space_Grotesk',sans-serif] leading-relaxed border-l-2 border-l-orange-500 shadow-sm">
-                <span className="block font-bold text-[10px] sm:text-[11px] uppercase tracking-wider text-orange-400 mb-1">
-                  Executive Summary:
-                </span>
-                <p className="italic text-neutral-300">{activeBlog.description}</p>
-              </div>
-            )}
+                {/* Executive Overview Summary */}
+                {activeBlog.description && (
+                  <div className="relative p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-red-500/5 to-transparent border border-orange-500/30 text-neutral-200 shadow-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-2 h-2 rounded-full bg-orange-400 shadow-[0_0_8px_#fb923c]" />
+                      <span className="font-mono font-bold text-[10px] sm:text-[11px] uppercase tracking-wider text-orange-400">
+                        Executive Summary & Overview
+                      </span>
+                    </div>
+                    <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm md:text-base leading-relaxed text-neutral-200">
+                      {activeBlog.description}
+                    </p>
+                  </div>
+                )}
 
-            {/* Editorial Body Content */}
-            <div className="flex flex-col gap-4 sm:gap-5 text-xs sm:text-sm md:text-base text-neutral-300 leading-relaxed font-['Space_Grotesk',sans-serif] pt-2 border-t border-neutral-800/80">
-              {activeBlog.content?.map((paragraph, idx) => (
-                <p key={idx} className="leading-relaxed sm:leading-loose">
-                  {paragraph}
-                </p>
-              ))}
-            </div>
+                {/* Detailed Editorial Article Breakdown Content */}
+                <div className="flex flex-col gap-4 sm:gap-5 pt-3 border-t border-white/10">
+                  <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-neutral-400">
+                    <Bookmark className="w-3.5 h-3.5 text-red-400" />
+                    <span>Editorial Breakdown & Insights</span>
+                  </div>
+                  <div className="flex flex-col gap-4 text-xs sm:text-sm md:text-[15px] text-neutral-300 font-['Space_Grotesk',sans-serif] leading-relaxed sm:leading-loose">
+                    {contentParagraphs.length > 0 ? (
+                      contentParagraphs.map((paragraph, idx) => (
+                        <p key={idx} className="leading-relaxed sm:leading-loose">
+                          {paragraph}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="italic text-neutral-400">
+                        {activeBlog.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-            {/* Bullet Points Checklist (Key Strategic Highlights & Solutions) */}
-            {activeBlog.bullets && activeBlog.bullets.length > 0 && (
-              <div className="flex flex-col gap-3 pt-4 border-t border-neutral-800/80">
-                <h3 className="font-['Syne',sans-serif] text-xs sm:text-sm md:text-base font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#ff3b30]" />
-                  Key Strategic Highlights & Solutions ({activeBlog.bullets.length}):
-                </h3>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 pt-2">
-                  {activeBlog.bullets.map((bullet, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2.5 sm:gap-3 text-xs sm:text-sm text-neutral-300 bg-neutral-900/60 p-2.5 sm:p-3 rounded-lg border border-neutral-800/80 font-['Space_Grotesk',sans-serif]"
+                {/* Key Strategic Highlights & Solutions Checklist */}
+                {bulletItems.length > 0 && (
+                  <div className="flex flex-col gap-3.5 pt-6 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-['Syne',sans-serif] text-sm sm:text-base font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#ff3b30] shadow-[0_0_8px_#ff3b30]" />
+                        Key Strategic Highlights & Deliverables ({bulletItems.length}):
+                      </h3>
+                    </div>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1">
+                      {bulletItems.map((bullet, i) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-3 text-xs sm:text-sm text-neutral-200 bg-[#141620]/80 p-3 sm:p-3.5 rounded-xl border border-white/10 hover:border-orange-500/40 transition-colors font-['Space_Grotesk',sans-serif] shadow-sm"
+                        >
+                          <CheckCircle2 className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                          <span className="leading-relaxed">{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Modal Footer CTA */}
+                <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 text-[11px] sm:text-xs text-neutral-400 font-mono uppercase tracking-wider text-center sm:text-left">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>Published by Bharat DigiGuru Digital Media</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => setActiveBlog(null)}
+                      className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-white text-black text-xs font-mono font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors cursor-pointer shadow-lg active:scale-95"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
+                      Close Article
+                    </button>
+                  </div>
+                </div>
               </div>
-            )}
-
-            {/* Modal Footer CTA */}
-            <div className="pt-4 sm:pt-6 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-              <span className="text-[11px] sm:text-xs text-neutral-400 font-['Space_Grotesk',sans-serif] uppercase tracking-wider text-center sm:text-left">
-                Published by Bharat DigiGuru Digital Media Company
-              </span>
-              <button
-                type="button"
-                onClick={() => setActiveBlog(null)}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-white text-black text-xs font-['Space_Grotesk',sans-serif] font-semibold uppercase tracking-wider hover:bg-neutral-200 transition-colors cursor-pointer"
-              >
-                Close Article
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        );
+
+        return typeof document !== "undefined"
+          ? createPortal(modalNode, document.body)
+          : modalNode;
+      })()}
     </section>
   );
 };
