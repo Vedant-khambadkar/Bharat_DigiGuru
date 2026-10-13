@@ -3,6 +3,8 @@ import gsap from "gsap";
 import vignetteBg from "../../assets/Minimalist Black and White Vignette  mobile.webp";
 import { userService } from "../../services/service/userService";
 import { onSocketEvent } from "../../utils/socket";
+import CachedImage from "../CachedImage";
+import { preloadMediaList } from "../../utils/mediaCache";
 
 interface MobileHeroShowcaseProps {
   onReady?: () => void;
@@ -53,6 +55,9 @@ export const MobileHeroShowcase: React.FC<MobileHeroShowcaseProps> = ({ onReady 
           if (mappedTabs.length > 0 && !mappedTabs.some((t) => t.id === activeTabId)) {
             setActiveTabId(mappedTabs[0].id);
           }
+          // Preload tab images so switching tabs on mobile is instant and zero-delay
+          const imageUrls = mappedTabs.map((t) => t.image).filter(Boolean);
+          preloadMediaList(imageUrls, { priority: "high", concurrency: 4 });
         }
       } catch (err) {
         console.warn("[MobileHeroShowcase] Could not fetch live services:", err);
@@ -138,7 +143,7 @@ export const MobileHeroShowcase: React.FC<MobileHeroShowcaseProps> = ({ onReady 
           {tabs.map((tab) => {
             const isSelected = tab.id === activeTabId;
             return (
-              <img
+              <CachedImage
                 key={tab.id}
                 src={tab.image}
                 alt={`${tab.label} Signature Showcase`}

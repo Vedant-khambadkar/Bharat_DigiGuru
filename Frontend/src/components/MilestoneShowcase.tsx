@@ -18,6 +18,8 @@ import DigitalMedia1 from "../assets/DigitalMedia/DigitalMedia-1.webp";
 import DigitalMedia2 from "../assets/DigitalMedia/DigitalMedia-2.webp";
 import DigitalMedia3 from "../assets/DigitalMedia/DigitalMedia-3.webp";
 import DigitalMedia4 from "../assets/DigitalMedia/DigitalMedia-4.webp";
+import CachedImage from "./CachedImage";
+import { preloadMediaList } from "../utils/mediaCache";
 
 export interface MilestoneKPI {
   label: string;
@@ -149,6 +151,12 @@ export const MilestoneShowcase: React.FC = () => {
   const touchEndX = useRef<number | null>(null);
 
   const activeMilestone = MILESTONES[activeIndex];
+
+  // Pre-warm all milestone images so tab changes and modal reveals are instant
+  useEffect(() => {
+    const urls = MILESTONES.map((m) => m.image).filter(Boolean);
+    preloadMediaList(urls, { priority: "high", concurrency: 4 });
+  }, []);
 
   // Pause Lenis & lock body scroll while modal is open
   useEffect(() => {
@@ -569,7 +577,7 @@ export const MilestoneShowcase: React.FC = () => {
                 onClick={() => setSelectedMilestone(activeMilestone)}
                 className="relative w-full overflow-hidden select-none cursor-pointer bg-neutral-950 flex items-center justify-center"
               >
-                <img
+                <CachedImage
                   src={activeMilestone.image}
                   alt={activeMilestone.title}
                   loading={activeIndex === 0 ? "eager" : "lazy"}
@@ -692,7 +700,7 @@ export const MilestoneShowcase: React.FC = () => {
                 <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
 
-              <img
+              <CachedImage
                 src={selectedMilestone.image}
                 alt={selectedMilestone.title}
                 decoding="async"

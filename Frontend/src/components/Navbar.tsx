@@ -78,37 +78,43 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
     const observer = new MutationObserver(checkModal);
     observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
+    let ticking = false;
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const diff = currentScrollY - lastScrollY.current;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        const currentScrollY = window.scrollY;
+        const diff = currentScrollY - lastScrollY.current;
 
-      setIsScrolled(currentScrollY > 40);
+        setIsScrolled(currentScrollY > 40);
 
-      // Auto-hide dock when scrolling down so it never blocks content, reveal on scroll up
-      if (currentScrollY <= 80) {
-        setIsNavVisible(true);
-      } else if (diff > 8) {
-        setIsNavVisible(false);
-      } else if (diff < -8) {
-        setIsNavVisible(true);
-      }
+        // Auto-hide dock when scrolling down so it never blocks content, reveal on scroll up
+        if (currentScrollY <= 80) {
+          setIsNavVisible(true);
+        } else if (diff > 8) {
+          setIsNavVisible(false);
+        } else if (diff < -8) {
+          setIsNavVisible(true);
+        }
 
-      lastScrollY.current = currentScrollY;
+        lastScrollY.current = currentScrollY;
 
-      // Section detection
-      const scrollPos = currentScrollY + window.innerHeight * 0.4;
-      for (let i = navItems.length - 1; i >= 0; i--) {
-        const item = navItems[i];
-        const targetEl = document.querySelector(item.href);
-        if (targetEl) {
-          const rect = targetEl.getBoundingClientRect();
-          const top = rect.top + window.scrollY;
-          if (scrollPos >= top) {
-            setActiveTab(item.id);
-            break;
+        // Section detection with lightweight threshold
+        const scrollPos = currentScrollY + window.innerHeight * 0.4;
+        for (let i = navItems.length - 1; i >= 0; i--) {
+          const item = navItems[i];
+          const targetEl = document.querySelector(item.href);
+          if (targetEl) {
+            const rect = targetEl.getBoundingClientRect();
+            const top = rect.top + window.scrollY;
+            if (scrollPos >= top) {
+              setActiveTab((prev) => (prev === item.id ? prev : item.id));
+              break;
+            }
           }
         }
-      }
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });

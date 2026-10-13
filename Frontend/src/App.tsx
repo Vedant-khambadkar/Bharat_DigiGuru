@@ -202,7 +202,11 @@ const MainLandingPage = () => {
       const handleResize = () => {
         ScrollTrigger.refresh();
       };
+      const handleScroll = () => {
+        ScrollTrigger.update();
+      };
       window.addEventListener("resize", handleResize, { passive: true });
+      window.addEventListener("scroll", handleScroll, { passive: true });
 
       const handleAnchorClick = (e: MouseEvent) => {
         const target = (e.target as HTMLElement)?.closest("a[href^='#']");
@@ -220,6 +224,7 @@ const MainLandingPage = () => {
 
       return () => {
         window.removeEventListener("resize", handleResize);
+        window.removeEventListener("scroll", handleScroll);
         document.removeEventListener("click", handleAnchorClick);
         delete (window as any).lenis;
       };

@@ -154,6 +154,26 @@ img {
   contain: paint layout;
 }
 
+/* Mobile Animation Performance & GPU Compositing Optimization */
+@media (max-width: 767px) {
+  /* Promote animated elements to dedicated GPU layers to avoid repaint lag */
+  .floating-3d-node,
+  .floating-app-node,
+  .studio-hero-card,
+  [data-animate-gpu] {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* Reduce costly backdrop filters on mobile for silky smooth 60fps scrolling */
+  .backdrop-blur-3xl,
+  .backdrop-blur-2xl {
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+  }
+}
+
 /* Modal Active State: Force all sticky headers, navbars and docks to z-index -1000 */
 body.modal-open header,
 body.modal-open nav,

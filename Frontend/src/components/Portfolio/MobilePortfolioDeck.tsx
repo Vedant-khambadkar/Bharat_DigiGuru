@@ -1,6 +1,8 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { PlaneItem } from "../SkinnedPlane";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import CachedImage from "../CachedImage";
+import { preloadMediaList } from "../../utils/mediaCache";
 
 interface MobilePortfolioDeckProps {
   planes: PlaneItem[];
@@ -21,6 +23,14 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollTicking = useRef(false);
+
+  // Preload portfolio plane images so mobile carousel swiping is seamless and zero-lag
+  useEffect(() => {
+    if (planes && planes.length > 0) {
+      const urls = planes.map((p) => p.textureUrl).filter(Boolean) as string[];
+      preloadMediaList(urls, { priority: "low", concurrency: 4 });
+    }
+  }, [planes]);
 
   const handleCardScroll = () => {
     if (scrollTicking.current) return;
@@ -58,7 +68,7 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
 
       {/* TOP HEADER */}
       <div className="w-full max-w-lg mx-auto flex items-center justify-between">
-        <h2 className="font-['DM_Sans'] text-2xl sm:text-3xl font-bold text-white tracking-wider uppercase">
+        <h2 className="font-['DM_Sans'] text-4xl sm:text-5xl md:text-6xl font-bold leading-[0.88] tracking-wider text-white m-0 uppercase">
           PORTFOLIO
         </h2>
       </div>
@@ -96,7 +106,7 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
               } bg-[#0e0e12] shadow-xl relative will-change-transform`}
             >
               {plane.textureUrl ? (
-                <img
+                <CachedImage
                   src={plane.textureUrl}
                   alt=""
                   loading={idx === 0 ? "eager" : "lazy"}
@@ -164,7 +174,7 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
-          <img
+          <CachedImage
             src={lightboxImage}
             alt=""
             className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl"

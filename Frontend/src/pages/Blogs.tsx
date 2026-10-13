@@ -10,6 +10,7 @@ import LensText from "../components/LensText";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 import { getApiCache } from "../utils/apiCache";
+import { preloadMediaList } from "../utils/mediaCache";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -36,6 +37,8 @@ export const Blogs: React.FC = () => {
         const items = Array.isArray(data) ? data : data.items || [];
         if (Array.isArray(items)) {
           setBlogs(items);
+          const imageUrls = items.map((b: any) => b.image).filter(Boolean);
+          preloadMediaList(imageUrls, { priority: "low", concurrency: 4 });
         }
       } catch (err) {
         console.warn("Could not fetch blogs from API:", err);

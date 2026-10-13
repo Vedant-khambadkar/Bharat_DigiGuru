@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getCachedMediaUrl } from "../utils/mediaCache";
 
 interface CachedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -6,10 +6,15 @@ interface CachedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallbackSrc?: string;
 }
 
+// Global in-memory record of successfully loaded image URLs
+// Once an image is loaded, it remains immediately loaded across tab switches and re-renders
+const globalLoadedSrcs = new Set<string>();
+
 /**
  * Enhanced CachedImage component
- * Loads the image from the browser's persistent CacheStorage API / Blob cache.
- * Uses native async decoding and lazy loading for buttery smooth 60fps scrolling.
+ * Loads the image from memory cache, browser CacheStorage, or network.
+ * Avoids opacity flicker, remembers loaded state across re-renders,
+ * and maintains 60fps scrolling on mobile devices.
  */
 export const CachedImage: React.FC<CachedImageProps> = ({
   src,
@@ -20,33 +25,46 @@ export const CachedImage: React.FC<CachedImageProps> = ({
   decoding = "async",
   ...props
 }) => {
-  const [resolvedSrc, setResolvedSrc] = useState<string>(src || "");
-  const [isLoaded, setIsLoaded] = useState(false);
+  const cleanSrc = src?.trim() || "";
+  const [resolvedSrc, setResolvedSrc] = useState<string>(cleanSrc);
+  const [isLoaded, setIsLoaded] = useState<boolean>(() => globalLoadedSrcs.has(cleanSrc));
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    if (!src) {
+    mountedRef.current = true;
+    if (!cleanSrc) {
       setResolvedSrc("");
       setIsLoaded(false);
       return;
     }
 
+    if (globalLoadedSrcs.has(cleanSrc)) {
+      setResolvedSrc(cleanSrc);
+      setIsLoaded(true);
+      return;
+    }
+
     let isMounted = true;
-    getCachedMediaUrl(src)
+    getCachedMediaUrl(cleanSrc)
       .then((cached) => {
-        if (isMounted) {
-          setResolvedSrc(cached || src);
+        if (isMounted && cached) {
+          setResolvedSrc(cached);
+          if (globalLoadedSrcs.has(cached)) {
+            setIsLoaded(true);
+          }
         }
       })
       .catch(() => {
         if (isMounted) {
-          setResolvedSrc(src);
+          setResolvedSrc(cleanSrc);
         }
       });
 
     return () => {
       isMounted = false;
+      mountedRef.current = false;
     };
-  }, [src]);
+  }, [cleanSrc]);
 
   return (
     <img
@@ -56,7 +74,15 @@ export const CachedImage: React.FC<CachedImageProps> = ({
       decoding={decoding}
       className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-90"} ${className}`}
       onLoad={(e) => {
-        setIsLoaded(true);
+        if (resolvedSrc) {
+          globalLoadedSrcs.add(resolvedSrc);
+        }
+        if (cleanSrc) {
+          globalLoadedSrcs.add(cleanSrc);
+        }
+        if (mountedRef.current) {
+          setIsLoaded(true);
+        }
         if (props.onLoad) props.onLoad(e);
       }}
       onError={(e) => {

@@ -4,6 +4,7 @@ import founderPhoto from "../../assets/Picture/Picture12.webp";
 import mobileVignette from "../../assets/Minimalist Black and White Vignette  mobile.webp";
 import { userService } from "../../services/service/userService";
 import { onSocketEvent } from "../../utils/socket";
+import CachedImage from "../CachedImage";
 
 interface MobileTeamShowcaseProps {
   onOpenProfile: () => void;
@@ -91,7 +92,7 @@ export const MobileTeamShowcase: React.FC<MobileTeamShowcaseProps> = ({
 
           {/* Portrait Container */}
           <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-900">
-            <img
+            <CachedImage
               src={founderImg}
               alt={`${founderName} — ${founderRole}`}
               loading="eager"
