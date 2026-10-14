@@ -152,10 +152,10 @@ export const MilestoneShowcase: React.FC = () => {
 
   const activeMilestone = MILESTONES[activeIndex];
 
-  // Pre-warm all milestone images so tab changes and modal reveals are instant
+  // Pre-warm milestone images during idle time so it doesn't contend with hero startup
   useEffect(() => {
     const urls = MILESTONES.map((m) => m.image).filter(Boolean);
-    preloadMediaList(urls, { priority: "high", concurrency: 4 });
+    preloadMediaList(urls, { priority: "idle", concurrency: 2 });
   }, []);
 
   // Pause Lenis & lock body scroll while modal is open
@@ -617,7 +617,7 @@ export const MilestoneShowcase: React.FC = () => {
       {selectedMilestone && (
         <div
           onClick={() => setSelectedMilestone(null)}
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/90 backdrop-blur-md animate-fade-in font-['DM_Sans']"
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/95 sm:bg-black/90 sm:backdrop-blur-md animate-fade-in font-['DM_Sans']"
         >
           <div
             onClick={(e) => e.stopPropagation()}

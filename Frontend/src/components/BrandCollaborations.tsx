@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Sparkles } from "lucide-react";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
@@ -74,6 +74,25 @@ export const BrandCollaborations: React.FC<BrandCollaborationsProps> = ({ classN
     return Math.max(25, totalCount * 3.5);
   }, [displaySets]);
 
+  const [isVisible, setIsVisible] = useState<boolean>(true);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Pause continuous CSS marquee when offscreen to conserve GPU resources
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { rootMargin: "100px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   // Gracefully handle empty or error state without crashing the website
   if (!isLoading && (hasError || brands.length === 0)) {
     return null;
@@ -81,16 +100,17 @@ export const BrandCollaborations: React.FC<BrandCollaborationsProps> = ({ classN
 
   return (
     <section
+      ref={sectionRef}
       id="brand-collaborations"
       aria-label="Brand Collaborations"
-      className={`relative w-full py-16 sm:py-20  text-white overflow-hidden select-none ${className}`}
+      className={`relative w-full py-16 sm:py-20 text-white overflow-hidden select-none ${className}`}
     >
       {/* Background Ambience Gradient */}
-      <div className="absolute inset-0 pointer-events-none " />
+      <div className="absolute inset-0 pointer-events-none" />
 
       {/* Header Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-10 sm:mb-14 relative z-10">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-neutral-300 font-mono text-[11px] sm:text-xs uppercase tracking-widest mb-3 backdrop-blur-md">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-neutral-300 font-mono text-[11px] sm:text-xs uppercase tracking-widest mb-3">
           <Sparkles size={13} className="text-red-500 animate-pulse" />
           <span>Strategic Partnerships</span>
         </div>
@@ -105,7 +125,10 @@ export const BrandCollaborations: React.FC<BrandCollaborationsProps> = ({ classN
       </div>
 
       {/* Marquee Track Container with Gradient Edge Fades */}
-      <div className="relative w-full overflow-hidden brand-slider-container group">
+      <div
+        className="relative w-full overflow-hidden brand-slider-container group"
+        style={{ touchAction: "pan-y" }}
+      >
         {/* Left Edge Luxury Gradient Fade Mask */}
         <div className="pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-32 md:w-48 bg-gradient-to-r from-[#050505] via-[#050505]/80 to-transparent z-10" />
 
@@ -118,6 +141,7 @@ export const BrandCollaborations: React.FC<BrandCollaborationsProps> = ({ classN
           style={
             {
               "--brand-slider-duration": `${animationDurationSeconds}s`,
+              animationPlayState: isVisible ? "running" : "paused",
             } as React.CSSProperties
           }
         >
@@ -130,7 +154,7 @@ export const BrandCollaborations: React.FC<BrandCollaborationsProps> = ({ classN
               {set.map((brand, brandIndex) => (
                 <div
                   key={`brand-${setIndex}-${brand.id}-${brandIndex}`}
-                  className="flex items-center justify-center h-20 sm:h-24 px-6 sm:px-8 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-white/20 transition-all duration-300 backdrop-blur-sm group/card shrink-0 hover:shadow-[0_0_25px_rgba(255,255,255,0.08)]"
+                  className="flex items-center justify-center h-20 sm:h-24 px-6 sm:px-8 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-white/20 transition-all duration-300 group/card shrink-0"
                 >
                   <img
                     src={brand.logoUrl}

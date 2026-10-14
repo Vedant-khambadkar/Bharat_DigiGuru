@@ -9,8 +9,24 @@ const inFlightPreloads = new Set<string>();
 const preloadedUrls = new Set<string>();
 
 // Centralized Three.js texture cache and in-flight promise tracker
+const MAX_TEXTURE_CACHE_SIZE = typeof window !== "undefined" && window.innerWidth < 768 ? 14 : 32;
 const textureCache = new Map<string, THREE.Texture>();
 const inFlightTexturePromises = new Map<string, Promise<THREE.Texture | null>>();
+
+function setCachedTexture(key: string, tex: THREE.Texture): void {
+  if (textureCache.has(key)) {
+    textureCache.delete(key);
+  } else if (textureCache.size >= MAX_TEXTURE_CACHE_SIZE) {
+    const oldestKey = textureCache.keys().next().value;
+    if (oldestKey) {
+      const oldTex = textureCache.get(oldestKey);
+      oldTex?.dispose();
+      textureCache.delete(oldestKey);
+      preloadedUrls.delete(oldestKey);
+    }
+  }
+  textureCache.set(key, tex);
+}
 
 /**
  * Safely opens the persistent CacheStorage instance if supported by the browser.
@@ -216,7 +232,7 @@ export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | nul
       // First try optimized downsampling loader
       const optimizedTex = await loadOptimizedTextureImage(cleanUrl);
       if (optimizedTex) {
-        textureCache.set(cleanUrl, optimizedTex);
+        setCachedTexture(cleanUrl, optimizedTex);
         preloadedUrls.add(cleanUrl);
         return optimizedTex;
       }
@@ -236,7 +252,7 @@ export function loadSharedThreeTexture(url: string): Promise<THREE.Texture | nul
             tex.flipY = true;
             tex.needsUpdate = true;
 
-            textureCache.set(cleanUrl, tex);
+            setCachedTexture(cleanUrl, tex);
             preloadedUrls.add(cleanUrl);
             resolve(tex);
           },

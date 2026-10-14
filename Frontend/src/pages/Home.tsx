@@ -89,7 +89,7 @@ function Home({ onMacReady, onMacError }: HomeProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const progressRef = useRef<number>(0);
   const [isSectionVisible, setIsSectionVisible] = useState(true);
-  const { shouldRenderHero3D, isMobile } = useResponsiveTier();
+  const { shouldRenderHero3D, isMobile, maxDpr } = useResponsiveTier();
 
   // IntersectionObserver to pause MacBook WebGL rendering when Home section is scrolled past (Desktop only)
   useEffect(() => {
@@ -176,7 +176,7 @@ function Home({ onMacReady, onMacError }: HomeProps) {
         <div className="w-full h-full pointer-events-none">
           <Canvas
             frameloop={isSectionVisible ? "always" : "never"}
-            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, isMobile ? 1.0 : 1.35)]}
+            dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, maxDpr)]}
             gl={{
               antialias: !isMobile,
               alpha: true,

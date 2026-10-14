@@ -91,13 +91,15 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     );
   }, [onStartExit, onComplete]);
 
-  // Progress interpolation driven by Hero 3D & Drei Asset Readiness
+  // Progress interpolation driven by Hero 3D & Asset Readiness
   useEffect(() => {
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
     if (isReady || macReady) {
       hasFinishedRef.current = true;
       const tween = gsap.to(counterRef.current, {
         value: 100,
-        duration: 0.35,
+        duration: isMobile ? 0.2 : 0.35,
         ease: "power2.out",
         onUpdate: () => {
           const val = Math.round(counterRef.current.value);
@@ -107,7 +109,7 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
           updateDisplay(100);
           const timer = setTimeout(() => {
             triggerExit();
-          }, 150);
+          }, isMobile ? 60 : 120);
           return () => clearTimeout(timer);
         },
       });
@@ -116,12 +118,17 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
       };
     }
 
-    let target = Math.max(35, Math.min(88, Math.round(dreiProgress * 0.88)));
+    // On mobile, Drei 3D progress may be 0 because 3D canvas is not mounted.
+    // Progressively count up to 85% while hero assets mount.
+    let target = isMobile
+      ? Math.max(50, Math.min(88, counterRef.current.value + 20))
+      : Math.max(35, Math.min(88, Math.round(dreiProgress * 0.88)));
+
     if (target < counterRef.current.value) target = counterRef.current.value;
 
     const tween = gsap.to(counterRef.current, {
       value: target,
-      duration: 0.4,
+      duration: isMobile ? 0.25 : 0.4,
       ease: "power2.out",
       onUpdate: () => {
         const val = Math.round(counterRef.current.value);
@@ -134,10 +141,10 @@ export const Preloader3D: React.FC<Preloader3DProps> = ({
     };
   }, [dreiProgress, isReady, macReady, triggerExit]);
 
-  // Fast safety timer: maximum 2.8s on desktop, 2.2s on mobile to guarantee immediate page access
+  // Fast safety timer: maximum 2.8s on desktop, 1.2s on mobile to guarantee immediate page access
   useEffect(() => {
     const isMobileViewport = typeof window !== "undefined" && window.innerWidth < 768;
-    const maxWaitTime = isMobileViewport ? 1500 : 2800;
+    const maxWaitTime = isMobileViewport ? 1200 : 2800;
 
     const safetyTimer = setTimeout(() => {
       if (!isExitingRef.current) {

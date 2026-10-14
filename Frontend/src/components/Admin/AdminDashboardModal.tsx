@@ -20,7 +20,7 @@ import {
 import { adminService } from "../../services/service/adminService";
 import { socket, onSocketEvent } from "../../utils/socket";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
-import { getApiCache, setApiCache } from "../../utils/apiCache";
+import { getApiCache, setApiCache, invalidateApiCache } from "../../utils/apiCache";
 
 import { BrandCollaborationsManager } from "./BrandCollaborations/BrandCollaborationsManager";
 
@@ -142,6 +142,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   // INQUIRIES STATE (SERVER-SIDE PAGINATION)
   // ==========================================
   const initialInqCache = extractPaginatedData(
+    getApiCache<any>("admin_inquiries_limit=6&page=1") ||
     getApiCache<any>("admin_inquiries_limit=6&page=1&search=&status=")
   );
   const [inquiriesList, setInquiriesList] = useState<any[]>(initialInqCache.items);
@@ -268,7 +269,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   );
 
   const fetchInquiries = useCallback(
-    async (page = inquiriesPage, forceRefresh = false) => {
+    async (page = inquiriesPage, forceRefresh = true) => {
       try {
         const res = await adminService.getInquiries(
           {
@@ -330,6 +331,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     socket.on("disconnect", handleDisconnect);
 
     const unsubInquiry = onSocketEvent("inquiry:new", (newInquiry) => {
+      invalidateApiCache(["inquiries", "admin_inquiries", "admin_stats"]);
       setInquiriesList((prev) => [newInquiry, ...prev]);
       setStats((prev) => {
         const updated = {
@@ -344,10 +346,12 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     });
 
     const unsubInqUpdated = onSocketEvent("inquiry:updated", (updated) => {
+      invalidateApiCache(["inquiries", "admin_inquiries", "admin_stats"]);
       setInquiriesList((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
     });
 
     const unsubInqDeleted = onSocketEvent("inquiry:deleted", (id) => {
+      invalidateApiCache(["inquiries", "admin_inquiries", "admin_stats"]);
       setInquiriesList((prev) => prev.filter((i) => i.id !== id));
       setStats((prev) => {
         const updated = { ...prev, totalInquiries: Math.max(0, prev.totalInquiries - 1) };
@@ -465,6 +469,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   const handleUpdateInquiryStatus = async (id: string, newStatus: "NEW" | "CONTACTED" | "ARCHIVED") => {
     try {
       await adminService.updateInquiryStatus(id, newStatus);
+      invalidateApiCache(["inquiries", "admin_inquiries", "admin_stats"]);
       setInquiriesList((prev) =>
         prev.map((inq) => (inq.id === id ? { ...inq, status: newStatus } : inq))
       );

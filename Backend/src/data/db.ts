@@ -571,12 +571,14 @@ class DatabaseStore {
     if (this.isMongoConnected) {
       const query: any = {};
       if (status && status !== "ALL") {
-        query.status = status;
+        query.status = { $regex: new RegExp(`^${status}$`, "i") };
       }
       if (search) {
         query.$or = [
           { name: { $regex: new RegExp(search, "i") } },
+          { fullName: { $regex: new RegExp(search, "i") } },
           { email: { $regex: new RegExp(search, "i") } },
+          { phone: { $regex: new RegExp(search, "i") } },
           { company: { $regex: new RegExp(search, "i") } },
           { message: { $regex: new RegExp(search, "i") } },
         ];
@@ -592,8 +594,18 @@ class DatabaseStore {
         .limit(limit)
         .lean()) as unknown as IInquiry[];
 
+      const normalizedItems = (items || []).map((doc: any) => ({
+        ...doc,
+        id: doc.id || doc._id?.toString() || String(doc._id),
+        name: doc.name || doc.fullName || "Anonymous Client",
+        fullName: doc.fullName || doc.name || "Anonymous Client",
+        phone: doc.phone || "Not Provided",
+        company: doc.company || "Not Specified",
+        status: doc.status ? String(doc.status).toUpperCase() : "NEW",
+      }));
+
       return {
-        items,
+        items: normalizedItems,
         total,
         page,
         limit,
@@ -612,7 +624,9 @@ class DatabaseStore {
       list = list.filter(
         (i) =>
           i.name?.toLowerCase().includes(search) ||
+          i.fullName?.toLowerCase().includes(search) ||
           i.email?.toLowerCase().includes(search) ||
+          i.phone?.toLowerCase().includes(search) ||
           i.company?.toLowerCase().includes(search) ||
           i.message?.toLowerCase().includes(search)
       );
@@ -621,7 +635,15 @@ class DatabaseStore {
     const total = list.length;
     const totalPages = Math.ceil(total / limit) || 1;
     const skip = (page - 1) * limit;
-    const items = list.slice(skip, skip + limit);
+    const items = list.slice(skip, skip + limit).map((doc: any) => ({
+      ...doc,
+      id: doc.id || doc._id?.toString() || String(doc._id),
+      name: doc.name || doc.fullName || "Anonymous Client",
+      fullName: doc.fullName || doc.name || "Anonymous Client",
+      phone: doc.phone || "Not Provided",
+      company: doc.company || "Not Specified",
+      status: doc.status ? String(doc.status).toUpperCase() : "NEW",
+    }));
 
     return {
       items,

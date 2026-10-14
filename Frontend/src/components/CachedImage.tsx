@@ -4,16 +4,28 @@ import { getCachedMediaUrl } from "../utils/mediaCache";
 interface CachedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src?: string;
   fallbackSrc?: string;
+  aspectRatio?: string;
+  fetchPriority?: "high" | "low" | "auto";
 }
 
-// Global in-memory record of successfully loaded image URLs
-// Once an image is loaded, it remains immediately loaded across tab switches and re-renders
+// Bounded in-memory record of loaded image URLs to prevent memory bloat on mobile
+const MAX_RECORDED_SRCS = 120;
 const globalLoadedSrcs = new Set<string>();
+
+function recordLoadedSrc(url: string) {
+  if (!url) return;
+  if (globalLoadedSrcs.has(url)) return;
+  if (globalLoadedSrcs.size >= MAX_RECORDED_SRCS) {
+    const oldest = globalLoadedSrcs.values().next().value;
+    if (oldest) globalLoadedSrcs.delete(oldest);
+  }
+  globalLoadedSrcs.add(url);
+}
 
 /**
  * Enhanced CachedImage component
- * Loads the image from memory cache, browser CacheStorage, or network.
- * Avoids opacity flicker, remembers loaded state across re-renders,
+ * Loads images with async decoding, prevents layout shifts via aspect ratio,
+ * supports priority hinting (fetchPriority), bounds memory caches,
  * and maintains 60fps scrolling on mobile devices.
  */
 export const CachedImage: React.FC<CachedImageProps> = ({
@@ -23,6 +35,9 @@ export const CachedImage: React.FC<CachedImageProps> = ({
   className = "",
   loading = "lazy",
   decoding = "async",
+  aspectRatio,
+  fetchPriority,
+  style,
   ...props
 }) => {
   const cleanSrc = src?.trim() || "";
@@ -66,20 +81,22 @@ export const CachedImage: React.FC<CachedImageProps> = ({
     };
   }, [cleanSrc]);
 
+  const combinedStyle = aspectRatio
+    ? { aspectRatio, ...style }
+    : style;
+
   return (
     <img
       src={resolvedSrc}
       alt={alt}
       loading={loading}
       decoding={decoding}
+      style={combinedStyle}
+      {...((fetchPriority ? { fetchpriority: fetchPriority } : {}) as any)}
       className={`transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-90"} ${className}`}
       onLoad={(e) => {
-        if (resolvedSrc) {
-          globalLoadedSrcs.add(resolvedSrc);
-        }
-        if (cleanSrc) {
-          globalLoadedSrcs.add(cleanSrc);
-        }
+        if (resolvedSrc) recordLoadedSrc(resolvedSrc);
+        if (cleanSrc) recordLoadedSrc(cleanSrc);
         if (mountedRef.current) {
           setIsLoaded(true);
         }

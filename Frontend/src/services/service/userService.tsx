@@ -1,5 +1,5 @@
 import { userApi } from "../api/userApi/userApi";
-import { getApiCache, setApiCache } from "../../utils/apiCache";
+import { getApiCache, setApiCache, invalidateApiCache } from "../../utils/apiCache";
 
 class UserService {
   private _portfolioPromise: Promise<any> | null = null;
@@ -228,7 +228,7 @@ class UserService {
     }
   }
 
-  submitInquiry(data: {
+  async submitInquiry(data: {
     name?: string;
     fullName?: string;
     email: string;
@@ -240,7 +240,9 @@ class UserService {
     message: string;
     [key: string]: any;
   }) {
-    return userApi.submitInquiry(data);
+    const res = await userApi.submitInquiry(data);
+    invalidateApiCache(["inquiries", "admin_inquiries", "admin_stats"]);
+    return res;
   }
 
   private _settingsPromise: Promise<any> | null = null;

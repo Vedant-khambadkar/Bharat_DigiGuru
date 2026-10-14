@@ -384,16 +384,16 @@ class AdminService {
   }
 
 
-  // Inquiries
+  // Inquiries - Operational client leads, always fetched fresh from database
   async getInquiries(
     params?: { status?: string; page?: number; limit?: number; search?: string },
-    forceRefresh = false
+    forceRefresh = true
   ) {
     const key = this.getCacheKey("inquiries", params);
 
     if (!forceRefresh) {
       const cached = getApiCache<any>(key);
-      if (cached) {
+      if (cached && Array.isArray(cached.items) && cached.items.length > 0) {
         return cached;
       }
       if (this._inflightRequests.has(key)) {

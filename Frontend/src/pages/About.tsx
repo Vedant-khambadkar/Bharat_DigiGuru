@@ -35,9 +35,23 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
   const containerRef = useRef<HTMLElement>(null);
   const [hoveredPillar, setHoveredPillar] = useState<number | null>(null);
 
-  // Preload and store in persistent CacheStorage on mount
+  // Progressively preload assets when section approaches the viewport
   useEffect(() => {
-    preloadAboutAssets().catch(() => {});
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          preloadAboutAssets().catch(() => {});
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "600px 0px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   // Coordinated, high-performance responsive GSAP entrance animations

@@ -240,14 +240,14 @@ const MainLandingPage = () => {
 
       (window as any).lenis = nativeLenisProxy;
 
+      let resizeTimer: number;
       const handleResize = () => {
-        ScrollTrigger.refresh();
-      };
-      const handleScroll = () => {
-        ScrollTrigger.update();
+        clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(() => {
+          ScrollTrigger.refresh();
+        }, 200);
       };
       window.addEventListener("resize", handleResize, { passive: true });
-      window.addEventListener("scroll", handleScroll, { passive: true });
 
       const handleAnchorClick = (e: MouseEvent) => {
         const target = (e.target as HTMLElement)?.closest("a[href^='#']");
@@ -264,8 +264,8 @@ const MainLandingPage = () => {
       document.addEventListener("click", handleAnchorClick);
 
       return () => {
+        clearTimeout(resizeTimer);
         window.removeEventListener("resize", handleResize);
-        window.removeEventListener("scroll", handleScroll);
         document.removeEventListener("click", handleAnchorClick);
         delete (window as any).lenis;
       };
@@ -505,7 +505,9 @@ const MainLandingPage = () => {
         <BrandCollaborations />
         <Services />
         <PlatformsWeManage />
-        <Portfolio />
+        <Suspense fallback={<div className="min-h-screen bg-[#050505]" />}>
+          <Portfolio />
+        </Suspense>
         <ThreeDProjects />
         <ToolsAndTechnology />
         <Process />

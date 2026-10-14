@@ -37,7 +37,7 @@ export const OurTeam: React.FC<OurTeamProps> = ({
   const [sceneState, setSceneState] = useState<SceneState>('overview');
   const sectionRef = useRef<HTMLElement>(null);
   const [isSectionVisible, setIsSectionVisible] = useState(false);
-  const { isMobile } = useResponsiveTier();
+  const { isMobile, maxDpr, shouldRenderTeam3D } = useResponsiveTier();
 
   const [hasEnteredViewport, setHasEnteredViewport] = useState(false);
 
@@ -156,9 +156,9 @@ export const OurTeam: React.FC<OurTeamProps> = ({
         <Canvas
           frameloop={isSectionVisible ? "always" : "never"}
           shadows={!isMobile ? { type: THREE.PCFShadowMap } : false}
-          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, isMobile ? 1.15 : 1.35)]}
+          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, maxDpr)]}
           gl={{
-            antialias: true,
+            antialias: !isMobile,
             alpha: true,
             powerPreference: 'high-performance',
             toneMapping: THREE.NoToneMapping,
@@ -169,7 +169,7 @@ export const OurTeam: React.FC<OurTeamProps> = ({
           className="w-full h-full block touch-pan-y"
         >
           <ModelErrorBoundary fallback={null} onError={onBusinessmanError}>
-            {hasEnteredViewport ? (
+            {hasEnteredViewport && shouldRenderTeam3D ? (
               <Suspense fallback={<ModelLoader theme="light" label="Loading 3D" />}>
                 <PeopleScene
                   sceneState={sceneState}

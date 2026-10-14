@@ -24,11 +24,18 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollTicking = useRef(false);
 
-  // Preload portfolio plane images so mobile carousel swiping is seamless and zero-lag
+  // Preload portfolio plane images progressively: first 2 immediate, rest on idle
   useEffect(() => {
     if (planes && planes.length > 0) {
       const urls = planes.map((p) => p.textureUrl).filter(Boolean) as string[];
-      preloadMediaList(urls, { priority: "low", concurrency: 4 });
+      if (urls.length > 0) {
+        // Immediate priority for first 2 visible cards
+        preloadMediaList(urls.slice(0, 2), { priority: "high", concurrency: 2 });
+        // Defer rest to idle time
+        if (urls.length > 2) {
+          preloadMediaList(urls.slice(2), { priority: "idle", concurrency: 2 });
+        }
+      }
     }
   }, [planes]);
 
@@ -60,6 +67,18 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
     setActiveIndex(targetIdx);
     onSelectPlane(planes[targetIdx]);
   };
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxImage) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setLightboxImage(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxImage]);
 
   return (
     <div className="relative z-10 w-full min-h-[100svh] flex flex-col justify-between pt-20 pb-8 px-4 sm:px-6 select-none overflow-hidden font-['DM_Sans']">
@@ -162,7 +181,7 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
         <div
           data-lenis-prevent="true"
           onClick={() => setLightboxImage(null)}
-          className="fixed inset-0 z-[999999] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 cursor-pointer select-none animate-fadeIn"
+          className="fixed inset-0 z-[999999] bg-black/95 flex items-center justify-center p-4 cursor-pointer select-none animate-fadeIn"
         >
           <button
             onClick={(e) => {

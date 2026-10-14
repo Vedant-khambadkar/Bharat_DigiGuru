@@ -136,8 +136,7 @@ body {
 
 /* Image Performance & Rendering Optimization */
 img {
-  content-visibility: auto;
-  contain-intrinsic-size: 300px 200px;
+  max-width: 100%;
 }
 
 /* GPU Hardware Acceleration for Smooth 60-120fps Transitions */
@@ -156,21 +155,19 @@ img {
 
 /* Mobile Animation Performance & GPU Compositing Optimization */
 @media (max-width: 767px) {
-  /* Promote animated elements to dedicated GPU layers to avoid repaint lag */
-  .floating-3d-node,
-  .floating-app-node,
-  .studio-hero-card,
-  [data-animate-gpu] {
+  /* Promote only critical animated elements to dedicated GPU layers to avoid repaint lag */
+  .studio-hero-card {
     will-change: transform, opacity;
     transform: translateZ(0);
     backface-visibility: hidden;
   }
 
-  /* Reduce costly backdrop filters on mobile for silky smooth 60fps scrolling */
+  /* Clamp costly backdrop filters on mobile for silky smooth 60fps scrolling */
   .backdrop-blur-3xl,
-  .backdrop-blur-2xl {
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
+  .backdrop-blur-2xl,
+  .backdrop-blur-xl {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
   }
 }
 

@@ -29,6 +29,7 @@ export const MobileHeroShowcase: React.FC<MobileHeroShowcaseProps> = ({ onReady 
   const containerRef = useRef<HTMLDivElement>(null);
   const [tabs, setTabs] = useState<ServiceTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>("");
+  const [visitedTabIds, setVisitedTabIds] = useState<Set<string>>(() => new Set());
   const [isPressed, setIsPressed] = useState<boolean>(false);
 
   // Notify parent of readiness
@@ -52,12 +53,21 @@ export const MobileHeroShowcase: React.FC<MobileHeroShowcaseProps> = ({ onReady 
             targetSection: "services-section",
           }));
           setTabs(mappedTabs);
-          if (mappedTabs.length > 0 && !mappedTabs.some((t) => t.id === activeTabId)) {
-            setActiveTabId(mappedTabs[0].id);
+          const initialId = mappedTabs[0]?.id || "";
+          if (initialId && !activeTabId) {
+            setActiveTabId(initialId);
+            setVisitedTabIds(new Set([initialId]));
           }
-          // Preload tab images so switching tabs on mobile is instant and zero-delay
-          const imageUrls = mappedTabs.map((t) => t.image).filter(Boolean);
-          preloadMediaList(imageUrls, { priority: "high", concurrency: 4 });
+
+          // Prioritize loading the initial active hero image for fast LCP
+          if (mappedTabs[0]?.image) {
+            preloadMediaList([mappedTabs[0].image], { priority: "high", concurrency: 1 });
+          }
+          // Defer secondary tab images until browser idle time
+          const remainingImages = mappedTabs.slice(1).map((t) => t.image).filter(Boolean);
+          if (remainingImages.length > 0) {
+            preloadMediaList(remainingImages, { priority: "idle", concurrency: 2 });
+          }
         }
       } catch (err) {
         console.warn("[MobileHeroShowcase] Could not fetch live services:", err);
@@ -110,6 +120,7 @@ export const MobileHeroShowcase: React.FC<MobileHeroShowcaseProps> = ({ onReady 
 
   const handleTabClick = (tab: ServiceTab) => {
     setActiveTabId(tab.id);
+    setVisitedTabIds((prev) => new Set(prev).add(tab.id));
   };
 
   return (
@@ -139,16 +150,20 @@ export const MobileHeroShowcase: React.FC<MobileHeroShowcaseProps> = ({ onReady 
             isPressed ? "scale-[0.988]" : "scale-100"
           }`}
         >
-          {/* Dynamic Image with Smooth Cross-Fade */}
+          {/* Dynamic Image with Smooth Cross-Fade - Render active & visited only */}
           {tabs.map((tab) => {
             const isSelected = tab.id === activeTabId;
+            if (!isSelected && !visitedTabIds.has(tab.id)) {
+              return null;
+            }
             return (
               <CachedImage
                 key={tab.id}
                 src={tab.image}
                 alt={`${tab.label} Signature Showcase`}
-                loading="eager"
+                loading={isSelected ? "eager" : "lazy"}
                 decoding="async"
+                fetchPriority={isSelected ? "high" : "low"}
                 className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-600 ease-out ${
                   isSelected ? "opacity-100 scale-100 z-10" : "opacity-0 scale-[1.02] z-0 pointer-events-none"
                 }`}

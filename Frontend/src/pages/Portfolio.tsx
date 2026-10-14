@@ -81,7 +81,7 @@ export const Portfolio: React.FC = () => {
     rotation: Math.PI * 0.75,
     scale: 0.5,
   });
-  const { shouldRenderPortfolio3D, isMobile } = useResponsiveTier();
+  const { shouldRenderPortfolio3D, isMobile, maxDpr } = useResponsiveTier();
   const [mobile3DMode, setMobile3DMode] = useState<boolean>(false);
 
   // 1. Fetch Dynamic Portfolio directly from API / Database with graceful fallback
@@ -317,7 +317,7 @@ export const Portfolio: React.FC = () => {
             {planes.length > 0 ? (
               <Canvas
                 frameloop={isSectionVisible ? "always" : "never"}
-                dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, isMobile ? 1.0 : 1.35)]}
+                dpr={[1, Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, maxDpr)]}
                 gl={{
                   antialias: !isMobile,
                   alpha: true,
