@@ -4,6 +4,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import Home from "./pages/Home";
 import Services from "./pages/Services";
+import BrandCollaborations from "./components/BrandCollaborations";
 import Navbar from "./components/Navbar";
 import TopHeader from "./components/TopHeader";
 import Preloader3D from "./components/Preloader/Preloader3D";
@@ -21,6 +22,9 @@ import WorkWithUs from "./pages/WhyWorkWithUs";
 import Blogs from "./pages/Blogs";
 import Contact from "./pages/Contact";
 import Footer from "./components/Footer";
+import { userService } from "./services/service/userService";
+import { onSocketEvent } from "./utils/socket";
+import { getApiCache, setApiCache } from "./utils/apiCache";
 
 // Lazy-load Admin routes & modals so they don't bloat the main landing page bundle
 const AdminAuthModal = lazy(() => import("./components/Admin/AdminAuthModal"));
@@ -38,6 +42,43 @@ const MainLandingPage = () => {
   const [macReady, setMacReady] = useState(false);
   const [businessmanReady, setBusinessmanReady] = useState(false);
   const [macFailed, setMacFailed] = useState(false);
+
+  // Team & Founder Section Visibility State (Persisted in DB & synced in real-time)
+  const [teamSectionVisible, setTeamSectionVisible] = useState<boolean>(() => {
+    const cached = getApiCache<any>("site_settings");
+    return cached?.teamSectionVisible !== false;
+  });
+
+  useEffect(() => {
+    userService
+      .getSettings()
+      .then((res: any) => {
+        if (res && typeof res.teamSectionVisible === "boolean") {
+          setTeamSectionVisible(res.teamSectionVisible);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch public site settings:", err);
+      });
+
+    const unsubSettings = onSocketEvent("settings:updated", (settings: any) => {
+      if (settings && typeof settings.teamSectionVisible === "boolean") {
+        setTeamSectionVisible(settings.teamSectionVisible);
+        setApiCache("site_settings", settings);
+      }
+    });
+
+    const unsubTeamVisibility = onSocketEvent("team:visibility:updated", (payload: any) => {
+      if (payload && typeof payload.teamSectionVisible === "boolean") {
+        setTeamSectionVisible(payload.teamSectionVisible);
+      }
+    });
+
+    return () => {
+      unsubSettings();
+      unsubTeamVisibility();
+    };
+  }, []);
 
   const hero3DReady = macReady || macFailed;
 
@@ -446,7 +487,7 @@ const MainLandingPage = () => {
         <Preloader3D
           isReady={hero3DReady}
           macReady={macReady}
-          businessmanReady={businessmanReady}
+          businessmanReady={businessmanReady || !teamSectionVisible}
           onStartExit={handleStartPageReveal}
           onComplete={handlePreloaderComplete}
         />
@@ -456,11 +497,12 @@ const MainLandingPage = () => {
       <TopHeader />
 
       {/* Floating Glassmorphism Navbar */}
-      <Navbar />
+      <Navbar teamSectionVisible={teamSectionVisible} />
 
       {/* Main Sections Flow */}
       <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
         <Home onMacReady={handleMacReady} onMacError={handleMacError} />
+        <BrandCollaborations />
         <Services />
         <PlatformsWeManage />
         <Portfolio />
@@ -470,14 +512,16 @@ const MainLandingPage = () => {
         <About />
         <MissionVision />
         <MilestoneShowcase />
-        <OurTeam
-          onBusinessmanReady={handleBusinessmanReady}
-          onBusinessmanError={handleBusinessmanError}
-        />
+        {teamSectionVisible && (
+          <OurTeam
+            onBusinessmanReady={handleBusinessmanReady}
+            onBusinessmanError={handleBusinessmanError}
+          />
+        )}
         <WorkWithUs />
         <Blogs />
         <Contact />
-        <Footer />
+        <Footer teamSectionVisible={teamSectionVisible} />
       </main>
 
       {/* Admin Auth Modal */}

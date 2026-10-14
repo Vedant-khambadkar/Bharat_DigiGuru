@@ -33,6 +33,13 @@ class UserApi {
     return api._post("/inquiries/submit", data);
   }
 
+  getSettings() {
+    return api._get("/settings");
+  }
+
+  getBrandCollaborations() {
+    return api._get("/brand-collaborations");
+  }
 }
 
 export const userApi = new UserApi();

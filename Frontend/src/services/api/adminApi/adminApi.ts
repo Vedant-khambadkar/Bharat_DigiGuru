@@ -164,7 +164,44 @@ class AdminApi {
   deleteAdminUser(id: string) {
     return api._delete(`/admin/users/${id}`);
   }
-}
 
+  // Site Settings (Team / Founder Visibility)
+  getSettings() {
+    return api._get("/admin/settings");
+  }
+
+  updateTeamVisibility(teamSectionVisible: boolean) {
+    return api._patch("/admin/settings/team-visibility", { teamSectionVisible });
+  }
+
+  // Brand Collaborations
+  getBrandCollaborations(params?: any) {
+    return api._get("/admin/brand-collaborations", { params } as any);
+  }
+
+  getBrandCollaborationById(id: string) {
+    return api._get(`/admin/brand-collaborations/${id}`);
+  }
+
+  createBrandCollaboration(formData: FormData) {
+    return api._postFormData("/admin/brand-collaborations", formData);
+  }
+
+  updateBrandCollaboration(id: string, formData: FormData) {
+    return api._putFormData(`/admin/brand-collaborations/${id}`, formData);
+  }
+
+  updateBrandCollaborationStatus(id: string, isActive: boolean) {
+    return api._patch(`/admin/brand-collaborations/${id}/status`, { isActive });
+  }
+
+  reorderBrandCollaborations(items: { id: string; order: number }[]) {
+    return api._patch("/admin/brand-collaborations/reorder", { items });
+  }
+
+  deleteBrandCollaboration(id: string) {
+    return api._delete(`/admin/brand-collaborations/${id}`);
+  }
+}
 
 export const adminApi = new AdminApi();

@@ -21,3 +21,20 @@ export const upload = multer({
     }
   },
 });
+
+export const uploadBrandLogo = multer({
+  storage,
+  limits: {
+    fileSize: 1_000_000, // 1 MB strict limit for brand logos (1,000,000 bytes)
+  },
+  fileFilter: (_req, file, cb) => {
+    if (
+      file.mimetype.startsWith("image/") ||
+      /\.(png|jpe?g|webp|avif|tiff)$/i.test(file.originalname)
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error("Unsupported image format. Please upload a PNG, JPG, JPEG, or WebP logo."));
+    }
+  },
+});

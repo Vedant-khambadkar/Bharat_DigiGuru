@@ -19,6 +19,7 @@ import {
   Check,
   Archive,
   Eye,
+  EyeOff,
   X,
   Phone,
   UploadCloud,
@@ -43,9 +44,11 @@ import { socket, onSocketEvent } from "../utils/socket";
 import { ConfirmDeleteModal } from "../components/Admin/ConfirmDeleteModal";
 import CachedImage from "../components/CachedImage";
 import { getApiCache, setApiCache } from "../utils/apiCache";
+import { RichTextEditor } from "../components/Admin/RichTextEditor";
 import founderPhoto from "../assets/Picture/Picture12.webp";
+import { BrandCollaborationsManager } from "../components/Admin/BrandCollaborations/BrandCollaborationsManager";
 
-type TabType = "overview" | "portfolio" | "services" | "team" | "blogs" | "threed" | "inquiries" | "admins";
+type TabType = "overview" | "portfolio" | "services" | "brands" | "team" | "blogs" | "threed" | "inquiries" | "admins";
 
 const extractPaginatedData = (res: any) => {
   if (!res) return { items: [], total: 0, totalPages: 1, page: 1 };
@@ -252,6 +255,45 @@ export const AdminDashboardPage: React.FC = () => {
       console.error("Failed to fetch founder profile:", err);
     } finally {
       setFounderLoading(false);
+    }
+  };
+
+  // Team / Founder Public Website Visibility Setting
+  const [teamSectionVisible, setTeamSectionVisible] = useState<boolean>(() => {
+    const cached = getApiCache<any>("admin_site_settings");
+    return cached?.teamSectionVisible !== false;
+  });
+  const [teamVisibilityLoading, setTeamVisibilityLoading] = useState<boolean>(false);
+
+  const fetchSettings = useCallback(async (force = false) => {
+    try {
+      const res = await adminService.getSettings(force);
+      if (res && typeof res.teamSectionVisible === "boolean") {
+        setTeamSectionVisible(res.teamSectionVisible);
+      }
+    } catch (err) {
+      console.error("Failed to load site settings:", err);
+    }
+  }, []);
+
+  const handleToggleTeamVisibility = async (newVal: boolean) => {
+    if (teamVisibilityLoading) return;
+    try {
+      setTeamVisibilityLoading(true);
+      const res = await adminService.updateTeamVisibility(newVal);
+      if (res?.success || res?.settings) {
+        setTeamSectionVisible(newVal);
+        showNotification(
+          `Team & Founder section is now ${newVal ? "VISIBLE" : "HIDDEN"} on the live website!`,
+          "success"
+        );
+      } else {
+        showNotification(res?.message || "Failed to update team visibility.", "error");
+      }
+    } catch (err: any) {
+      showNotification(err?.message || "Network error updating team visibility.", "error");
+    } finally {
+      setTeamVisibilityLoading(false);
     }
   };
 
@@ -619,6 +661,7 @@ export const AdminDashboardPage: React.FC = () => {
     if (currentUser.role === "managedAdmin" || currentUser.role === "superAdmin") {
       fetchAdminUsers(true);
     }
+    fetchSettings(true);
   };
 
   useEffect(() => {
@@ -634,7 +677,8 @@ export const AdminDashboardPage: React.FC = () => {
     if (currentUser.role === "managedAdmin" || currentUser.role === "superAdmin") {
       fetchAdminUsers();
     }
-  }, [currentUser.role]);
+    fetchSettings(true);
+  }, [currentUser.role, fetchSettings]);
 
 
   // Socket Connection & Real-time Listeners
@@ -796,6 +840,19 @@ export const AdminDashboardPage: React.FC = () => {
       showNotification("Founder profile synchronized in real-time!", "success");
     });
 
+    const unsubSettingsUpdated = onSocketEvent("settings:updated", (settings: any) => {
+      if (settings && typeof settings.teamSectionVisible === "boolean") {
+        setTeamSectionVisible(settings.teamSectionVisible);
+        setApiCache("admin_site_settings", settings);
+      }
+    });
+
+    const unsubTeamVisibility = onSocketEvent("team:visibility:updated", (payload: any) => {
+      if (payload && typeof payload.teamSectionVisible === "boolean") {
+        setTeamSectionVisible(payload.teamSectionVisible);
+      }
+    });
+
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
@@ -806,6 +863,8 @@ export const AdminDashboardPage: React.FC = () => {
       unsubTeamUpdated();
       unsubTeamDeleted();
       unsubFounderUpdated();
+      unsubSettingsUpdated();
+      unsubTeamVisibility();
       unsubBlogCreated();
       unsubBlogUpdated();
       unsubBlogDeleted();
@@ -906,6 +965,47 @@ export const AdminDashboardPage: React.FC = () => {
         showNotification(`${file.type.startsWith("video") ? "Video" : "Image"} uploaded to CloudFront!`);
       } else {
         showNotification("Upload response missing file URL", "error");
+      }
+    } catch (err: any) {
+      showNotification(`Upload failed: ${err.message || "Error"}`, "error");
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(null);
+    }
+  };
+
+  const handleMultipleBlogMediaUpload = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList).filter((f) => f.type.startsWith("image/"));
+    if (files.length === 0) return;
+    setIsUploading(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        setUploadProgress(`Uploading ${i + 1} of ${files.length} (${files[i].name})...`);
+        const res: any = await adminService.uploadMedia(files[i]);
+        const url = res?.url || res?.data?.url || (res as any)?.fileUrl;
+        if (url) uploadedUrls.push(url);
+      }
+      if (uploadedUrls.length > 0) {
+        setEditingItem((prev: any) => {
+          if (!prev) return prev;
+          const currentImages = Array.isArray(prev.data.images)
+            ? [...prev.data.images]
+            : prev.data.image
+            ? [prev.data.image]
+            : [];
+          const merged = Array.from(new Set([...currentImages, ...uploadedUrls]));
+          const primary = prev.data.image || merged[0] || "";
+          return {
+            ...prev,
+            data: {
+              ...prev.data,
+              image: primary,
+              images: merged,
+            },
+          };
+        });
+        showNotification(`${uploadedUrls.length} image(s) uploaded successfully!`);
       }
     } catch (err: any) {
       showNotification(`Upload failed: ${err.message || "Error"}`, "error");
@@ -1016,11 +1116,12 @@ export const AdminDashboardPage: React.FC = () => {
           readTime: data.readTime || "5 MIN READ",
           date: data.date || "AUG 2026",
           image: data.image || "",
-          content: Array.isArray(data.content)
+          images: Array.isArray(data.images) ? data.images : (data.image ? [data.image] : []),
+          content: typeof data.content === "string"
             ? data.content
-            : typeof data.content === "string"
-            ? data.content.split("\n\n").map((s: string) => s.trim()).filter(Boolean)
-            : [],
+            : Array.isArray(data.content)
+            ? data.content
+            : "",
           bullets: Array.isArray(data.bullets)
             ? data.bullets
             : typeof data.bullets === "string"
@@ -1337,6 +1438,26 @@ export const AdminDashboardPage: React.FC = () => {
             </span>
           </button>
 
+          {/* Brand Collaborations */}
+          <button
+            onClick={() => {
+              setActiveTab("brands");
+            }}
+            className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-xs font-mono tracking-wider transition-all cursor-pointer ${
+              activeTab === "brands"
+                ? "bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold shadow-[0_0_15px_rgba(239,68,68,0.35)]"
+                : "text-neutral-400 hover:text-white hover:bg-white/5 bg-white/[0.02] border border-white/5"
+            }`}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Sparkles size={15} className="shrink-0 text-rose-400" />
+              <span>BRAND COLLABS</span>
+            </div>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold font-mono ${activeTab === "brands" ? "bg-white/20 text-white" : "bg-white/10 text-neutral-300"}`}>
+              LIVE
+            </span>
+          </button>
+
           {/* Team */}
           <button
             onClick={() => {
@@ -1511,6 +1632,21 @@ export const AdminDashboardPage: React.FC = () => {
             <span className="text-[9px] font-mono tracking-tight">Services</span>
           </button>
 
+          {/* Brands (Mobile) */}
+          <button
+            onClick={() => setActiveTab("brands")}
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2 rounded-2xl transition-all cursor-pointer relative ${
+              activeTab === "brands"
+                ? "text-white font-bold"
+                : "text-neutral-400 hover:text-white"
+            }`}
+          >
+            <div className={`p-1.5 rounded-xl relative transition-all ${activeTab === "brands" ? "bg-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.5)]" : "bg-transparent"}`}>
+              <Sparkles size={16} />
+            </div>
+            <span className="text-[9px] font-mono tracking-tight">Brands</span>
+          </button>
+
           {/* 4. Team */}
           <button
             onClick={() => {
@@ -1576,7 +1712,7 @@ export const AdminDashboardPage: React.FC = () => {
         </nav>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-3.5 sm:p-6 md:p-8 md:overflow-y-auto max-w-7xl w-full">
+        <main className="flex-1 p-3.5 sm:p-6 md:p-8 md:overflow-y-auto max-w-8xl w-full">
           {/* =========================================================================
               1. OVERVIEW TAB
              ========================================================================= */}
@@ -2356,6 +2492,75 @@ export const AdminDashboardPage: React.FC = () => {
              ========================================================================= */}
           {activeTab === "team" && (
             <div className="flex flex-col gap-3.5 sm:gap-6">
+              {/* Client Requirement: Team & Founder Section Public Visibility Toggle */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#141824] via-[#11131b] to-[#141824] backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-white/10 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-white/5 to-transparent pointer-events-none" />
+                <div className="flex items-start sm:items-center gap-3.5 relative z-10">
+                  <div
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 ${
+                      teamSectionVisible
+                        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                        : "bg-amber-500/15 border-amber-500/30 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+                    }`}
+                  >
+                    {teamSectionVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-['Syne',sans-serif] font-bold text-sm sm:text-base text-white">
+                        Show Team / Founder Section on Website
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider border ${
+                          teamSectionVisible
+                            ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                            : "bg-red-500/15 border-red-500/30 text-red-400"
+                        }`}
+                      >
+                        {teamSectionVisible ? "PUBLIC: VISIBLE" : "PUBLIC: HIDDEN"}
+                      </span>
+                    </div>
+                    <p className="font-mono text-xs text-neutral-400 max-w-xl">
+                      Toggle the public visibility of the entire Team &amp; Founder section (including 3D models, founder dossier, and editorial grid).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 self-end sm:self-auto relative z-10 shrink-0">
+                  <button
+                    type="button"
+                    disabled={teamVisibilityLoading}
+                    onClick={() => handleToggleTeamVisibility(!teamSectionVisible)}
+                    className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#11131b] disabled:opacity-50 disabled:cursor-not-allowed ${
+                      teamSectionVisible
+                        ? "bg-emerald-500 border-emerald-400 focus:ring-emerald-500"
+                        : "bg-neutral-800 border-neutral-700 focus:ring-neutral-500"
+                    }`}
+                    role="switch"
+                    aria-checked={teamSectionVisible}
+                  >
+                    <span className="sr-only">Toggle Team Visibility</span>
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-flex items-center justify-center h-7 w-7 transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out ${
+                        teamSectionVisible ? "translate-x-6 text-emerald-600" : "translate-x-0 text-neutral-500"
+                      }`}
+                    >
+                      {teamVisibilityLoading ? (
+                        <Loader2 size={12} className="animate-spin text-neutral-900" />
+                      ) : teamSectionVisible ? (
+                        <Check size={12} className="stroke-[3]" />
+                      ) : (
+                        <X size={12} className="stroke-[3]" />
+                      )}
+                    </span>
+                  </button>
+                  <span className="font-mono text-xs font-bold text-white w-10">
+                    {teamSectionVisible ? "ON" : "OFF"}
+                  </span>
+                </div>
+              </div>
+
               {/* Sub-tab Navigation between Founder Profile and Editorial Grid */}
               <div className="flex flex-wrap items-center justify-between gap-3 bg-[#11131b]/80 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-white/10 shadow-lg">
                 <div className="flex items-center gap-2">
@@ -2906,7 +3111,7 @@ export const AdminDashboardPage: React.FC = () => {
                         readTime: "5 MIN READ",
                         date: "AUG 2026",
                         image: "",
-                        content: [""],
+                        content: "",
                         bullets: [""],
                         isPublished: true,
                       },
@@ -3005,7 +3210,7 @@ export const AdminDashboardPage: React.FC = () => {
                           readTime: "5 MIN READ",
                           date: "AUG 2026",
                           image: "",
-                          content: [""],
+                          content: "",
                           bullets: [""],
                           isPublished: true,
                         },
@@ -3019,7 +3224,11 @@ export const AdminDashboardPage: React.FC = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {blogsItems.map((blog) => {
-                    const paragraphsCount = Array.isArray(blog.content) ? blog.content.length : 0;
+                    const paragraphsCount = Array.isArray(blog.content)
+                      ? blog.content.length
+                      : typeof blog.content === "string" && blog.content
+                      ? (blog.content.match(/<p|<h[1-6]|<li/g) || []).length || 1
+                      : 0;
                     const bulletsCount = Array.isArray(blog.bullets) ? blog.bullets.length : 0;
 
                     return (
@@ -3115,7 +3324,11 @@ export const AdminDashboardPage: React.FC = () => {
                                   isNew: false,
                                   data: {
                                     ...blog,
-                                    content: Array.isArray(blog.content) ? blog.content : [blog.content || ""],
+                                    content: typeof blog.content === "string"
+                                      ? blog.content
+                                      : Array.isArray(blog.content)
+                                      ? blog.content.map((p: any) => `<p>${p}</p>`).join("")
+                                      : "",
                                     bullets: Array.isArray(blog.bullets) ? blog.bullets : [blog.bullets || ""],
                                   },
                                 })
@@ -3780,6 +3993,15 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* =========================================================================
+              6. BRAND COLLABORATIONS MANAGEMENT TAB
+             ========================================================================= */}
+          {activeTab === "brands" && (
+            <div className="animate-in fade-in duration-200">
+              <BrandCollaborationsManager />
+            </div>
+          )}
         </main>
       </div>
 
@@ -3918,7 +4140,7 @@ export const AdminDashboardPage: React.FC = () => {
          ========================================================================= */}
       {editingItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl bg-[#11131b] border border-white/15 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl max-h-[92vh] overflow-y-auto">
+          <div className="relative w-full max-w-5xl bg-[#11131b] border border-white/15 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2.5">
               <h3 className="font-['Syne',sans-serif] font-bold text-base sm:text-xl text-white">
                 {editingItem.isNew ? "Create New" : "Edit"}{" "}
@@ -5760,184 +5982,232 @@ export const AdminDashboardPage: React.FC = () => {
                     />
                   </div>
 
-                  {/* Cover Image Upload / URL */}
-                  <div className="flex flex-col gap-1.5">
+                  {/* Article Media & Banner Gallery (Multi-Image Support) */}
+                  <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-[#141620] border border-white/10">
                     <div className="flex items-center justify-between">
-                      <label className="font-mono text-[10px] sm:text-[11px] text-neutral-400 uppercase font-semibold">
-                        Article Banner Image (Drag & Drop or URL)
-                      </label>
-                      {editingItem.data.image && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setEditingItem({
-                              ...editingItem,
-                              data: { ...editingItem.data, image: "" },
-                            })
+                      <div className="flex items-center gap-1.5 text-cyan-400">
+                        <UploadCloud size={15} />
+                        <label className="font-mono text-[10px] sm:text-[11px] text-white uppercase font-bold">
+                          Article Media Assets &amp; Banners ({(Array.isArray(editingItem.data.images) ? editingItem.data.images.length : (editingItem.data.image ? 1 : 0))})
+                        </label>
+                      </div>
+                      <span className="font-mono text-[10px] text-neutral-400 hidden sm:inline">
+                        Select multiple images · Set primary banner · Insert into editorial story
+                      </span>
+                    </div>
+
+                    {/* Multi-Image Gallery Grid if images exist */}
+                    {(() => {
+                      const allImages: string[] = Array.isArray(editingItem.data.images) && editingItem.data.images.length > 0
+                        ? editingItem.data.images
+                        : editingItem.data.image
+                        ? [editingItem.data.image]
+                        : [];
+
+                      if (allImages.length === 0) return null;
+
+                      return (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-1">
+                          {allImages.map((imgUrl: string, idx: number) => {
+                            const isPrimary = editingItem.data.image === imgUrl || (!editingItem.data.image && idx === 0);
+
+                            return (
+                              <div
+                                key={idx}
+                                className={`relative rounded-xl overflow-hidden border p-2 flex flex-col gap-2 bg-black/60 transition-all ${
+                                  isPrimary ? "border-cyan-500 shadow-md shadow-cyan-950/40" : "border-white/10 hover:border-white/20"
+                                }`}
+                              >
+                                <div className="relative w-full h-24 rounded-lg overflow-hidden bg-black/80 flex items-center justify-center">
+                                  <CachedImage
+                                    src={imgUrl}
+                                    alt={`Media ${idx + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  {isPrimary && (
+                                    <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-cyan-600 text-white font-mono text-[9px] font-bold shadow">
+                                      ★ PRIMARY BANNER
+                                    </span>
+                                  )}
+                                </div>
+
+                                <p className="font-mono text-[9px] text-neutral-400 truncate">
+                                  {imgUrl}
+                                </p>
+
+                                <div className="flex items-center justify-between gap-1 pt-1 border-t border-white/5">
+                                  {!isPrimary && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setEditingItem({
+                                          ...editingItem,
+                                          data: {
+                                            ...editingItem.data,
+                                            image: imgUrl,
+                                          },
+                                        });
+                                      }}
+                                      className="px-2 py-1 rounded-md bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 font-mono text-[9px] font-bold cursor-pointer transition-colors"
+                                    >
+                                      Set As Banner
+                                    </button>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      const currentContent = typeof editingItem.data.content === "string" ? editingItem.data.content : "";
+                                      const imgHtml = `<p><img src="${imgUrl}" alt="Article Visual" style="width: 100%; margin: 1.5rem auto; display: block;" /></p>`;
+                                      setEditingItem({
+                                        ...editingItem,
+                                        data: {
+                                          ...editingItem.data,
+                                          content: currentContent + imgHtml,
+                                        },
+                                      });
+                                      showNotification("Image inserted into article body!");
+                                    }}
+                                    className="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-neutral-300 font-mono text-[9px] font-bold cursor-pointer transition-colors"
+                                    title="Append this image into the editorial content"
+                                  >
+                                    Insert in Story
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      const updatedImages = allImages.filter((_, i) => i !== idx);
+                                      const updatedPrimary = isPrimary ? (updatedImages[0] || "") : editingItem.data.image;
+                                      setEditingItem({
+                                        ...editingItem,
+                                        data: {
+                                          ...editingItem.data,
+                                          image: updatedPrimary,
+                                          images: updatedImages,
+                                        },
+                                      });
+                                    }}
+                                    className="p-1 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 cursor-pointer transition-colors ml-auto"
+                                    title="Remove this image asset"
+                                  >
+                                    <Trash2 size={11} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Multi-Image Drag & Drop Upload Zone */}
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragActive(true);
+                      }}
+                      onDragLeave={() => setDragActive(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDragActive(false);
+                        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                          handleMultipleBlogMediaUpload(e.dataTransfer.files);
+                        }
+                      }}
+                      className="relative border-2 border-dashed border-cyan-500/30 hover:border-cyan-500/60 rounded-2xl p-4 text-center cursor-pointer flex flex-col items-center justify-center gap-2 bg-[#181a24]/50"
+                    >
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            handleMultipleBlogMediaUpload(e.target.files);
                           }
-                          className="text-[10px] font-mono text-red-400 hover:underline cursor-pointer flex items-center gap-1"
-                        >
-                          <Trash2 size={11} /> Remove
-                        </button>
+                        }}
+                      />
+                      {isUploading ? (
+                        <div className="flex flex-col items-center gap-1.5 py-2">
+                          <Loader2 className="w-6 h-6 text-cyan-400 animate-spin" />
+                          <span className="text-xs font-mono text-cyan-300">{uploadProgress || "Uploading images to Cloud..."}</span>
+                        </div>
+                      ) : (
+                        <>
+                          <UploadCloud size={20} className="text-cyan-400" />
+                          <p className="text-xs text-neutral-300">
+                            Drag one or <span className="text-cyan-400 font-bold underline">multiple images</span> here or click to browse
+                          </p>
+                          <span className="font-mono text-[10px] text-neutral-500">
+                            Supports multi-selection (PNG, JPG, JPEG, WebP)
+                          </span>
+                        </>
                       )}
                     </div>
 
-                    {editingItem.data.image ? (
-                      <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 bg-black/40 p-2.5 flex items-center gap-3">
-                        <div className="w-24 h-16 rounded-xl overflow-hidden bg-black shrink-0 border border-white/10 relative">
-                          <CachedImage
-                            src={editingItem.data.image}
-                            alt="Cover Preview"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1 min-w-0 flex-1">
-                          <span className="font-mono text-[11px] text-cyan-400 font-semibold flex items-center gap-1">
-                            <CheckCircle size={12} /> Image Attached
-                          </span>
-                          <p className="font-mono text-[10px] text-neutral-400 truncate max-w-full">
-                            {editingItem.data.image}
-                          </p>
-                          <div className="flex items-center gap-2 pt-1">
-                            <label className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold cursor-pointer transition-colors active:scale-95 inline-flex items-center gap-1">
-                              <UploadCloud size={11} />
-                              <span>Replace Image</span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const f = e.target.files?.[0];
-                                  if (f) handleFileUpload(f, "image");
-                                }}
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          setDragActive(true);
-                        }}
-                        onDragLeave={() => setDragActive(false)}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          setDragActive(false);
-                          const f = e.dataTransfer.files?.[0];
-                          if (f) handleFileUpload(f, "image");
-                        }}
-                        className="relative border-2 border-dashed border-cyan-500/30 hover:border-cyan-500/60 rounded-2xl p-4 text-center cursor-pointer flex flex-col items-center justify-center gap-2 bg-[#181a24]/50"
-                      >
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) handleFileUpload(f, "image");
-                          }}
-                        />
-                        {isUploading ? (
-                          <div className="flex flex-col items-center gap-1.5 py-2">
-                            <Loader2 className="w-6 h-6 text-cyan-400 animate-spin" />
-                            <span className="text-xs font-mono text-cyan-300">{uploadProgress || "Uploading image..."}</span>
-                          </div>
-                        ) : (
-                          <>
-                            <UploadCloud size={18} className="text-cyan-400" />
-                            <p className="text-xs text-neutral-300">
-                              Drag cover image here or <span className="text-cyan-400 underline">browse</span>
-                            </p>
-                          </>
-                        )}
-                      </div>
-                    )}
-
-                    <input
-                      type="text"
-                      value={editingItem.data.image || ""}
-                      onChange={(e) =>
-                        setEditingItem({
-                          ...editingItem,
-                          data: { ...editingItem.data, image: e.target.value },
-                        })
-                      }
-                      placeholder="Or paste direct CloudFront / Unsplash / CDN image URL (https://...)"
-                      className="w-full bg-[#181a24]/50 border border-white/5 rounded-lg px-2.5 py-1 text-[11px] font-mono text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-cyan-500"
-                    />
-                  </div>
-
-                  {/* Dynamic Content Paragraphs */}
-                  <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-[#141620] border border-white/10">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-cyan-400">
-                        <FileText size={15} />
-                        <h4 className="font-['Syne',sans-serif] font-bold text-xs sm:text-sm text-white">
-                          Article Content Paragraphs ({(editingItem.data.content || []).length})
-                        </h4>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const currentContent = Array.isArray(editingItem.data.content) ? editingItem.data.content : [];
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editingItem.data.image || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const currentImages = Array.isArray(editingItem.data.images) ? editingItem.data.images : [];
                           setEditingItem({
                             ...editingItem,
                             data: {
                               ...editingItem.data,
-                              content: [...currentContent, ""],
+                              image: val,
+                              images: val && !currentImages.includes(val) ? [val, ...currentImages] : currentImages,
                             },
                           });
                         }}
-                        className="px-2.5 py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 font-mono text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors active:scale-95"
-                      >
-                        <Plus size={11} />
-                        <span>Add Paragraph</span>
-                      </button>
+                        placeholder="Or paste direct CloudFront / CDN image URL (https://...)"
+                        className="w-full bg-[#181a24]/50 border border-white/5 rounded-lg px-2.5 py-1 text-[11px] font-mono text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-cyan-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Rich Text Editor */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-cyan-400">
+                        <FileText size={15} />
+                        <h4 className="font-['Syne',sans-serif] font-bold text-xs sm:text-sm text-white">
+                          Article Editorial Content (Rich Text)
+                        </h4>
+                      </div>
+                      <span className="font-mono text-[10px] text-neutral-400 hidden sm:inline">
+                        Supports Headings (H2-H4), Lists, Formats, Quotes, Code &amp; Links
+                      </span>
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                      {(editingItem.data.content || [""]).map((para: string, idx: number) => (
-                        <div key={idx} className="flex flex-col gap-1 bg-[#181a24] border border-white/5 rounded-xl p-2.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-mono text-[10px] text-cyan-400 font-semibold">
-                              Paragraph #{idx + 1}
-                            </span>
-                            {(editingItem.data.content || []).length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const updated = [...(editingItem.data.content || [])];
-                                  updated.splice(idx, 1);
-                                  setEditingItem({
-                                    ...editingItem,
-                                    data: { ...editingItem.data, content: updated },
-                                  });
-                                }}
-                                className="text-[10px] font-mono text-red-400 hover:text-red-300 flex items-center gap-0.5 cursor-pointer"
-                              >
-                                <Trash2 size={10} /> Delete
-                              </button>
-                            )}
-                          </div>
-                          <textarea
-                            rows={3}
-                            value={para}
-                            onChange={(e) => {
-                              const updated = [...(editingItem.data.content || [])];
-                              updated[idx] = e.target.value;
-                              setEditingItem({
-                                ...editingItem,
-                                data: { ...editingItem.data, content: updated },
-                              });
-                            }}
-                            placeholder={`Enter content for paragraph #${idx + 1}...`}
-                            className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-cyan-500 leading-relaxed"
-                          />
-                        </div>
-                      ))}
-                    </div>
+                    <RichTextEditor
+                      value={
+                        typeof editingItem.data.content === "string"
+                          ? editingItem.data.content
+                          : Array.isArray(editingItem.data.content)
+                          ? editingItem.data.content.map((p: any) => `<p>${p}</p>`).join("")
+                          : ""
+                      }
+                      onChange={(html) =>
+                        setEditingItem({
+                          ...editingItem,
+                          data: { ...editingItem.data, content: html },
+                        })
+                      }
+                      onUploadImage={async (file: File) => {
+                        const res: any = await adminService.uploadMedia(file);
+                        return res?.url || res?.data?.url || "";
+                      }}
+                      placeholder="Write your article story here... Highlight text to add links or formatting."
+                    />
                   </div>
 
                   {/* Key Highlights / Bullets */}

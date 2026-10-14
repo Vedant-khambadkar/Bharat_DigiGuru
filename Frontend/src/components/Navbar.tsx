@@ -19,6 +19,7 @@ import {
 
 interface NavbarProps {
   activeSection?: string;
+  teamSectionVisible?: boolean;
 }
 
 interface NavItem {
@@ -41,7 +42,8 @@ const navItems: NavItem[] = [
   { id: "contact", label: "Contact", href: "#contact-section", icon: Mail, badge: true },
 ];
 
-export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
+export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSectionVisible = true }) => {
+  const currentNavItems = navItems.filter((item) => item.id !== "team" || teamSectionVisible !== false);
   const [activeTab, setActiveTab] = useState(activeSection);
   const [hoveredTab, setHoveredTab] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -102,8 +104,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
 
         // Section detection with lightweight threshold
         const scrollPos = currentScrollY + window.innerHeight * 0.4;
-        for (let i = navItems.length - 1; i >= 0; i--) {
-          const item = navItems[i];
+        for (let i = currentNavItems.length - 1; i >= 0; i--) {
+          const item = currentNavItems[i];
           const targetEl = document.querySelector(item.href);
           if (targetEl) {
             const rect = targetEl.getBoundingClientRect();
@@ -216,7 +218,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
             <div className="hidden md:flex items-center gap-1 sm:gap-1.5 px-1">
               
 
-              {navItems.map((item) => {
+              {currentNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
                 const isHovered = hoveredTab === item.id;
@@ -284,7 +286,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
             <div className="flex md:hidden items-center gap-1 px-1">
              
 
-              {navItems.slice(0, 4).map((item) => {
+              {currentNavItems.slice(0, 4).map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
 
@@ -363,7 +365,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home" }) => {
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              {navItems.map((item) => {
+              {currentNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
 

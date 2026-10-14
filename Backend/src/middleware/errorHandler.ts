@@ -8,6 +8,14 @@ export const errorHandler = (
 ): void => {
   console.error("❌ [SERVER ERROR]:", err);
 
+  if (err.code === "LIMIT_FILE_SIZE") {
+    res.status(400).json({
+      success: false,
+      message: "File exceeds maximum upload size limit of 1 MB (1,000,000 bytes).",
+    });
+    return;
+  }
+
   const status = err.status || err.statusCode || 500;
   const message = err.message || "Internal Server Error";
 

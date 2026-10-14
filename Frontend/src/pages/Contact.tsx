@@ -100,7 +100,7 @@ export const Contact: React.FC = () => {
   return (
     <section
       id="contact-section"
-      className="relative font-['DM_Sans'] z-10 bg-transparent text-white w-full px-6 sm:px-10 md:px-12 lg:px-16 py-16 sm:py-20 lg:py-24 overflow-hidden"
+      className="relative font-['DM_Sans'] z-10 bg-black text-white w-full px-6 sm:px-10 md:px-12 lg:px-16 py-16 sm:py-20 lg:py-24 overflow-hidden"
     >
       <div className="relative z-10 w-full max-w-8xl mx-auto flex flex-col gap-12 sm:gap-16">
         {/* =========================================================================

@@ -461,6 +461,94 @@ class AdminService {
     invalidateApiCache(["admin_users_list"]);
     return res;
   }
+
+  // Site Settings (Team / Founder Visibility)
+  async getSettings(forceRefresh = false) {
+    const key = "admin_site_settings";
+    if (!forceRefresh) {
+      const cached = getApiCache<any>(key);
+      if (cached) return cached;
+    }
+    const res = await adminApi.getSettings();
+    if (res) {
+      setApiCache(key, res);
+      setApiCache("site_settings", res);
+    }
+    return res;
+  }
+
+  async updateTeamVisibility(teamSectionVisible: boolean) {
+    const res = await adminApi.updateTeamVisibility(teamSectionVisible);
+    invalidateApiCache(["site_settings", "admin_site_settings"]);
+    if (res?.settings) {
+      setApiCache("admin_site_settings", res.settings);
+      setApiCache("site_settings", res.settings);
+    }
+    return res;
+  }
+
+  // Brand Collaborations
+  async getBrandCollaborations(
+    params?: { page?: number; limit?: number; search?: string; status?: string },
+    forceRefresh = false
+  ) {
+    const key = this.getCacheKey("brands", params);
+
+    if (!forceRefresh) {
+      const cached = getApiCache<any>(key);
+      if (cached) {
+        return cached;
+      }
+      if (this._inflightRequests.has(key)) {
+        return this._inflightRequests.get(key);
+      }
+    }
+
+    const promise = (async () => {
+      try {
+        const res = await adminApi.getBrandCollaborations(params);
+        if (res) {
+          setApiCache(key, res);
+        }
+        return res;
+      } finally {
+        this._inflightRequests.delete(key);
+      }
+    })();
+
+    this._inflightRequests.set(key, promise);
+    return promise;
+  }
+
+  async createBrandCollaboration(formData: FormData) {
+    const res = await adminApi.createBrandCollaboration(formData);
+    invalidateApiCache(["brands", "admin_brands", "public_brands"]);
+    return res;
+  }
+
+  async updateBrandCollaboration(id: string, formData: FormData) {
+    const res = await adminApi.updateBrandCollaboration(id, formData);
+    invalidateApiCache(["brands", "admin_brands", "public_brands"]);
+    return res;
+  }
+
+  async updateBrandCollaborationStatus(id: string, isActive: boolean) {
+    const res = await adminApi.updateBrandCollaborationStatus(id, isActive);
+    invalidateApiCache(["brands", "admin_brands", "public_brands"]);
+    return res;
+  }
+
+  async reorderBrandCollaborations(items: { id: string; order: number }[]) {
+    const res = await adminApi.reorderBrandCollaborations(items);
+    invalidateApiCache(["brands", "admin_brands", "public_brands"]);
+    return res;
+  }
+
+  async deleteBrandCollaboration(id: string) {
+    const res = await adminApi.deleteBrandCollaboration(id);
+    invalidateApiCache(["brands", "admin_brands", "public_brands"]);
+    return res;
+  }
 }
 
 export const adminService = new AdminService();

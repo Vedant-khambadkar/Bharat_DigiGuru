@@ -167,14 +167,8 @@ export const WhyWorkWithUs: React.FC = () => {
     <section
       ref={sectionRef}
       id="work-with-us-section"
-      className="relative w-full min-h-screen bg-transparent text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none  flex flex-col justify-center py-10 sm:py-16 lg:py-0"
+      className="relative w-full min-h-screen bg-black text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none  flex flex-col justify-center py-10 sm:py-16 lg:py-0"
     >
-      {/* Subtle Dedicated Ambient Lighting */}
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-white/[0.02] blur-[140px] rounded-full" />
-        <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] bg-white/[0.015] blur-[120px] rounded-full" />
-      </div>
-
       <div className="relative z-10 w-full max-w-8xl mx-auto px-4 sm:px-8 md:px-12 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-14 items-center">
 

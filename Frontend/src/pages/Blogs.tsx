@@ -7,6 +7,7 @@ import BlogCard from "../components/BlogCard";
 import type { BlogItem } from "../components/BlogCard";
 import CachedImage from "../components/CachedImage";
 import LensText from "../components/LensText";
+import DOMPurify from "dompurify";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 import { getApiCache } from "../utils/apiCache";
@@ -104,15 +105,21 @@ export const Blogs: React.FC = () => {
       const refreshed = blogs.find(
         (b) => String(b.id) === String(activeBlog.id) || (b as any)._id === (activeBlog as any)._id
       );
-      if (
-        refreshed &&
-        (refreshed.title !== activeBlog.title ||
+      if (refreshed) {
+        const contentChanged =
+          typeof refreshed.content === "string" || typeof activeBlog.content === "string"
+            ? refreshed.content !== activeBlog.content
+            : refreshed.content?.length !== activeBlog.content?.length;
+
+        if (
+          refreshed.title !== activeBlog.title ||
           refreshed.image !== activeBlog.image ||
           refreshed.description !== activeBlog.description ||
           refreshed.bullets?.length !== activeBlog.bullets?.length ||
-          refreshed.content?.length !== activeBlog.content?.length)
-      ) {
-        setActiveBlog(refreshed);
+          contentChanged
+        ) {
+          setActiveBlog(refreshed);
+        }
       }
     }
   }, [blogs, activeBlog]);
@@ -225,15 +232,15 @@ export const Blogs: React.FC = () => {
     <section
       id="stories-section"
       ref={sectionRef}
-      className="relative z-10 bg-transparent text-white w-full overflow-hidden py-10 sm:py-16 lg:py-0"
+      className="relative z-10 bg-black text-white w-full overflow-hidden py-10 sm:py-16 lg:py-0"
     >
       {/* Anchor for backwards compatibility */}
       <div id="blogs-section" className="absolute -top-10 left-0 pointer-events-none" />
       {/* Ambient background glows */}
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+      {/* <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-red-600/[0.03] blur-[150px] rounded-full" />
         <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-orange-500/[0.025] blur-[140px] rounded-full" />
-      </div>
+      </div> */}
 
       {/* Giant Kinetic Watermark Typography across the background */}
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-full select-none pointer-events-none z-0 overflow-hidden opacity-[0.035] leading-none whitespace-nowrap">
@@ -338,10 +345,26 @@ export const Blogs: React.FC = () => {
           DETAILED BLOG ARTICLE READER MODAL (Displays Full Editorial Breakdown)
          ========================================================================= */}
       {activeBlog && (() => {
-        const contentParagraphs: string[] = Array.isArray(activeBlog.content)
-          ? activeBlog.content.map((p) => String(p || "").trim()).filter(Boolean)
-          : typeof activeBlog.content === "string"
-          ? (activeBlog.content as string).split(/\n\s*\n|\n/).map((p) => p.trim()).filter(Boolean)
+        const rawContent = activeBlog.content;
+        const isHtml =
+          typeof rawContent === "string"
+            ? /<[a-z][\s\S]*>/i.test(rawContent)
+            : Array.isArray(rawContent)
+            ? rawContent.some((p) => /<[a-z][\s\S]*>/i.test(p))
+            : false;
+
+        const contentHtml: string = isHtml
+          ? typeof rawContent === "string"
+            ? rawContent
+            : (rawContent as string[]).join("\n")
+          : "";
+
+        const plainTextParagraphs: string[] = !isHtml
+          ? Array.isArray(rawContent)
+            ? rawContent.map((p) => String(p || "").trim()).filter(Boolean)
+            : typeof rawContent === "string"
+            ? (rawContent as string).split(/\n\s*\n|\n/).map((p) => p.trim()).filter(Boolean)
+            : []
           : [];
 
         const bulletItems: string[] = Array.isArray(activeBlog.bullets)
@@ -360,7 +383,7 @@ export const Blogs: React.FC = () => {
             <div
               onClick={(e) => e.stopPropagation()}
               data-lenis-prevent="true"
-              className="relative w-full max-w-4xl my-auto max-h-[92vh] sm:max-h-[88vh] rounded-2xl sm:rounded-3xl bg-[#0c0d12] border border-white/10 shadow-[0_25px_80px_rgba(0,0,0,0.95),0_0_50px_rgba(255,59,48,0.12)] flex flex-col text-neutral-200 overflow-hidden animate-in zoom-in-95 duration-200"
+              className="relative w-full max-w-7xl my-auto  sm:max-h-[88vh] rounded-2xl sm:rounded-3xl bg-[#0c0d12]  flex flex-col text-neutral-200 overflow-hidden animate-in zoom-in-95 duration-200"
             >
               {/* Sticky Top Navigation Bar */}
               <div className="sticky top-0 z-30 px-4 sm:px-8 py-3 sm:py-4 bg-[#0c0d12]/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between gap-3 shrink-0">
@@ -463,19 +486,43 @@ export const Blogs: React.FC = () => {
                     <Bookmark className="w-3.5 h-3.5 text-red-400" />
                     <span>Editorial Breakdown & Insights</span>
                   </div>
-                  <div className="flex flex-col gap-4 text-xs sm:text-sm md:text-[15px] text-neutral-300 font-['Space_Grotesk',sans-serif] leading-relaxed sm:leading-loose">
-                    {contentParagraphs.length > 0 ? (
-                      contentParagraphs.map((paragraph, idx) => (
+                  {isHtml ? (
+                    <div
+                      className="blog-rich-content text-neutral-200"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(contentHtml, {
+                          ADD_ATTR: [
+                            "target",
+                            "rel",
+                            "style",
+                            "class",
+                            "width",
+                            "height",
+                            "loading",
+                            "data-width",
+                            "data-alignment",
+                            "data-aspect-ratio",
+                            "data-object-fit",
+                            "data-zoom",
+                            "data-caption",
+                          ],
+                          ADD_TAGS: ["figure", "figcaption", "iframe"],
+                        }),
+                      }}
+                    />
+                  ) : plainTextParagraphs.length > 0 ? (
+                    <div className="flex flex-col gap-4 text-xs sm:text-sm md:text-[15px] text-neutral-300 font-['Space_Grotesk',sans-serif] leading-relaxed sm:leading-loose">
+                      {plainTextParagraphs.map((paragraph, idx) => (
                         <p key={idx} className="leading-relaxed sm:leading-loose">
                           {paragraph}
                         </p>
-                      ))
-                    ) : (
-                      <p className="italic text-neutral-400">
-                        {activeBlog.description}
-                      </p>
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="italic text-neutral-400 font-['Space_Grotesk',sans-serif] text-sm">
+                      {activeBlog.description}
+                    </p>
+                  )}
                 </div>
 
                 {/* Key Strategic Highlights & Solutions Checklist */}

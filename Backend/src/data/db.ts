@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { IDatabaseSchema, IPortfolioItem, IThreeDProject, IServiceItem, ITeamMember, IFounderProfile, IStoryItem, IBlogItem, IInquiry } from "../types/index.js";
+import { IDatabaseSchema, IPortfolioItem, IThreeDProject, IServiceItem, ITeamMember, IFounderProfile, IStoryItem, IBlogItem, IInquiry, ISiteSettings, IBrandCollaboration } from "../types/index.js";
 import {
   PortfolioModel,
   ThreeDModel,
@@ -10,6 +10,8 @@ import {
   BlogModel,
   InquiryModel,
   AdminUserModel,
+  SiteSettingsModel,
+  BrandCollaborationModel,
 } from "../models/index.js";
 
 export interface PaginationParams {
@@ -69,6 +71,8 @@ class DatabaseStore {
       founder: { ...DEFAULT_FOUNDER_PROFILE },
       stories: [],
       blogs: [],
+      settings: { teamSectionVisible: true },
+      brands: [],
       inquiries: [],
       adminUser: {
         id: "admin-master-001",
@@ -1380,7 +1384,12 @@ class DatabaseStore {
       readTime: data.readTime || "5 MIN READ",
       date: data.date || "AUG 2026",
       image: data.image || "",
-      content: Array.isArray(data.content) ? data.content : [],
+      content:
+        data.content !== undefined
+          ? Array.isArray(data.content)
+            ? data.content
+            : String(data.content)
+          : [],
       bullets: Array.isArray(data.bullets) ? data.bullets : [],
       isPublished: data.isPublished !== false,
       order: data.order ?? (this.localData.blogs?.length || 0) + 1,
@@ -1436,6 +1445,248 @@ class DatabaseStore {
       (b) => String(b.id) !== String(id) && (b as any)._id !== String(id)
     );
     if (this.localData.blogs.length !== initialLen) {
+      this.persistLocal(this.localData);
+      return true;
+    }
+    return false;
+  }
+
+  // ==========================================
+  // SITE SETTINGS (TEAM / FOUNDER VISIBILITY)
+  // ==========================================
+  public async getSiteSettings(): Promise<ISiteSettings> {
+    if (this.isMongoConnected) {
+      let doc = await SiteSettingsModel.findOne({ key: "global_settings" });
+      if (!doc) {
+        doc = await SiteSettingsModel.create({
+          key: "global_settings",
+          teamSectionVisible: true,
+        });
+      }
+      return doc.toJSON() as unknown as ISiteSettings;
+    }
+
+    if (!this.localData.settings) {
+      this.localData.settings = { teamSectionVisible: true };
+    }
+    return this.localData.settings;
+  }
+
+  public async updateSiteSettings(updates: Partial<ISiteSettings>): Promise<ISiteSettings> {
+    if (this.isMongoConnected) {
+      const doc = await SiteSettingsModel.findOneAndUpdate(
+        { key: "global_settings" },
+        { ...updates, updatedAt: new Date() },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      );
+      return doc.toJSON() as unknown as ISiteSettings;
+    }
+
+    this.localData.settings = {
+      ...(this.localData.settings || { teamSectionVisible: true }),
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.persistLocal(this.localData);
+    return this.localData.settings;
+  }
+
+  // ==========================================
+  // BRAND COLLABORATIONS
+  // ==========================================
+  public async getBrandCollaborations(params?: PaginationParams): Promise<PaginatedResult<IBrandCollaboration> | IBrandCollaboration[]> {
+    const page = Math.max(1, Number(params?.page) || 1);
+    const limit = Math.max(1, Number(params?.limit) || 10);
+    const search = params?.search?.trim().toLowerCase();
+    const status = params?.status?.trim().toLowerCase();
+
+    if (this.isMongoConnected) {
+      const query: any = {};
+      if (status === "active") query.isActive = true;
+      else if (status === "inactive") query.isActive = false;
+
+      if (search) {
+        query.$or = [
+          { name: { $regex: new RegExp(search, "i") } },
+          { altText: { $regex: new RegExp(search, "i") } },
+        ];
+      }
+
+      const total = await BrandCollaborationModel.countDocuments(query);
+      const totalPages = Math.ceil(total / limit) || 1;
+      const skip = (page - 1) * limit;
+
+      const items = (await BrandCollaborationModel.find(query)
+        .sort({ order: 1, createdAt: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()) as unknown as IBrandCollaboration[];
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      };
+    }
+
+    // Local JSON / memory fallback
+    if (!this.localData.brands) {
+      this.localData.brands = [];
+    }
+
+    let list = [...this.localData.brands];
+    if (status === "active") list = list.filter((b) => b.isActive === true);
+    else if (status === "inactive") list = list.filter((b) => b.isActive === false);
+
+    if (search) {
+      list = list.filter(
+        (b) =>
+          b.name.toLowerCase().includes(search) ||
+          (b.altText && b.altText.toLowerCase().includes(search))
+      );
+    }
+
+    list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    const total = list.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const skip = (page - 1) * limit;
+    const items = list.slice(skip, skip + limit);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+    };
+  }
+
+  public async getAllBrandCollaborations(): Promise<IBrandCollaboration[]> {
+    if (this.isMongoConnected) {
+      return (await BrandCollaborationModel.find().sort({ order: 1, createdAt: 1 }).lean()) as unknown as IBrandCollaboration[];
+    }
+    if (!this.localData.brands) this.localData.brands = [];
+    return [...this.localData.brands].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  public async getActiveBrandCollaborations(): Promise<IBrandCollaboration[]> {
+    if (this.isMongoConnected) {
+      return (await BrandCollaborationModel.find({ isActive: true })
+        .sort({ order: 1, createdAt: 1 })
+        .lean()) as unknown as IBrandCollaboration[];
+    }
+    if (!this.localData.brands) this.localData.brands = [];
+    return this.localData.brands
+      .filter((b) => b.isActive === true)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  public async getBrandCollaborationById(id: string): Promise<IBrandCollaboration | null> {
+    if (this.isMongoConnected) {
+      return (await BrandCollaborationModel.findOne(this.buildIdQuery(id)).lean()) as unknown as IBrandCollaboration;
+    }
+    if (!this.localData.brands) this.localData.brands = [];
+    const found = this.localData.brands.find((b) => String(b.id) === String(id) || (b as any)._id === String(id));
+    return found || null;
+  }
+
+  public async createBrandCollaboration(item: Partial<IBrandCollaboration>): Promise<IBrandCollaboration> {
+    const id = item.id || `brand-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const newBrand: IBrandCollaboration = {
+      id,
+      name: item.name || "Brand",
+      logoUrl: item.logoUrl || "",
+      altText: item.altText || item.name || "Brand Logo",
+      order: item.order !== undefined ? Number(item.order) : (this.localData.brands?.length || 0) + 1,
+      isActive: item.isActive !== undefined ? Boolean(item.isActive) : true,
+      originalFormat: item.originalFormat || "",
+      format: item.format || "webp",
+      size: item.size || 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (this.isMongoConnected) {
+      const doc = await BrandCollaborationModel.create(newBrand);
+      return doc.toJSON() as unknown as IBrandCollaboration;
+    }
+
+    if (!this.localData.brands) this.localData.brands = [];
+    this.localData.brands.push(newBrand);
+    this.persistLocal(this.localData);
+    return newBrand;
+  }
+
+  public async updateBrandCollaboration(id: string, updates: Partial<IBrandCollaboration>): Promise<IBrandCollaboration | null> {
+    if (this.isMongoConnected) {
+      const doc = await BrandCollaborationModel.findOneAndUpdate(
+        this.buildIdQuery(id),
+        { ...updates, updatedAt: new Date() },
+        { new: true }
+      );
+      return doc ? (doc.toJSON() as unknown as IBrandCollaboration) : null;
+    }
+
+    if (!this.localData.brands) this.localData.brands = [];
+    const idx = this.localData.brands.findIndex((b) => String(b.id) === String(id) || (b as any)._id === String(id));
+    if (idx === -1) return null;
+
+    this.localData.brands[idx] = {
+      ...this.localData.brands[idx],
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.persistLocal(this.localData);
+    return this.localData.brands[idx];
+  }
+
+  public async updateBrandCollaborationStatus(id: string, isActive: boolean): Promise<IBrandCollaboration | null> {
+    return this.updateBrandCollaboration(id, { isActive });
+  }
+
+  public async reorderBrandCollaborations(orderedItems: { id: string; order: number }[]): Promise<boolean> {
+    if (this.isMongoConnected) {
+      const bulkOps = orderedItems.map((item) => ({
+        updateOne: {
+          filter: this.buildIdQuery(item.id),
+          update: { $set: { order: item.order, updatedAt: new Date() } },
+        },
+      }));
+      if (bulkOps.length > 0) {
+        await BrandCollaborationModel.bulkWrite(bulkOps);
+      }
+      return true;
+    }
+
+    if (!this.localData.brands) this.localData.brands = [];
+    for (const item of orderedItems) {
+      const brand = this.localData.brands.find((b) => String(b.id) === String(item.id) || (b as any)._id === String(item.id));
+      if (brand) {
+        brand.order = item.order;
+        brand.updatedAt = new Date().toISOString();
+      }
+    }
+    this.persistLocal(this.localData);
+    return true;
+  }
+
+  public async deleteBrandCollaboration(id: string): Promise<boolean> {
+    if (this.isMongoConnected) {
+      const res = await BrandCollaborationModel.deleteOne(this.buildIdQuery(id));
+      return res.deletedCount > 0;
+    }
+
+    if (!this.localData.brands) return false;
+    const initialLen = this.localData.brands.length;
+    this.localData.brands = this.localData.brands.filter((b) => String(b.id) !== String(id) && (b as any)._id !== String(id));
+    if (this.localData.brands.length !== initialLen) {
       this.persistLocal(this.localData);
       return true;
     }

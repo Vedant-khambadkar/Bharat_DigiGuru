@@ -58,11 +58,24 @@ import {
   getPresignedUploadUrlHandler,
 } from "../controllers/uploadController.js";
 import {
+  getAdminSettings,
+  updateTeamVisibility,
+} from "../controllers/settingsController.js";
+import {
   authenticateAdmin,
   requireManagedAdmin,
   requireSuperOrManagedAdmin,
 } from "../middleware/auth.js";
-import { upload } from "../middleware/upload.js";
+import {
+  getAdminBrandCollaborations,
+  getBrandCollaborationById,
+  createBrandCollaboration,
+  updateBrandCollaboration,
+  updateBrandCollaborationStatus,
+  reorderBrandCollaborations,
+  deleteBrandCollaboration,
+} from "../controllers/brandCollaborationsController.js";
+import { upload, uploadBrandLogo } from "../middleware/upload.js";
 
 const router = Router();
 
@@ -131,6 +144,18 @@ router.post("/upload", upload.single("file"), uploadMedia);
 router.get("/media/presigned-url", getPresignedUrlHandler);
 router.post("/media/presigned-upload", getPresignedUploadUrlHandler);
 
+// 9. Site Settings (Team / Founder Visibility Toggle)
+router.get("/settings", getAdminSettings);
+router.patch("/settings/team-visibility", updateTeamVisibility);
+
+// 10. Brand Collaborations CRUD
+router.get("/brand-collaborations", getAdminBrandCollaborations);
+router.post("/brand-collaborations", uploadBrandLogo.single("logo"), createBrandCollaboration);
+router.patch("/brand-collaborations/reorder", reorderBrandCollaborations);
+router.get("/brand-collaborations/:id", getBrandCollaborationById);
+router.put("/brand-collaborations/:id", uploadBrandLogo.single("logo"), updateBrandCollaboration);
+router.patch("/brand-collaborations/:id/status", updateBrandCollaborationStatus);
+router.delete("/brand-collaborations/:id", deleteBrandCollaboration);
 
 export default router;
 

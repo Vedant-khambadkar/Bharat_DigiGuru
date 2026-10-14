@@ -15,11 +15,14 @@ import {
   Search,
   Layers,
   Upload,
+  Sparkles,
 } from "lucide-react";
 import { adminService } from "../../services/service/adminService";
 import { socket, onSocketEvent } from "../../utils/socket";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { getApiCache, setApiCache } from "../../utils/apiCache";
+
+import { BrandCollaborationsManager } from "./BrandCollaborations/BrandCollaborationsManager";
 
 interface AdminDashboardModalProps {
   isOpen: boolean;
@@ -27,7 +30,7 @@ interface AdminDashboardModalProps {
   onLogout: () => void;
 }
 
-type TabType = "overview" | "portfolio" | "threed" | "services" | "inquiries";
+type TabType = "overview" | "portfolio" | "threed" | "services" | "brands" | "inquiries";
 
 const extractPaginatedData = (res: any) => {
   if (!res) return { items: [], total: 0, totalPages: 1, page: 1 };
@@ -596,6 +599,20 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
             >
               <Layers size={14} />
               <span>SERVICES ({stats.totalServices})</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("brands");
+              }}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-mono tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                activeTab === "brands"
+                  ? "bg-[#ff3b30] text-white font-bold shadow-[0_0_15px_rgba(255,59,48,0.3)]"
+                  : "text-neutral-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <Sparkles size={14} />
+              <span>BRAND COLLABS</span>
             </button>
 
             <button
@@ -1179,6 +1196,13 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                     </button>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* BRAND COLLABORATIONS TAB */}
+            {activeTab === "brands" && (
+              <div className="animate-in fade-in duration-200">
+                <BrandCollaborationsManager />
               </div>
             )}
           </main>

@@ -179,11 +179,6 @@ export const Process: React.FC = () => {
       id="process-section"
       className="relative w-full min-h-screen bg-transparent text-white font-['DM_Sans']  overflow-hidden select-none flex flex-col justify-center py-10 lg:py-0"
     >
-      {/* Background Subtle Ambient Lighting */}
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-white/[0.02] blur-[140px] rounded-full" />
-        <div className="absolute bottom-1/4 left-1/4 w-[400px] h-[400px] bg-white/[0.015] blur-[120px] rounded-full" />
-      </div>
 
       <div className="relative z-10 mt-5 w-full max-w-8xl mx-auto px-5 sm:px-8 md:px-12 flex flex-col justify-between gap-10 sm:gap-14 py-8">
 

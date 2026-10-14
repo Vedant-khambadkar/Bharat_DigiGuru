@@ -242,6 +242,66 @@ class UserService {
   }) {
     return userApi.submitInquiry(data);
   }
+
+  private _settingsPromise: Promise<any> | null = null;
+  private _brandsPromise: Promise<any> | null = null;
+
+  async getSettings(forceRefresh = false) {
+    if (!forceRefresh) {
+      const cached = getApiCache<any>("site_settings");
+      if (cached) {
+        if (!this._settingsPromise) {
+          this._settingsPromise = this._fetchSettingsDirect();
+        }
+        return cached;
+      }
+    }
+
+    if (this._settingsPromise) return this._settingsPromise;
+    this._settingsPromise = this._fetchSettingsDirect();
+    return this._settingsPromise;
+  }
+
+  private async _fetchSettingsDirect() {
+    try {
+      const data = await userApi.getSettings();
+      if (data) {
+        setApiCache("site_settings", data);
+      }
+      return data;
+    } finally {
+      this._settingsPromise = null;
+    }
+  }
+
+  async getBrandCollaborations(forceRefresh = false) {
+    if (!forceRefresh) {
+      const cached = getApiCache<any>("public_brands");
+      if (cached && (Array.isArray(cached) ? cached.length > 0 : true)) {
+        if (!this._brandsPromise) {
+          this._brandsPromise = this._fetchBrandsDirect();
+        }
+        return cached;
+      }
+    }
+
+    if (this._brandsPromise) return this._brandsPromise;
+    this._brandsPromise = this._fetchBrandsDirect();
+    return this._brandsPromise;
+  }
+
+  private async _fetchBrandsDirect() {
+    try {
+      const data = await userApi.getBrandCollaborations();
+      if (data) {
+        const items = Array.isArray(data) ? data : data.items || data.data || [];
+        setApiCache("public_brands", items);
+      }
+      return data;
+    } finally {
+      this._brandsPromise = null;
+    }
+  }
 }
 
 export const userService = new UserService();

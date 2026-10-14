@@ -151,12 +151,19 @@ export interface IBlogItem {
   readTime?: string;
   date?: string;
   image?: string;
-  content: string[];
+  images?: string[];
+  content: string[] | string;
   bullets?: string[];
   isPublished?: boolean;
   order?: number;
   createdAt?: string | Date;
   updatedAt?: string | Date;
+}
+
+export interface ISiteSettings {
+  teamSectionVisible: boolean;
+  updatedAt?: string | Date;
+  createdAt?: string | Date;
 }
 
 export interface IFounderProfile {
@@ -178,6 +185,20 @@ export interface IFounderProfile {
   updatedAt?: string | Date;
 }
 
+export interface IBrandCollaboration {
+  id: string;
+  name: string;
+  logoUrl: string;
+  altText?: string;
+  order: number;
+  isActive: boolean;
+  originalFormat?: string;
+  format?: string;
+  size?: number;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
 export interface IDatabaseSchema {
   portfolio: IPortfolioItem[];
   threed: IThreeDProject[];
@@ -186,6 +207,8 @@ export interface IDatabaseSchema {
   founder?: IFounderProfile;
   stories?: IStoryItem[];
   blogs?: IBlogItem[];
+  settings?: ISiteSettings;
+  brands?: IBrandCollaboration[];
   inquiries: IInquiry[];
   adminUser: IAdminUser;
   adminUsers?: IAdminUser[];

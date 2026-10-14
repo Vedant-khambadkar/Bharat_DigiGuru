@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../data/db.js";
 import { emitEvent } from "../services/socketService.js";
+import { sanitizeBlogContent } from "../utils/sanitizeHtml.js";
 
 export const getBlogs = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -40,7 +41,11 @@ export const getBlogById = async (req: Request, res: Response): Promise<void> =>
 
 export const createBlog = async (req: Request, res: Response): Promise<void> => {
   try {
-    const created = await db.createBlog(req.body);
+    const payload = { ...req.body };
+    if (payload.content !== undefined) {
+      payload.content = sanitizeBlogContent(payload.content);
+    }
+    const created = await db.createBlog(payload);
     emitEvent("blog:created", created);
     res.status(201).json({ success: true, data: created });
   } catch (err: any) {
@@ -51,7 +56,11 @@ export const createBlog = async (req: Request, res: Response): Promise<void> => 
 export const updateBlog = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const updated = await db.updateBlog(id, req.body);
+    const payload = { ...req.body };
+    if (payload.content !== undefined) {
+      payload.content = sanitizeBlogContent(payload.content);
+    }
+    const updated = await db.updateBlog(id, payload);
     if (!updated) {
       res.status(404).json({ success: false, message: "Blog not found" });
       return;

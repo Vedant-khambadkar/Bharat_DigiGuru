@@ -7,6 +7,8 @@ import { getStories, getStoryById } from "../controllers/storyController.js";
 import { getBlogs, getBlogById } from "../controllers/blogsController.js";
 import { submitInquiry } from "../controllers/inquiriesController.js";
 import { getPresignedUrlHandler, streamMediaHandler } from "../controllers/uploadController.js";
+import { getPublicSettings } from "../controllers/settingsController.js";
+import { getPublicBrandCollaborations } from "../controllers/brandCollaborationsController.js";
 
 const router = Router();
 
@@ -44,5 +46,11 @@ router.get("/media/url", getPresignedUrlHandler);
 router.get("/files/:key/url", getPresignedUrlHandler);
 router.get("/media/stream", streamMediaHandler);
 router.get("/files/stream", streamMediaHandler);
+
+// 8. Public Site Settings
+router.get("/settings", getPublicSettings);
+
+// 9. Brand Collaborations (Active only, ordered)
+router.get("/brand-collaborations", getPublicBrandCollaborations);
 
 export default router;

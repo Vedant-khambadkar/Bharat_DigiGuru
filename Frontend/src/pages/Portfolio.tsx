@@ -270,20 +270,8 @@ export const Portfolio: React.FC = () => {
     <section
       ref={sectionRef}
       id="portfolio-section"
-      className="relative w-full min-h-[100svh] md:h-screen md:min-h-[640px] overflow-x-clip md:overflow-hidden bg-[#050505] text-white font-['DM_Sans'] select-none"
+      className="relative w-full min-h-[100svh] md:h-screen md:min-h-[640px] overflow-x-clip md:overflow-hidden  text-white font-['DM_Sans'] select-none"
     >
-      {/* Background Subtle Dot-Matrix Texture matching MissionVision */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-15 z-0"
-        style={{
-          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.22) 1.25px, transparent 1.25px)`,
-          backgroundSize: "28px 28px",
-        }}
-      />
-
-      {/* Top Soft Fade Gradient for Seamless Section Blend */}
-      <div className="absolute top-0 inset-x-0 h-44 bg-gradient-to-b from-[#050505] via-[#050505]/75 to-transparent pointer-events-none z-10" />
-
       {/* Mobile Experience: Dedicated, Responsive Card Deck */}
       {!shouldRenderPortfolio3D && !mobile3DMode ? (
         <MobilePortfolioDeck
@@ -295,15 +283,6 @@ export const Portfolio: React.FC = () => {
         />
       ) : (
         <>
-          {/* 360° Rotation Progress Glowing Wire */}
-          <div className="absolute top-0 left-0 right-0 h-[2px] z-30 pointer-events-none overflow-hidden">
-            <div
-              ref={progressBarRef}
-              className="h-full bg-gradient-to-r from-[#ff2d55] via-[#ff3b30] to-[#ff6b00] shadow-[0_0_12px_rgba(255,59,48,0.9)] transition-all duration-75 ease-out"
-              style={{ width: "0%" }}
-            />
-          </div>
-
           {/* 1. Upper Left Section: PORTFOLIO Header */}
           <div className="portfolio-header-text absolute top-16 sm:top-20 md:top-[110px] lg:top-[125px] left-4 sm:left-8 md:left-12 z-10 pointer-events-none select-none">
             <div className="font-['DM_Sans'] text-5xl md:text-6xl font-bold leading-[0.88] tracking-wider text-white m-0 uppercase">

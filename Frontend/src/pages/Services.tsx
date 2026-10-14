@@ -222,7 +222,7 @@ const Services: React.FC = () => {
         >
             {/* Background Vignette & Radial Lighting - feathers naturally into dynamic background */}
             <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.035)_0%,rgba(255,255,255,0.01)_45%,transparent_80%)] opacity-90" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255, 255, 255, 0.01)_0%,rgba(255,255,255,0.01)_45%,transparent_80%)] opacity-90" />
                 <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:24px_24px] opacity-25" />
                 <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[900px] h-[350px] sm:h-[500px] bg-white/[0.025] blur-[120px] rounded-full pointer-events-none" />
             </div>

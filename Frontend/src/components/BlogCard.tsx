@@ -11,10 +11,11 @@ export interface BlogItem {
   readTime: string;
   date: string;
   image?: string;
+  images?: string[];
   gradient?: string;
   cardHeight?: string;
   cardWidth?: string;
-  content?: string[];
+  content?: string[] | string;
   bullets?: string[];
 }
 

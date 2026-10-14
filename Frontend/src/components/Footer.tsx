@@ -1,7 +1,7 @@
 import React from "react";
 import { ArrowUpRight, ArrowUp, Mail, MapPin, Globe, Phone } from "lucide-react";
 
-export const Footer: React.FC = () => {
+export const Footer: React.FC<{ teamSectionVisible?: boolean }> = ({ teamSectionVisible = true }) => {
   const scrollToSection = (id: string) => {
     if (id === "top" || id === "home-section") {
       if ((window as any).lenis) {
@@ -29,7 +29,7 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer id="footer-section" className="relative z-10 bg-transparent text-white w-full pt-10 sm:pt-14 md:pt-16 pb-10 sm:pb-14 overflow-hidden font-['Space_Grotesk',sans-serif]">
+    <footer id="footer-section" className="relative z-10 bg-black text-white w-full pt-10 sm:pt-14 md:pt-16 pb-10 sm:pb-14 overflow-hidden font-['Space_Grotesk',sans-serif]">
       {/* Subtle Ambient Backlight Glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-96 bg-red-600/[0.03] blur-[160px] rounded-full pointer-events-none" />
 
@@ -121,15 +121,17 @@ export const Footer: React.FC = () => {
                   Portfolio
                 </button>
               </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection("our-team-section")}
-                  className="hover:text-white transition-colors cursor-pointer text-left hover:translate-x-1 duration-200 inline-block"
-                >
-                  Our Team
-                </button>
-              </li>
+              {teamSectionVisible && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection("our-team-section")}
+                    className="hover:text-white transition-colors cursor-pointer text-left hover:translate-x-1 duration-200 inline-block"
+                  >
+                    Our Team
+                  </button>
+                </li>
+              )}
               <li>
                 <button
                   type="button"

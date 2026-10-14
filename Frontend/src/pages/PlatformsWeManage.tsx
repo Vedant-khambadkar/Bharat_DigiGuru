@@ -162,26 +162,7 @@ export const PlatformsWeManage: React.FC = () => {
           animation: streamPulseAnim 7.5s ease-in-out infinite;
         }
 
-        /* Default ambient background */
-        #platforms-we-manage-section .platform-ambient-glow {
-          background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, rgba(4, 106, 56, 0.06) 45%, transparent 70%);
-        }
-        #platforms-we-manage-section[data-active-platform="instagram"] .platform-ambient-glow {
-          background: radial-gradient(circle at 35% 30%, rgba(225, 48, 108, 0.15) 0%, transparent 60%);
-        }
-        #platforms-we-manage-section[data-active-platform="linkedin"] .platform-ambient-glow {
-          background: radial-gradient(circle at 65% 30%, rgba(10, 102, 194, 0.15) 0%, transparent 60%);
-        }
-        #platforms-we-manage-section[data-active-platform="youtube"] .platform-ambient-glow {
-          background: radial-gradient(circle at 75% 40%, rgba(255, 0, 0, 0.15) 0%, transparent 60%);
-        }
-        #platforms-we-manage-section[data-active-platform="tiktok"] .platform-ambient-glow {
-          background: radial-gradient(circle at 80% 50%, rgba(37, 244, 238, 0.15) 0%, transparent 60%);
-        }
-        #platforms-we-manage-section[data-active-platform="facebook"] .platform-ambient-glow {
-          background: radial-gradient(circle at 30% 70%, rgba(24, 119, 242, 0.15) 0%, transparent 60%);
-        }
-
+       
         .animate-float-1,
         .animate-float-2,
         .animate-pulse-ring,

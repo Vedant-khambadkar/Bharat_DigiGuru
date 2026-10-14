@@ -7,4 +7,6 @@ export * from "./TeamMember.js";
 export * from "./Story.js";
 export * from "./Blog.js";
 export * from "./Founder.js";
+export * from "./SiteSettings.js";
+export * from "./BrandCollaboration.js";
 

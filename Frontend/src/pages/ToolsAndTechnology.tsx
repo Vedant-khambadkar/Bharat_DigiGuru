@@ -110,7 +110,7 @@ export const ToolsAndTechnology: React.FC = () => {
 
       {/* Ambient Atmospheric Glows */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[950px] h-[350px] sm:h-[500px] bg-white/[0.015] blur-[150px] rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[950px] h-[350px] sm:h-[500px]  rounded-full" />
         <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-purple-500/[0.03] blur-[120px] rounded-full" />
         <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-blue-500/[0.025] blur-[130px] rounded-full" />
       </div>
