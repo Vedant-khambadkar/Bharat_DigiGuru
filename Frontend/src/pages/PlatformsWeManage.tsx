@@ -6,31 +6,31 @@ gsap.registerPlugin(ScrollTrigger);
 const SOCIAL_PLATFORMS = {
   instagram: {
     name: "Instagram",
-    url: "https://www.instagram.com/banarasi_chap/",
+    url: "https://www.instagram.com/bharat.digiguru/",
   },
   linkedin: {
     name: "LinkedIn",
-    url: "https://www.linkedin.com/in/shubhsingh04/",
+    url: "https://www.linkedin.com/company/bharatdigiguru/",
   },
   youtube: {
     name: "YouTube",
-    url: "https://www.youtube.com/@banarasichap",
+    url: "https://www.youtube.com/@YourBharatDigiGuru",
   },
   x: {
     name: "X (Twitter)",
-    url: "https://x.com",
+    url: "https://x.com/Bharat_digiguru",
   },
   tiktok: {
     name: "TikTok",
-    url: "https://www.tiktok.com",
+    url: "https://www.tiktok.com/@bharatdigiguru",
   },
   pinterest: {
     name: "Pinterest",
-    url: "https://www.pinterest.com",
+    url: "https://www.pinterest.com/bharatdigiguru/",
   },
   facebook: {
     name: "Facebook",
-    url: "https://www.facebook.com/banarasichap",
+    url: "https://www.facebook.com/bharatdigiguru/",
   },
 };
 

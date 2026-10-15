@@ -159,7 +159,7 @@ export const BrandCollaborationsManager: React.FC = () => {
       await adminService.createBrandCollaboration(formData);
       setNotification({
         type: "success",
-        message: "Brand collaboration added successfully with automatic WebP conversion.",
+        message: "Brand added to Brands Trust Us successfully with automatic WebP conversion.",
       });
     }
     await fetchBrands(true);
@@ -312,7 +312,7 @@ export const BrandCollaborationsManager: React.FC = () => {
           <div>
             <div className="flex items-center gap-2.5">
               <h2 className="font-['Syne',sans-serif] font-bold text-lg sm:text-2xl text-white">
-                Brand Collaborations
+                Brands Trust Us
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/10 text-neutral-300 border border-white/15">
                 {brands.length} Total
@@ -398,7 +398,7 @@ export const BrandCollaborationsManager: React.FC = () => {
       {isLoading ? (
         <div className="p-16 flex flex-col items-center justify-center gap-3 bg-[#11131b]/50 rounded-2xl border border-white/10">
           <Loader2 size={32} className="animate-spin text-red-500" />
-          <p className="font-mono text-xs text-neutral-400">Loading brand collaborations...</p>
+          <p className="font-mono text-xs text-neutral-400">Loading brands...</p>
         </div>
       ) : filteredBrands.length === 0 ? (
         <div className="p-16 flex flex-col items-center justify-center gap-4 bg-[#11131b]/40 rounded-2xl border border-white/10 text-center">
@@ -408,8 +408,8 @@ export const BrandCollaborationsManager: React.FC = () => {
           <div>
             <h3 className="font-['Syne',sans-serif] font-bold text-base text-white">
               {searchQuery || statusFilter !== "ALL"
-                ? "No matching brand collaborations found"
-                : "No brand collaborations yet"}
+                ? "No matching brands found"
+                : "No brands added to Brands Trust Us yet"}
             </h3>
             <p className="font-mono text-xs text-neutral-400 max-w-sm mt-1">
               {searchQuery || statusFilter !== "ALL"
@@ -615,7 +615,7 @@ export const BrandCollaborationsManager: React.FC = () => {
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         isOpen={Boolean(brandToDelete)}
-        title="Delete Brand Collaboration"
+        title="Delete Brand"
         message="The logo asset will be removed and this brand will no longer appear on the public website."
         itemTitle={brandToDelete?.name}
         isLoading={isDeleting}

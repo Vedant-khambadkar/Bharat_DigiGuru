@@ -886,7 +886,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                           duration: "0:15 // 4K",
                           resolution: "3840 x 2160 (4K UHD)",
                           description: "",
-                          posterUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200",
+                          posterUrl: "",
                         },
                       })
                     }

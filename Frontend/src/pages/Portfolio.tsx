@@ -284,7 +284,7 @@ export const Portfolio: React.FC = () => {
       ) : (
         <>
           {/* 1. Upper Left Section: PORTFOLIO Header */}
-          <div className="portfolio-header-text absolute top-16 sm:top-20 md:top-[110px] lg:top-[125px] left-4 sm:left-8 md:left-12 z-10 pointer-events-none select-none">
+          <div className="portfolio-header-text  absolute top-16 sm:top-20 md:top-[110px] lg:top-[125px] left-2 sm:left-8 md:left-12 z-10 pointer-events-none select-none">
             <div className="font-['DM_Sans'] text-5xl md:text-6xl font-bold leading-[0.88] tracking-wider text-white m-0 uppercase">
               PORTFOLIO
             </div>

@@ -81,12 +81,12 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
   }, [lightboxImage]);
 
   return (
-    <div className="relative z-10 w-full min-h-[100svh] flex flex-col justify-between pt-20 pb-8 px-4 sm:px-6 select-none overflow-hidden font-['DM_Sans']">
+    <div className="relative z-10 w-full min-h-[100svh] flex flex-col justify-between pt-20 pb-8 px-1 sm:px-6 select-none overflow-hidden font-['DM_Sans']">
       {/* Ambient Color Glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[240px] h-[240px] rounded-full blur-[70px] pointer-events-none opacity-20" />
 
       {/* TOP HEADER */}
-      <div className="w-full max-w-lg mx-auto flex items-center justify-between">
+      <div className="w-full  mx-auto flex items-center justify-between">
         <h2 className="font-['DM_Sans'] text-4xl sm:text-5xl md:text-6xl font-bold leading-[0.88] tracking-wider text-white m-0 uppercase">
           PORTFOLIO
         </h2>
@@ -96,7 +96,7 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
       <div
         ref={scrollContainerRef}
         onScroll={handleCardScroll}
-        className="flex gap-4 overflow-x-auto snap-x snap-proximity py-4 no-scrollbar touch-pan-x touch-pan-y w-full max-w-lg mx-auto scroll-smooth items-center"
+        className="flex gap-4 overflow-x-auto snap-x snap-proximity py-4 no-scrollbar touch-pan-x touch-pan-y w-full  mx-auto scroll-smooth items-center"
         style={{
           scrollbarWidth: "none",
           msOverflowStyle: "none",

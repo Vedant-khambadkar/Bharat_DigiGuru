@@ -110,6 +110,19 @@ class AdminService {
       try {
         const res = await adminApi.getThreeD(params);
         if (res) {
+          if (Array.isArray(res)) {
+            res.forEach((item: any) => {
+              if (item.posterUrl && (item.posterUrl.includes("unsplash.com") || item.posterUrl.includes("placeholder"))) {
+                delete item.posterUrl;
+              }
+            });
+          } else if (Array.isArray(res.items)) {
+            res.items.forEach((item: any) => {
+              if (item.posterUrl && (item.posterUrl.includes("unsplash.com") || item.posterUrl.includes("placeholder"))) {
+                delete item.posterUrl;
+              }
+            });
+          }
           setApiCache(key, res);
         }
         return res;

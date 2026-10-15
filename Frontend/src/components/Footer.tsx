@@ -338,6 +338,26 @@ export const Footer: React.FC<{ teamSectionVisible?: boolean }> = ({ teamSection
                   YouTube <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </a>
               </li>
+              <li>
+                <a
+                  href="https://www.tiktok.com/@bharatdigiguru"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-white transition-colors inline-flex items-center gap-1 group hover:translate-x-1 duration-200"
+                >
+                  TikTok <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.pinterest.com/bharatdigiguru/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-white transition-colors inline-flex items-center gap-1 group hover:translate-x-1 duration-200"
+                >
+                  Pinterest <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </a>
+              </li>
             </ul>
           </div>
         </div>

@@ -136,25 +136,40 @@ export const ThreeDSection: React.FC<ThreeDSectionProps> = ({
                   <div className="w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-black/50 relative flex items-center justify-center border border-white/5">
                     {t.videoUrl.match(/\.(mp4|webm|mov)($|\?)/i) || t.videoUrl.includes("/uploads/") ? (
                       <video
-                        src={t.videoUrl}
+                        src={t.videoUrl.includes("#t=") ? t.videoUrl : `${t.videoUrl}#t=0.001`}
                         muted
                         playsInline
                         preload="metadata"
+                        onMouseEnter={(e) => {
+                          try {
+                            e.currentTarget.play();
+                          } catch {}
+                        }}
+                        onMouseLeave={(e) => {
+                          try {
+                            e.currentTarget.pause();
+                            e.currentTarget.currentTime = 0;
+                          } catch {}
+                        }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                    ) : (
+                    ) : t.posterUrl && !t.posterUrl.includes("unsplash.com") ? (
                       <CachedImage
-                        src={t.posterUrl || t.videoUrl}
+                        src={t.posterUrl}
                         alt={t.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-black/60 text-purple-400 font-mono text-xs">
+                        3D Video
+                      </div>
                     )}
-                    <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-mono text-white/90 border border-white/10 flex items-center gap-1">
+                    <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-mono text-white/90 border border-white/10 flex items-center gap-1 pointer-events-none">
                       <Play size={10} className="fill-current text-purple-400" />
                       <span>{t.duration || "4K"}</span>
                     </div>
                   </div>
-                ) : t.posterUrl ? (
+                ) : t.posterUrl && !t.posterUrl.includes("unsplash.com") ? (
                   <div className="w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-black/40 relative">
                     <CachedImage
                       src={t.posterUrl}
@@ -165,7 +180,14 @@ export const ThreeDSection: React.FC<ThreeDSectionProps> = ({
                       {t.category || "3D Studio"}
                     </div>
                   </div>
-                ) : null}
+                ) : (
+                  <div className="w-full h-36 sm:h-40 rounded-xl overflow-hidden bg-black/40 relative flex items-center justify-center border border-white/5">
+                    <div className="flex flex-col items-center gap-1.5 text-neutral-500 font-mono text-xs">
+                      <Play size={16} className="text-purple-400/60" />
+                      <span>No Video Media</span>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs text-purple-400 truncate">

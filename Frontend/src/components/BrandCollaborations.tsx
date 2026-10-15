@@ -102,7 +102,7 @@ export const BrandCollaborations: React.FC<BrandCollaborationsProps> = ({ classN
     <section
       ref={sectionRef}
       id="brand-collaborations"
-      aria-label="Brand Collaborations"
+      aria-label="Brands Trust Us"
       className={`relative w-full py-16 sm:py-20 text-white overflow-hidden select-none ${className}`}
     >
       {/* Background Ambience Gradient */}
@@ -116,7 +116,7 @@ export const BrandCollaborations: React.FC<BrandCollaborationsProps> = ({ classN
         </div>
 
         <h2 className="font-['Syne',sans-serif] font-bold text-2xl sm:text-4xl md:text-5xl text-white tracking-tight uppercase">
-          Trusted by Industry Leaders
+          Brands Trust Us
         </h2>
 
         <p className="font-['Syne',sans-serif] text-xs sm:text-sm text-neutral-400 max-w-xl mx-auto mt-3">

@@ -13,7 +13,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 import { getApiCache, setApiCache } from "../utils/apiCache";
-import { preloadMediaList, useCachedMedia } from "../utils/mediaCache";
 import { useResponsiveTier } from "../hooks/useResponsiveTier";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -33,6 +32,7 @@ interface ThreeDCardProps {
   isPlaying: boolean;
   isMuted: boolean;
   canPlay: boolean;
+  priority?: boolean;
   onTogglePlay: (e: React.MouseEvent) => void;
   onToggleMute: (e: React.MouseEvent) => void;
   onOpenTheater: () => void;
@@ -45,6 +45,7 @@ const ThreeDCard: React.FC<ThreeDCardProps> = ({
   isPlaying,
   isMuted,
   canPlay,
+  priority = false,
   onTogglePlay,
   onToggleMute,
   onOpenTheater,
@@ -53,6 +54,7 @@ const ThreeDCard: React.FC<ThreeDCardProps> = ({
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [isVideoReady, setIsVideoReady] = useState(false);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -62,7 +64,7 @@ const ThreeDCard: React.FC<ThreeDCardProps> = ({
       ([entry]) => {
         onVisibilityChange(project.id, entry.isIntersecting ? entry.intersectionRatio : 0);
       },
-      { threshold: [0, 0.25, 0.5, 0.75, 1], rootMargin: "50px 0px" }
+      { threshold: [0, 0.25, 0.5, 0.75, 1], rootMargin: "80px 0px" }
     );
 
     observer.observe(el);
@@ -86,6 +88,21 @@ const ThreeDCard: React.FC<ThreeDCardProps> = ({
     }
   }, [canPlay, isPlaying]);
 
+  // Sanitize poster - never display default Unsplash or stock photos
+  const cleanPoster =
+    project.posterUrl &&
+    !project.posterUrl.includes("unsplash.com") &&
+    !project.posterUrl.includes("placeholder")
+      ? project.posterUrl
+      : undefined;
+
+  // Append #t=0.001 to instruct modern browsers to immediately render the first frame of the video
+  const videoSrc = project.videoUrl
+    ? project.videoUrl.includes("#t=")
+      ? project.videoUrl
+      : `${project.videoUrl}#t=0.001`
+    : "";
+
   return (
     <div
       ref={cardRef}
@@ -94,35 +111,36 @@ const ThreeDCard: React.FC<ThreeDCardProps> = ({
     >
       {/* Full-Card Video Player View */}
       <div className="relative aspect-[16/10] w-full bg-neutral-950 overflow-hidden">
-        {/* Fallback Poster Image */}
-        {project.posterUrl && (
-          <img
-            src={project.posterUrl}
-            alt={project.title || "3D Project"}
-            loading="lazy"
-            decoding="async"
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-              canPlay && isPlaying ? "opacity-0 pointer-events-none" : "opacity-100"
-            }`}
-          />
+        {/* Loading Shimmer / Frame placeholder */}
+        {!isVideoReady && !cleanPoster && (
+          <div className="absolute inset-0 bg-[#0e0e10] flex items-center justify-center pointer-events-none">
+            <div className="flex flex-col items-center gap-2">
+              <span className="w-5 h-5 rounded-full border-2 border-white/10 border-t-[#ff3b30] animate-spin" />
+              <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-500">Loading 4K Reel</span>
+            </div>
+          </div>
         )}
 
-        {/* Video Player (Mounted and active only when within viewport policy) */}
-        {canPlay && (
+        {/* Video Player (Always mounted in DOM for instantaneous first-frame decode) */}
+        {videoSrc ? (
           <video
             ref={(el) => {
               localVideoRef.current = el;
               setVideoRef(el);
             }}
-            src={project.videoUrl}
-            poster={project.posterUrl}
+            src={videoSrc}
+            poster={cleanPoster}
             loop
             muted={isMuted}
             playsInline
-            preload="metadata"
-            className="w-full h-full object-cover transition-transform duration-500 ease-out"
+            preload={priority ? "auto" : "metadata"}
+            onLoadedData={() => setIsVideoReady(true)}
+            onCanPlay={() => setIsVideoReady(true)}
+            className={`w-full h-full object-cover transition-all duration-500 ease-out ${
+              isVideoReady || cleanPoster ? "opacity-100" : "opacity-0"
+            }`}
           />
-        )}
+        ) : null}
 
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none transition-opacity duration-300 group-hover:opacity-60" />
@@ -193,7 +211,17 @@ const ThreeDCard: React.FC<ThreeDCardProps> = ({
 export const ThreeDProjects: React.FC = () => {
   const [projects, setProjects] = useState<ThreeDProject[]>(() => {
     const cached = getApiCache<ThreeDProject[]>("threed_projects");
-    return cached && cached.length > 0 ? cached : [];
+    if (cached && cached.length > 0) {
+      return cached.map((p) => ({
+        ...p,
+        posterUrl:
+          p.posterUrl &&
+          (p.posterUrl.includes("unsplash.com") || p.posterUrl.includes("placeholder"))
+            ? ""
+            : p.posterUrl,
+      }));
+    }
+    return [];
   });
   const [isLoading, setIsLoading] = useState<boolean>(() => projects.length === 0);
   const [activeTheaterProject, setActiveTheaterProject] = useState<ThreeDProject | null>(null);
@@ -234,13 +262,21 @@ export const ThreeDProjects: React.FC = () => {
     const fetchThreeD = async () => {
       try {
         const res = await userService.getThreeD();
-        const items = Array.isArray(res)
+        const rawItems = Array.isArray(res)
           ? res
           : Array.isArray((res as any)?.items)
           ? (res as any).items
           : Array.isArray((res as any)?.data)
           ? (res as any).data
           : [];
+        const items = rawItems.map((p: any) => ({
+          ...p,
+          posterUrl:
+            p.posterUrl &&
+            (p.posterUrl.includes("unsplash.com") || p.posterUrl.includes("placeholder"))
+              ? ""
+              : p.posterUrl,
+        }));
         if (items.length > 0) {
           setProjects(items);
           setApiCache("threed_projects", items);
@@ -255,22 +291,36 @@ export const ThreeDProjects: React.FC = () => {
 
     const unsubscribeUpdate = onSocketEvent("threed:updated", (updatedProject: any) => {
       if (!updatedProject) return;
+      const cleanProject = {
+        ...updatedProject,
+        posterUrl:
+          updatedProject.posterUrl &&
+          (updatedProject.posterUrl.includes("unsplash.com") || updatedProject.posterUrl.includes("placeholder"))
+            ? ""
+            : updatedProject.posterUrl,
+      };
       setProjects((prev) => {
-        const updated = prev.map((p) => (String(p.id) === String(updatedProject.id || updatedProject._id) ? { ...p, ...updatedProject } : p));
+        const updated = prev.map((p) => (String(p.id) === String(cleanProject.id || cleanProject._id) ? { ...p, ...cleanProject } : p));
         setApiCache("threed_projects", updated);
-        if (updatedProject.posterUrl) preloadMediaList([updatedProject.posterUrl], { priority: "idle" });
         return updated;
       });
     });
 
     const unsubscribeCreate = onSocketEvent("threed:created", (newProject: any) => {
       if (!newProject) return;
+      const cleanProject = {
+        ...newProject,
+        posterUrl:
+          newProject.posterUrl &&
+          (newProject.posterUrl.includes("unsplash.com") || newProject.posterUrl.includes("placeholder"))
+            ? ""
+            : newProject.posterUrl,
+      };
       setProjects((prev) => {
-        const exists = prev.some((p) => String(p.id) === String(newProject.id || newProject._id));
+        const exists = prev.some((p) => String(p.id) === String(cleanProject.id || cleanProject._id));
         if (exists) return prev;
-        const updated = [newProject, ...prev];
+        const updated = [cleanProject, ...prev];
         setApiCache("threed_projects", updated);
-        if (newProject.posterUrl) preloadMediaList([newProject.posterUrl], { priority: "idle" });
         return updated;
       });
     });
@@ -473,6 +523,7 @@ export const ThreeDProjects: React.FC = () => {
                     isPlaying={isPlaying}
                     isMuted={isMuted}
                     canPlay={canPlay}
+                    priority={index < (isMobile ? 2 : 3)}
                     onTogglePlay={(e) => toggleInlinePlay(project.id, e)}
                     onToggleMute={(e) => toggleInlineMute(project.id, e)}
                     onOpenTheater={() => setActiveTheaterProject(project)}
@@ -505,7 +556,18 @@ const TheaterModal: React.FC<{
   onClose: () => void;
   isMobile: boolean;
 }> = ({ project, onClose, isMobile }) => {
-  const theaterPoster = useCachedMedia(project.posterUrl);
+  const cleanPoster =
+    project.posterUrl &&
+    !project.posterUrl.includes("unsplash.com") &&
+    !project.posterUrl.includes("placeholder")
+      ? project.posterUrl
+      : undefined;
+
+  const videoSrc = project.videoUrl
+    ? project.videoUrl.includes("#t=")
+      ? project.videoUrl
+      : `${project.videoUrl}#t=0.001`
+    : "";
 
   return createPortal(
     <div
@@ -539,8 +601,8 @@ const TheaterModal: React.FC<{
         {/* Fullscreen Video Player */}
         <div className="relative w-full aspect-video max-h-[75vh] bg-black flex items-center justify-center overflow-hidden">
           <video
-            src={project.videoUrl}
-            poster={theaterPoster || project.posterUrl}
+            src={videoSrc}
+            poster={cleanPoster}
             autoPlay
             controls
             playsInline

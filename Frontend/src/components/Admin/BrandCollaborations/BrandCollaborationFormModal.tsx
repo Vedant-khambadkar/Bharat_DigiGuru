@@ -162,7 +162,7 @@ export const BrandCollaborationFormModal: React.FC<BrandCollaborationFormModalPr
       onClose();
     } catch (err: any) {
       console.error("Form submit error:", err);
-      const msg = err.response?.data?.message || err.message || "Failed to save brand collaboration.";
+      const msg = err.response?.data?.message || err.message || "Failed to save brand.";
       setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
@@ -188,7 +188,7 @@ export const BrandCollaborationFormModal: React.FC<BrandCollaborationFormModalPr
             </div>
             <div>
               <h3 className="font-['Syne',sans-serif] font-bold text-lg sm:text-xl text-white">
-                {initialData ? "Edit Brand Collaboration" : "Add Brand Collaboration"}
+                {initialData ? "Edit Brand (Brands Trust Us)" : "Add Brand (Brands Trust Us)"}
               </h3>
               <p className="font-mono text-xs text-neutral-400">
                 Automatic WebP conversion &amp; live website synchronization

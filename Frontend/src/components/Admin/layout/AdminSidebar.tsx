@@ -143,7 +143,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         >
           <div className="flex items-center gap-2 min-w-0">
             <Sparkles size={15} className="shrink-0 text-rose-400" />
-            <span>BRAND COLLABS</span>
+            <span>BRANDS TRUST US</span>
           </div>
         </button>
 
@@ -369,7 +369,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           >
             <Sparkles size={16} />
           </div>
-          <span className="text-[9px] font-mono tracking-tight">Brands</span>
+          <span className="text-[9px] font-mono tracking-tight">Brands Trust Us</span>
         </button>
 
         {/* 4. Team */}

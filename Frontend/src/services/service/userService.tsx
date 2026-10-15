@@ -46,7 +46,15 @@ class UserService {
         if (!this._threeDPromise) {
           this._threeDPromise = this._fetchThreeDDirect();
         }
-        return cached;
+        return Array.isArray(cached)
+          ? cached.map((p: any) => ({
+              ...p,
+              posterUrl:
+                p.posterUrl && !p.posterUrl.includes("unsplash.com") && !p.posterUrl.includes("placeholder")
+                  ? p.posterUrl
+                  : undefined,
+            }))
+          : cached;
       }
     }
 
@@ -60,8 +68,16 @@ class UserService {
       const data = await userApi.getThreeD();
       if (data) {
         const items = Array.isArray(data) ? data : data.items || data;
-        if (Array.isArray(items) && items.length > 0) {
-          setApiCache("threed_projects", items);
+        if (Array.isArray(items)) {
+          const sanitized = items.map((p: any) => ({
+            ...p,
+            posterUrl:
+              p.posterUrl && !p.posterUrl.includes("unsplash.com") && !p.posterUrl.includes("placeholder")
+                ? p.posterUrl
+                : undefined,
+          }));
+          setApiCache("threed_projects", sanitized);
+          return Array.isArray(data) ? sanitized : { ...data, items: sanitized };
         }
       }
       return data;
