@@ -37,7 +37,8 @@ export const TopHeader: React.FC = () => {
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
-          setIsScrolled(window.scrollY > 40);
+          const shouldBeScrolled = window.scrollY > 40;
+          setIsScrolled((prev) => (prev !== shouldBeScrolled ? shouldBeScrolled : prev));
           ticking = false;
         });
         ticking = true;

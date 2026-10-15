@@ -102,13 +102,18 @@ export const LensText: React.FC<LensTextProps> = ({
       rafId = requestAnimationFrame(updateMask);
     };
 
+    let scrollRaf = false;
     const handleScroll = () => {
       if (!isVisible) return;
-      updateRect();
-      if (wasNear) {
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(updateMask);
-      }
+      if (scrollRaf) return;
+      scrollRaf = true;
+      requestAnimationFrame(() => {
+        scrollRaf = false;
+        updateRect();
+        if (wasNear) {
+          updateMask();
+        }
+      });
     };
 
     const bindListeners = () => {

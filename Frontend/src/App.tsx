@@ -34,6 +34,12 @@ const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Prevent mobile viewport address-bar expansion/collapse from triggering ScrollTrigger layout recalculation
+ScrollTrigger.config({
+  ignoreMobileResize: true,
+  autoRefreshEvents: "visibilitychange,DOMContentLoaded,load",
+});
+
 const MainLandingPage = () => {
   const boxRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
@@ -240,8 +246,12 @@ const MainLandingPage = () => {
 
       (window as any).lenis = nativeLenisProxy;
 
+      let lastWidth = typeof window !== "undefined" ? window.innerWidth : 0;
       let resizeTimer: number;
       const handleResize = () => {
+        // Ignore vertical address-bar resize events on mobile devices (only orientation change)
+        if (window.innerWidth === lastWidth) return;
+        lastWidth = window.innerWidth;
         clearTimeout(resizeTimer);
         resizeTimer = window.setTimeout(() => {
           ScrollTrigger.refresh();
@@ -317,8 +327,11 @@ const MainLandingPage = () => {
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
 
+    let lastDesktopWidth = typeof window !== "undefined" ? window.innerWidth : 0;
     let resizeTimer: number;
     const handleResize = () => {
+      if (window.innerWidth === lastDesktopWidth) return;
+      lastDesktopWidth = window.innerWidth;
       clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
         lenis.resize();
@@ -369,22 +382,63 @@ const MainLandingPage = () => {
     };
   }, []);
 
-  // Layout Synchronization: Auto-refresh ScrollTrigger & Lenis whenever dynamic content changes height
+  // Layout Synchronization: Auto-refresh ScrollTrigger & Lenis only when dynamic content changes genuinely and user is not scrolling
   useEffect(() => {
     if (!mainContentRef.current) return;
 
     let timeoutId: number | null = null;
+    let isScrolling = false;
+    let scrollTimeout: number;
+
+    const onScroll = () => {
+      isScrolling = true;
+      clearTimeout(scrollTimeout);
+      scrollTimeout = window.setTimeout(() => {
+        isScrolling = false;
+      }, 200);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    let lastKnownHeight = mainContentRef.current.offsetHeight;
+    let lastKnownWidth = mainContentRef.current.offsetWidth;
+
     const resizeObserver = new ResizeObserver(() => {
+      const el = mainContentRef.current;
+      if (!el) return;
+      const newHeight = el.offsetHeight;
+      const newWidth = el.offsetWidth;
+
+      // Ignore address-bar height adjustments on mobile (< 120px height diff with unchanged width)
+      const widthChanged = Math.abs(newWidth - lastKnownWidth) > 5;
+      const significantHeightChange = Math.abs(newHeight - lastKnownHeight) > 120;
+
+      if (!widthChanged && !significantHeightChange) return;
+
+      lastKnownHeight = newHeight;
+      lastKnownWidth = newWidth;
+
+      // Do NOT trigger refresh while user is actively swiping or scrolling
+      if (isScrolling) {
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = window.setTimeout(() => {
+          (window as any).lenis?.resize();
+          ScrollTrigger.refresh();
+        }, 350);
+        return;
+      }
+
       if (timeoutId) window.clearTimeout(timeoutId);
       timeoutId = window.setTimeout(() => {
         (window as any).lenis?.resize();
         ScrollTrigger.refresh();
-      }, 60);
+      }, 150);
     });
 
     resizeObserver.observe(mainContentRef.current);
 
     return () => {
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(scrollTimeout);
       if (timeoutId) window.clearTimeout(timeoutId);
       resizeObserver.disconnect();
     };
@@ -500,7 +554,7 @@ const MainLandingPage = () => {
       <Navbar teamSectionVisible={teamSectionVisible} />
 
       {/* Main Sections Flow */}
-      <main ref={mainContentRef} className="relative z-10 w-full overflow-x-hidden">
+      <main ref={mainContentRef} className="relative z-10 w-full overflow-x-clip">
         <Home onMacReady={handleMacReady} onMacError={handleMacError} />
         <BrandCollaborations />
         <Services />

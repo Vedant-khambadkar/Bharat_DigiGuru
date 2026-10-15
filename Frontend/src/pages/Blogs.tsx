@@ -210,8 +210,12 @@ export const Blogs: React.FC = () => {
       gsap.set(track, { clearProps: "transform,x" });
     });
 
-    // Auto-refresh ScrollTrigger whenever track dimensions change (e.g. dynamic admin cards added/removed)
+    // Auto-refresh ScrollTrigger only on desktop when track dimensions change
+    let lastTrackWidth = 0;
     const resizeObserver = new ResizeObserver(() => {
+      if (window.innerWidth < 1024) return;
+      if (track.scrollWidth === lastTrackWidth) return;
+      lastTrackWidth = track.scrollWidth;
       ScrollTrigger.refresh();
     });
     resizeObserver.observe(track);

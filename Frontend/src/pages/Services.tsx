@@ -218,7 +218,7 @@ const Services: React.FC = () => {
     return (
         <div
             id="services-section"
-            className="relative min-h-screen bg-transparent text-white selection:bg-white selection:text-black font-['Plus_Jakarta_Sans',sans-serif] overflow-x-hidden "
+            className="relative min-h-screen bg-transparent text-white selection:bg-white selection:text-black font-['Plus_Jakarta_Sans',sans-serif] overflow-x-clip "
         >
             {/* Background Vignette & Radial Lighting - feathers naturally into dynamic background */}
             <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">

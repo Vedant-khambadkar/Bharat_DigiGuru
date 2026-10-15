@@ -74,7 +74,7 @@ body,
   /* Firefox */
   scroll-behavior: auto !important;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: manipulation;
 }
 
 /* Simple, clean sans-serif typography for Admin Portal & Dashboard */

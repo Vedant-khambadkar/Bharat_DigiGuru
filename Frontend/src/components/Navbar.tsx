@@ -81,6 +81,9 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSect
     observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
 
     let ticking = false;
+    let accumulatedDelta = 0;
+    let lastSectionCheckTime = 0;
+
     const handleScroll = () => {
       if (ticking) return;
       ticking = true;
@@ -89,30 +92,40 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSect
         const currentScrollY = window.scrollY;
         const diff = currentScrollY - lastScrollY.current;
 
-        setIsScrolled(currentScrollY > 40);
+        const shouldBeScrolled = currentScrollY > 40;
+        setIsScrolled((prev) => (prev !== shouldBeScrolled ? shouldBeScrolled : prev));
 
-        // Auto-hide dock when scrolling down so it never blocks content, reveal on scroll up
+        // Auto-hide dock with accumulated delta threshold (25px) to prevent rapid flickering during touch momentum
+        accumulatedDelta = (Math.sign(diff) === Math.sign(accumulatedDelta)) ? accumulatedDelta + diff : diff;
+
         if (currentScrollY <= 80) {
           setIsNavVisible(true);
-        } else if (diff > 8) {
+          accumulatedDelta = 0;
+        } else if (accumulatedDelta > 25) {
           setIsNavVisible(false);
-        } else if (diff < -8) {
+          accumulatedDelta = 0;
+        } else if (accumulatedDelta < -20) {
           setIsNavVisible(true);
+          accumulatedDelta = 0;
         }
 
         lastScrollY.current = currentScrollY;
 
-        // Section detection with lightweight threshold
-        const scrollPos = currentScrollY + window.innerHeight * 0.4;
-        for (let i = currentNavItems.length - 1; i >= 0; i--) {
-          const item = currentNavItems[i];
-          const targetEl = document.querySelector(item.href);
-          if (targetEl) {
-            const rect = targetEl.getBoundingClientRect();
-            const top = rect.top + window.scrollY;
-            if (scrollPos >= top) {
-              setActiveTab((prev) => (prev === item.id ? prev : item.id));
-              break;
+        // Section detection throttled to at most once every 150ms to prevent synchronous layout flushes
+        const now = performance.now();
+        if (now - lastSectionCheckTime > 150) {
+          lastSectionCheckTime = now;
+          const scrollPos = currentScrollY + window.innerHeight * 0.4;
+          for (let i = currentNavItems.length - 1; i >= 0; i--) {
+            const item = currentNavItems[i];
+            const targetEl = document.querySelector(item.href);
+            if (targetEl) {
+              const rect = targetEl.getBoundingClientRect();
+              const top = rect.top + window.scrollY;
+              if (scrollPos >= top) {
+                setActiveTab((prev) => (prev === item.id ? prev : item.id));
+                break;
+              }
             }
           }
         }

@@ -271,13 +271,16 @@ export const MissionVision: React.FC = () => {
       ScrollTrigger.refresh();
     }, 300);
 
+    let lastWidth = typeof window !== "undefined" ? window.innerWidth : 0;
     const handleRefresh = () => {
+      if (window.innerWidth === lastWidth) return;
+      lastWidth = window.innerWidth;
       ScrollTrigger.sort();
       ScrollTrigger.refresh();
     };
 
     window.addEventListener("start-hero-letters", handleRefresh);
-    window.addEventListener("resize", handleRefresh);
+    window.addEventListener("resize", handleRefresh, { passive: true });
 
     // Preload videos into CacheStorage persistently
     preloadVideoList(SLIDES.map((s) => s.videoSrc));
@@ -295,7 +298,7 @@ export const MissionVision: React.FC = () => {
       id="analytics-section"
       ref={sectionRef}
       aria-label="Corporate Vision, Mission, and Strategy Showcase"
-      className="relative z-20 w-full h-screen min-h-[600px] overflow-hidden bg-[#050505] text-white select-none isolate font-['DM_Sans']"
+      className="relative z-20 w-full h-[100svh] min-h-[600px] overflow-hidden bg-[#050505] text-white select-none isolate font-['DM_Sans']"
     >
       {/* Background Video Layers with High-Contrast Vignette Overlays & Persistent Disk/Blob Cache */}
       {SLIDES.map((slide, idx) => (
