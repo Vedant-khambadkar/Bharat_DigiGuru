@@ -255,15 +255,15 @@ const Services: React.FC = () => {
             </div>
 
             <div className="relative z-10 flex flex-col justify-between">
-                <section className="relative sm:min-h-screen flex flex-col justify-between px-6 sm:px-10 md:px-12 lg:px-16 py-6 sm:py-8 max-w-8xl mx-auto w-full">
+                <section className="relative h-[50vh] sm:min-h-screen flex flex-col justify-between px-6 sm:px-10 md:px-12 lg:px-16 py-6 sm:py-8 max-w-8xl mx-auto w-full">
 
                     <div className="my-auto py-12 sm:py-16 md:py-20 flex flex-col items-center text-center">
-                        <div className="flex flex-col items-center w-full max-w-6xl font-neuropol">
-                            <h1 className="font-neuropol text-4xl sm:text-7xl md:text-6xl lg:text-[100px] xl:text-[120px] uppercase tracking-wider text-white leading-[0.95] select-none">
+                        <div className="flex flex-col items-center w-full max-w-6xl font-['DM_Sans']">
+                            <h1 className="font-['DM_Sans'] text-4xl sm:text-7xl md:text-6xl lg:text-[100px] xl:text-[120px] uppercase tracking-wider text-white leading-[0.95] select-none">
                                 <LensText text="OUR" strokeWidth="1px" strokeColor="#ffffff" />
                             </h1>
 
-                            <h2 className="font-neuropol text-4xl sm:text-7xl md:text-8xl lg:text-[120px] xl:text-[110px] uppercase tracking-wider text-white leading-[0.95] select-none mt-1 sm:mt-2">
+                            <h2 className="font-['DM_Sans'] text-4xl sm:text-7xl md:text-8xl lg:text-[120px] xl:text-[110px] uppercase tracking-wider text-white leading-[0.95] select-none mt-1 sm:mt-2">
                                 <LensText text="SERVICES" strokeWidth="1px" strokeColor="#ffffff" />
                             </h2>
                         </div>

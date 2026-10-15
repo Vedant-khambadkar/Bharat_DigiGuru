@@ -9,6 +9,7 @@ import desktopVignette from '../assets/Monochrome Vignette White Space.webp';
 import mobileVignette from '../assets/Minimalist Black and White Vignette  mobile.webp';
 import { useResponsiveTier } from '../hooks/useResponsiveTier';
 import type { SceneState } from '../types/scene';
+import LensText from '../components/LensText';
 
 /**
  * Preload appropriate 2D vignette background asset based on viewport without preloading both
@@ -111,9 +112,9 @@ export const OurTeam: React.FC<OurTeamProps> = ({
       {/* EXACT 1:1 TOP HEADER UI — Padded below mobile navbar with responsive typography */}
       <div className="pointer-events-none absolute inset-x-0 top-14 sm:top-8 z-30 flex flex-col items-center text-center select-none px-4">
         {/* Title flanked by horizontal lines */}
-        <div className="flex items-center gap-2 sm:gap-4 text-[14px] sm:text-[28px] font-mono tracking-[0.22em] sm:tracking-[0.32em] text-white uppercase font-normal drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
+        <div className="pointer-events-auto flex items-center gap-2 sm:gap-4 text-[14px] sm:text-[28px] font-mono tracking-[0.22em] sm:tracking-[0.32em] text-white uppercase font-normal drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
           <span className="w-4 sm:w-10 h-[1px] bg-white/40" />
-          <span>THE COLLECTIVE & DIRECTION</span>
+          <LensText text="THE COLLECTIVE & DIRECTION" strokeWidth="1.5px" />
           <span className="w-4 sm:w-10 h-[1px] bg-white/40" />
         </div>
 

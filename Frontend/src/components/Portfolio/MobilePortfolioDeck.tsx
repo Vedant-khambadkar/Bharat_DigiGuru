@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import type { PlaneItem } from "../SkinnedPlane";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import CachedImage from "../CachedImage";
+import LensText from "../LensText";
 import { preloadMediaList } from "../../utils/mediaCache";
 
 interface MobilePortfolioDeckProps {
@@ -86,9 +87,9 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[240px] h-[240px] rounded-full blur-[70px] pointer-events-none opacity-20" />
 
       {/* TOP HEADER */}
-      <div className="w-full  mx-auto flex items-center justify-between">
+      <div className="w-full mx-auto flex items-center justify-between">
         <h2 className="font-['DM_Sans'] text-4xl sm:text-5xl md:text-6xl font-bold leading-[0.88] tracking-wider text-white m-0 uppercase">
-          PORTFOLIO
+          <LensText text="PORTFOLIO" strokeWidth="2px" />
         </h2>
       </div>
 

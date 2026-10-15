@@ -271,7 +271,7 @@ export const Blogs: React.FC = () => {
           {/* Main Title with LensText */}
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3">
             <div>
-              <h2 className="font-neuropol font-normal text-3xl sm:text-4xl lg:text-5xl uppercase tracking-wider text-white leading-tight select-none">
+              <h2 className="font-['DM_Sans'] font-normal text-3xl sm:text-4xl lg:text-5xl uppercase tracking-wider text-white leading-tight select-none">
                 <LensText text="REDEFINE DIGITAL STORIES" strokeWidth="1.5px" strokeColor="#ffffff" />
               </h2>
 

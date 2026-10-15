@@ -136,7 +136,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
     <section
       ref={containerRef}
       id={id}
-      className="relative z-10 min-h-screen bg-transparent text-white px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-20 md:py-24 mx-auto w-full max-w-8xl overflow-hidden flex flex-col justify-center"
+      className="relative z-10 min-h-screen bg-[#050505] text-white px-4 sm:px-8 md:px-12 lg:px-16 py-12 sm:py-20 md:py-24 mx-auto w-full max-w-8xl overflow-hidden flex flex-col justify-center"
     >
       {/* Subtle Dedicated Ambient Lighting for About Us */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -154,7 +154,7 @@ export const About: React.FC<AboutProps> = ({ id = "about-section" }) => {
         <div className="about-title-block col-span-full lg:col-span-2 flex flex-col justify-start pr-0 lg:pr-8 mb-6 lg:mb-0">
           {/* Header with red square accent */}
           <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <h2 className="font-neuropol font-normal text-4xl sm:text-5xl lg:text-6xl uppercase tracking-wider text-white leading-none select-none">
+            <h2 className="font-['DM_Sans'] font-normal text-4xl sm:text-5xl lg:text-6xl uppercase tracking-wider text-white leading-none select-none">
               <LensText text="ABOUT US" strokeWidth="2px" strokeColor="#ffffff" />
             </h2>
           </div>

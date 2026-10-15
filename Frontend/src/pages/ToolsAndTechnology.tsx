@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import LensText from "../components/LensText";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -187,8 +188,10 @@ export const ToolsAndTechnology: React.FC = () => {
         {/* Mobile Central Headline & Subtext */}
         <div className="flex flex-col items-center text-center w-full">
           <h2 className="reference-text-elem text-3xl sm:text-4xl font-normal tracking-tight text-white leading-[1.2] font-['Space_Grotesk',sans-serif]">
-            The current way we{" "}
-            <span className="block font-medium">work is seamless.</span>
+            <LensText text="The current way we" strokeWidth="1.2px" />{" "}
+            <span className="block font-medium">
+              <LensText text="work is seamless." strokeWidth="1.2px" />
+            </span>
           </h2>
           <p className="reference-text-elem font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-400 mt-3 max-w-sm font-normal leading-relaxed">
             All your design tools, 3D engines, marketing channels, and AI intelligence unified into a single frictionless pipeline.
@@ -494,8 +497,10 @@ export const ToolsAndTechnology: React.FC = () => {
         {/* Centerpiece Desktop Headline & 3 Monospace Metric Columns */}
         <div className="relative z-10 flex flex-col items-center text-center max-w-xl lg:max-w-2xl px-4 py-8">
           <h2 className="reference-text-elem text-4xl lg:text-5xl xl:text-6xl font-normal tracking-tight text-white leading-[1.15] font-['Space_Grotesk',sans-serif]">
-            The current way we{" "}
-            <span className="block font-medium">work is seamless.</span>
+            <LensText text="The current way we" strokeWidth="1.5px" />{" "}
+            <span className="block font-medium">
+              <LensText text="work is seamless." strokeWidth="1.5px" />
+            </span>
           </h2>
 
           <p className="reference-text-elem font-['Space_Grotesk',sans-serif] text-sm lg:text-base text-neutral-400 mt-3 max-w-md font-normal leading-relaxed">

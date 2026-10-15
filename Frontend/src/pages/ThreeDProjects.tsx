@@ -488,7 +488,7 @@ export const ThreeDProjects: React.FC = () => {
     <section
       ref={sectionRef}
       id="threed-section"
-      className="relative z-10 w-full px-4 sm:px-8 md:px-12 lg:px-16 pt-6 sm:pt-10 pb-16 sm:pb-24 bg-transparent text-[#121110] font-['Plus_Jakarta_Sans',sans-serif]"
+      className="relative z-10 w-full px-4 sm:px-8 md:px-12 lg:px-16 pt-6 sm:pt-10 pb-16 sm:pb-24 bg-[#050505] text-white font-['Plus_Jakarta_Sans',sans-serif]"
     >
       <div
         ref={containerRef}

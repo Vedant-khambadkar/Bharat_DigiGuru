@@ -12,6 +12,7 @@ import {
   BarChart3,
   RefreshCw,
 } from "lucide-react";
+import LensText from "../components/LensText";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -121,6 +122,7 @@ export const Process: React.FC = () => {
         scrollTrigger: {
           trigger: section,
           pin: true,
+          pinSpacing: true,
           start: "top top",
           end: () => `+=${getScrollDistance() + 800}`,
           scrub: 1,
@@ -139,6 +141,10 @@ export const Process: React.FC = () => {
       });
 
       scrollTriggerInstance.current = tween.scrollTrigger || null;
+
+      // Ensure proper trigger execution sequence and refresh pin spacers
+      ScrollTrigger.sort();
+      ScrollTrigger.refresh();
     });
 
     // Mobile / Tablet (< 1024px): Fluid Native Touch Glide without pinning lock
@@ -177,7 +183,7 @@ export const Process: React.FC = () => {
     <section
       ref={sectionRef}
       id="process-section"
-      className="relative w-full min-h-screen bg-transparent text-white font-['DM_Sans']  overflow-hidden select-none flex flex-col justify-center py-10 lg:py-0"
+      className="relative z-20 w-full min-h-screen lg:h-screen bg-[#050505] text-white font-['DM_Sans'] overflow-hidden select-none flex flex-col justify-center py-10 lg:py-0"
     >
 
       <div className="relative z-10 mt-5 w-full max-w-8xl mx-auto px-5 sm:px-8 md:px-12 flex flex-col justify-between gap-10 sm:gap-14 py-8">
@@ -188,8 +194,8 @@ export const Process: React.FC = () => {
             <span className="font-['DM_Sans'] text-xs uppercase tracking-widest text-neutral-500 select-none">
               Execution Roadmap
             </span>
-            <h2 className="font-['DM_Sans'] uppercase text-3xl sm:text-4xl md:text-5xl  tracking-tight text-white flex items-center gap-3">
-              <span>Our Process</span>
+            <h2 className="font-['DM_Sans'] uppercase text-3xl sm:text-4xl md:text-5xl tracking-tight text-white flex items-center gap-3">
+              <LensText text="OUR PROCESS" strokeWidth="1.5px" />
               <span className="inline-block translate-y-1 text-3xl sm:text-4xl font-light text-neutral-500">
                 ↴
               </span>

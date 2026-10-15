@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import LensText from "../components/LensText";
 gsap.registerPlugin(ScrollTrigger);
 
 const SOCIAL_PLATFORMS = {
@@ -214,13 +215,13 @@ export const PlatformsWeManage: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md mb-3 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#FF671F] animate-pulse" />
             <span className="text-[10px] sm:text-xs font-serif uppercase tracking-[0.25em] text-neutral-300 font-medium">
-              PLATFORMS WE MANAGE
+              <LensText text="PLATFORMS WE MANAGE" strokeWidth="1px" />
             </span>
           </div>
 
           {/* 2. Main Mobile Headline */}
           <h2 className="text-3xl font-bold tracking-tight text-white leading-tight">
-            Expertise across all major{" "}
+            <LensText text="Expertise across all major" strokeWidth="1.2px" />{" "}
             <span
               className="italic font-serif font-normal inline-block"
               style={{
@@ -794,12 +795,12 @@ export const PlatformsWeManage: React.FC = () => {
           <div className="chaos-header relative z-20 max-w-2xl lg:max-w-3xl mx-auto py-8 px-4">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md mb-4 shadow-sm">
               <span className="text-[11px] sm:text-xs font-serif uppercase tracking-[0.25em] text-neutral-300 font-medium">
-                PLATFORMS WE MANAGE
+                <LensText text="PLATFORMS WE MANAGE" strokeWidth="1px" />
               </span>
             </div>
 
             <h2 className="text-4xl md:text-5xl lg:text-[60px] font-bold tracking-tight text-white leading-[1.12]">
-              Expertise across all major{" "}
+              <LensText text="Expertise across all major" strokeWidth="1.5px" />{" "}
               <br className="hidden sm:block" />
               <span
                 className="italic font-serif font-normal inline-block transition-all duration-300"

@@ -11,7 +11,7 @@ import Preloader3D from "./components/Preloader/Preloader3D";
 
 import OurTeam from "./pages/OurTeam";
 import PlatformsWeManage from "./pages/PlatformsWeManage";
-const Portfolio = lazy(() => import("./pages/Portfolio"));
+import Portfolio from "./pages/Portfolio";
 import ThreeDProjects from "./pages/ThreeDProjects";
 import ToolsAndTechnology from "./pages/ToolsAndTechnology";
 import Process from "./pages/Process";
@@ -37,7 +37,6 @@ gsap.registerPlugin(ScrollTrigger);
 // Prevent mobile viewport address-bar expansion/collapse from triggering ScrollTrigger layout recalculation
 ScrollTrigger.config({
   ignoreMobileResize: true,
-  autoRefreshEvents: "visibilitychange,DOMContentLoaded,load",
 });
 
 const MainLandingPage = () => {
@@ -559,9 +558,7 @@ const MainLandingPage = () => {
         <BrandCollaborations />
         <Services />
         <PlatformsWeManage />
-        <Suspense fallback={<div className="min-h-screen bg-[#050505]" />}>
-          <Portfolio />
-        </Suspense>
+        <Portfolio />
         <ThreeDProjects />
         <ToolsAndTechnology />
         <Process />

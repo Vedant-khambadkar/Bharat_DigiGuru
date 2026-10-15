@@ -54,9 +54,23 @@ export const LensText: React.FC<LensTextProps> = ({
       if (!cachedRect) {
         cachedRect = container.getBoundingClientRect();
       }
-      const rect = cachedRect;
-      const localX = lastX - rect.left;
-      const localY = lastY - rect.top;
+      let rect = cachedRect;
+      let localX = lastX - rect.left;
+      let localY = lastY - rect.top;
+
+      // When cursor is within proximity (< 60px outside box), refresh rect for sub-pixel accuracy against transforms
+      const isPotentiallyNear =
+        localX >= -radius - 60 &&
+        localX <= rect.width + radius + 60 &&
+        localY >= -radius - 60 &&
+        localY <= rect.height + radius + 60;
+
+      if (isPotentiallyNear) {
+        rect = container.getBoundingClientRect();
+        cachedRect = rect;
+        localX = lastX - rect.left;
+        localY = lastY - rect.top;
+      }
 
       // Check if the circle touches this text bounding box
       const isNear =
@@ -78,9 +92,11 @@ export const LensText: React.FC<LensTextProps> = ({
         stroke.style.maskImage = strokeMask;
         stroke.style.opacity = "1";
       } else if (wasNear) {
-        // Only clean up once when moving away
+        // Instant clean up of both masks when cursor leaves
         fill.style.webkitMaskImage = "";
         fill.style.maskImage = "";
+        stroke.style.webkitMaskImage = "";
+        stroke.style.maskImage = "";
         stroke.style.opacity = "0";
         wasNear = false;
       }
@@ -151,6 +167,8 @@ export const LensText: React.FC<LensTextProps> = ({
             if (fill && stroke) {
               fill.style.webkitMaskImage = "";
               fill.style.maskImage = "";
+              stroke.style.webkitMaskImage = "";
+              stroke.style.maskImage = "";
               stroke.style.opacity = "0";
             }
             wasNear = false;
@@ -172,10 +190,18 @@ export const LensText: React.FC<LensTextProps> = ({
     <span
       ref={containerRef}
       data-lens-text="true"
-      className={`relative  inline-block ${className}`}
+      className={`relative inline-block ${className}`}
     >
-      {/* Base Solid Fill Layer */}
-      <span ref={fillRef} className="inline-block font-['DM_Sans'] text-white select-none ">
+      {/* Base Solid Fill Layer - Inherits exact font & styling from parent container */}
+      <span
+        ref={fillRef}
+        className="inline-block text-white select-none whitespace-normal"
+        style={{
+          font: "inherit",
+          letterSpacing: "inherit",
+          textTransform: "inherit",
+        }}
+      >
         {text}
       </span>
 
@@ -183,9 +209,12 @@ export const LensText: React.FC<LensTextProps> = ({
       <span
         ref={strokeRef}
         aria-hidden="true"
-        className="absolute inset-0 inline-block pointer-events-none select-none text-transparent opacity-0 transition-opacity duration-150"
+        className="absolute inset-0 inline-block pointer-events-none select-none text-transparent opacity-0 whitespace-normal"
         style={{
           WebkitTextStroke: `${strokeWidth} ${strokeColor}`,
+          font: "inherit",
+          letterSpacing: "inherit",
+          textTransform: "inherit",
         }}
       >
         {text}

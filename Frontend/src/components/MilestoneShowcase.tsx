@@ -19,6 +19,7 @@ import DigitalMedia2 from "../assets/DigitalMedia/DigitalMedia-2.webp";
 import DigitalMedia3 from "../assets/DigitalMedia/DigitalMedia-3.webp";
 import DigitalMedia4 from "../assets/DigitalMedia/DigitalMedia-4.webp";
 import CachedImage from "./CachedImage";
+import LensText from "./LensText";
 import { preloadMediaList } from "../utils/mediaCache";
 
 export interface MilestoneKPI {
@@ -329,10 +330,7 @@ export const MilestoneShowcase: React.FC = () => {
               </span>
             </div>
             <h2 className="font-['DM_Sans'] text-2xl sm:text-3xl md:text-4xl uppercase tracking-wider text-white leading-tight">
-              Digital Milestones &{" "}
-              <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
-                Analytics
-              </span>
+              <LensText text="DIGITAL MILESTONES & ANALYTICS" strokeWidth="1.5px" />
             </h2>
             <p className=" text-xs sm:text-sm text-neutral-400 max-w-xl leading-relaxed mt-1 ">
               Real business metrics, reach performance, and verified data executed for our clients across digital channels.

@@ -7,6 +7,7 @@ import { userService } from "../services/service/userService";
 import { onSocketEvent } from "../utils/socket";
 
 import MobilePortfolioDeck from "../components/Portfolio/MobilePortfolioDeck";
+import LensText from "../components/LensText";
 import { useResponsiveTier } from "../hooks/useResponsiveTier";
 import { backendUrl } from "../utils/constants";
 import { getApiCache } from "../utils/apiCache";
@@ -192,6 +193,8 @@ export const Portfolio: React.FC = () => {
         end: isMobile ? "+=1000" : "+=2200", // Responsive pinning distance for mobile touch
         pin: true,
         pinSpacing: true,
+        anticipatePin: 1,
+        fastScrollEnd: true,
         scrub: isMobile ? 0.35 : 0.6,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
@@ -201,6 +204,10 @@ export const Portfolio: React.FC = () => {
           }
         },
       });
+
+      // Sort all registered triggers in natural document order and refresh pin spacing
+      ScrollTrigger.sort();
+      ScrollTrigger.refresh();
 
       // 3D Card Canvas Entrance Animation using GSAP ScrollTrigger:
       // When reaching this section: animates from bottom to center with rotation and from scale 0.5 to 1.0
@@ -270,7 +277,7 @@ export const Portfolio: React.FC = () => {
     <section
       ref={sectionRef}
       id="portfolio-section"
-      className="relative w-full min-h-[100svh] md:h-screen md:min-h-[640px] overflow-x-clip md:overflow-hidden  text-white font-['DM_Sans'] select-none"
+      className="relative z-10 w-full min-h-[100svh] md:h-screen md:min-h-[640px] overflow-x-clip md:overflow-hidden bg-[#050505] text-white font-['DM_Sans'] select-none"
     >
       {/* Mobile Experience: Dedicated, Responsive Card Deck */}
       {!shouldRenderPortfolio3D && !mobile3DMode ? (
@@ -284,10 +291,10 @@ export const Portfolio: React.FC = () => {
       ) : (
         <>
           {/* 1. Upper Left Section: PORTFOLIO Header */}
-          <div className="portfolio-header-text  absolute top-16 sm:top-20 md:top-[110px] lg:top-[125px] left-2 sm:left-8 md:left-12 z-10 pointer-events-none select-none">
-            <div className="font-['DM_Sans'] text-5xl md:text-6xl font-bold leading-[0.88] tracking-wider text-white m-0 uppercase">
-              PORTFOLIO
-            </div>
+          <div className="portfolio-header-text absolute top-16 sm:top-20 md:top-[110px] lg:top-[125px] left-2 sm:left-8 md:left-12 z-20 pointer-events-auto select-none">
+            <h2 className="font-['DM_Sans'] text-5xl md:text-6xl font-bold leading-[0.88] tracking-wider text-white m-0 uppercase">
+              <LensText text="PORTFOLIO" strokeWidth="2px" />
+            </h2>
           </div>
 
           {/* 2. Upper Right Section & Mobile Switch Button */}
