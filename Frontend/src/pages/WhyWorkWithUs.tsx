@@ -199,9 +199,6 @@ export const WhyWorkWithUs: React.FC = () => {
 
             {/* Testimonial / Review */}
             <div className="flex flex-col gap-2.5 sm:gap-3.5 max-w-sm bg-neutral-950/60 lg:bg-transparent p-4 sm:p-0 rounded-xl border border-neutral-800/80 lg:border-none">
-              <p className="text-xs sm:text-[13px] text-neutral-300 leading-relaxed italic">
-                "We asked Bharat DigiGuru to elevate our brand and digital presence from scratch, and they absolutely nailed it."
-              </p>
 
               <div className="flex flex-col pt-0.5">
                 <span className="text-xs font-bold text-white uppercase">Shubham Singh</span>
