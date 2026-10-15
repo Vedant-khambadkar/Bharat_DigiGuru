@@ -81,7 +81,7 @@ export const MobilePortfolioDeck: React.FC<MobilePortfolioDeckProps> = ({
   }, [lightboxImage]);
 
   return (
-    <div className="relative z-10 w-full min-h-[100svh] flex flex-col justify-between pt-20 pb-8 px-1 sm:px-6 select-none overflow-hidden font-['DM_Sans']">
+    <div className="relative z-10 w-full min-h-[100svh] flex flex-col justify-between pt-20 pb-8 px-8 select-none overflow-hidden font-['DM_Sans']">
       {/* Ambient Color Glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[240px] h-[240px] rounded-full blur-[70px] pointer-events-none opacity-20" />
 

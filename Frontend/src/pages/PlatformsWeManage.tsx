@@ -207,180 +207,269 @@ export const PlatformsWeManage: React.FC = () => {
 
       <div ref={chaosRef} className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-8 md:px-12 flex flex-col items-center">
         {/* =========================================================================
-            MOBILE TIERED LAYOUT (< md screens)
+            MOBILE LAYOUT (< md screens) - DEDICATED STREAMLINED SHOWCASE (NO OVERLAP)
            ========================================================================= */}
-        <div className="flex md:hidden flex-col items-center w-full max-w-lg px-2 sm:px-4 gap-7 text-center">
-          {/* Top Mobile Social Icons Row */}
-          <div className="flex items-center justify-center gap-5 w-full pt-1">
-            {/* Instagram */}
+        <div className="flex md:hidden flex-col items-center w-full max-w-lg px-3 sm:px-6 text-center">
+          {/* 1. Category Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md mb-3 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FF671F] animate-pulse" />
+            <span className="text-[10px] sm:text-xs font-serif uppercase tracking-[0.25em] text-neutral-300 font-medium">
+              PLATFORMS WE MANAGE
+            </span>
+          </div>
+
+          {/* 2. Main Mobile Headline */}
+          <h2 className="text-3xl font-bold tracking-tight text-white leading-tight">
+            Expertise across all major{" "}
+            <span
+              className="italic font-serif font-normal inline-block"
+              style={{
+                background: "linear-gradient(95deg, #FFA870 0%, #FFC199 26%, #FFFFFF 50%, #86EFAC 74%, #4ADE80 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              social networks.
+            </span>
+          </h2>
+
+          {/* 3. Subtitle Description */}
+          <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-400 max-w-sm mt-2.5 leading-relaxed">
+            Omnichannel strategy, high-converting creative distribution, and algorithmic growth tailored for high-scale brands.
+          </p>
+
+          {/* 4. Social Platforms Showcase Grid (Clean 2-column cards, zero background, zero border, zero overlap) */}
+          <div className="grid grid-cols-2 gap-x-3 sm:gap-x-6 gap-y-6 w-full mt-8 font-['Plus_Jakarta_Sans',sans-serif]">
+            {/* 1. Instagram */}
             <a
               href={SOCIAL_PLATFORMS.instagram.url}
               target="_blank"
               rel="noreferrer"
               aria-label={SOCIAL_PLATFORMS.instagram.name}
-              className="floating-3d-node animate-float-1 relative group cursor-pointer"
+              className="group flex items-center gap-3 p-1 bg-transparent border-0 outline-none active:scale-95 transition-transform"
             >
-              <div className="relative flex items-center justify-center w-14 h-14 p-3 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
-                  <defs>
-                    <linearGradient id="igChaosGradientMob" x1="0%" y1="100%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#f09433" />
-                      <stop offset="25%" stopColor="#e6683c" />
-                      <stop offset="50%" stopColor="#dc2743" />
-                      <stop offset="75%" stopColor="#cc2366" />
-                      <stop offset="100%" stopColor="#bc1888" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"
-                    fill="url(#igChaosGradientMob)"
-                  />
-                </svg>
-                <div className="absolute -top-2 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-500 text-white font-mono text-[8px] font-bold shadow-md">
-                  99+
+              <div className="relative shrink-0">
+                <div
+                  className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                  style={{ filter: "drop-shadow(0 4px 14px rgba(225, 48, 108, 0.55))" }}
+                >
+                  <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                    <defs>
+                      <linearGradient id="igMobNew" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#f09433" />
+                        <stop offset="25%" stopColor="#e6683c" />
+                        <stop offset="50%" stopColor="#dc2743" />
+                        <stop offset="75%" stopColor="#cc2366" />
+                        <stop offset="100%" stopColor="#bc1888" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"
+                      fill="url(#igMobNew)"
+                    />
+                  </svg>
                 </div>
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-500 text-white font-mono text-[8px] font-bold shadow-md ring-2 ring-black/90 pointer-events-none">
+                  99+
+                </span>
+              </div>
+              <div className="flex flex-col min-w-0 text-left justify-center">
+                <span className="text-xs sm:text-sm font-bold text-white tracking-tight group-hover:text-[#FFA870] transition-colors truncate">
+                  Instagram
+                </span>
+                <span className="text-[10px] sm:text-xs text-neutral-400 font-sans truncate mt-0.5">
+                  Reels & Growth
+                </span>
               </div>
             </a>
 
-            {/* LinkedIn */}
+            {/* 2. LinkedIn */}
             <a
               href={SOCIAL_PLATFORMS.linkedin.url}
               target="_blank"
               rel="noreferrer"
               aria-label={SOCIAL_PLATFORMS.linkedin.name}
-              className="floating-3d-node animate-float-2 relative group cursor-pointer"
+              className="group flex items-center gap-3 p-1 bg-transparent border-0 outline-none active:scale-95 transition-transform"
             >
-              <div className="relative flex items-center justify-center w-14 h-14 p-3 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-                <svg className="w-8 h-8 fill-[#0A66C2]" viewBox="0 0 24 24">
-                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                </svg>
-                <div className="absolute -top-2 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-mono text-[8px] font-bold shadow-md">
-                  1M+
+              <div className="relative shrink-0">
+                <div
+                  className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                  style={{ filter: "drop-shadow(0 4px 14px rgba(10, 102, 194, 0.55))" }}
+                >
+                  <svg className="w-8 h-8 fill-[#0A66C2]" viewBox="0 0 24 24">
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                  </svg>
                 </div>
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-mono text-[8px] font-bold shadow-md ring-2 ring-black/90 pointer-events-none">
+                  1M+
+                </span>
+              </div>
+              <div className="flex flex-col min-w-0 text-left justify-center">
+                <span className="text-xs sm:text-sm font-bold text-white tracking-tight group-hover:text-[#FFA870] transition-colors truncate">
+                  LinkedIn
+                </span>
+                <span className="text-[10px] sm:text-xs text-neutral-400 font-sans truncate mt-0.5">
+                  B2B Network
+                </span>
               </div>
             </a>
 
-            {/* YouTube */}
+            {/* 3. YouTube */}
             <a
               href={SOCIAL_PLATFORMS.youtube.url}
               target="_blank"
               rel="noreferrer"
               aria-label={SOCIAL_PLATFORMS.youtube.name}
-              className="floating-3d-node animate-float-1 relative group cursor-pointer"
+              className="group flex items-center gap-3 p-1 bg-transparent border-0 outline-none active:scale-95 transition-transform"
             >
-              <div className="relative flex items-center justify-center w-14 h-14 p-3 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-                <svg className="w-8 h-8 fill-[#FF0000]" viewBox="0 0 24 24">
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                </svg>
-                <div className="absolute -bottom-2 -left-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-red-600 to-rose-600 text-white text-[8px] font-bold shadow-md">
-                  4K
+              <div className="relative shrink-0">
+                <div
+                  className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                  style={{ filter: "drop-shadow(0 4px 14px rgba(255, 0, 0, 0.55))" }}
+                >
+                  <svg className="w-8 h-8 fill-[#FF0000]" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                  </svg>
                 </div>
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 text-white font-mono text-[8px] font-bold shadow-md ring-2 ring-black/90 pointer-events-none">
+                  4K
+                </span>
+              </div>
+              <div className="flex flex-col min-w-0 text-left justify-center">
+                <span className="text-xs sm:text-sm font-bold text-white tracking-tight group-hover:text-[#FFA870] transition-colors truncate">
+                  YouTube
+                </span>
+                <span className="text-[10px] sm:text-xs text-neutral-400 font-sans truncate mt-0.5">
+                  High-Res Video
+                </span>
               </div>
             </a>
-          </div>
 
-          {/* Center Mobile Headline & Content */}
-          <div className="flex flex-col items-center">
-            {/* Category Pill */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md mb-3 shadow-sm">
-              <span className="text-[10px] sm:text-xs font-serif uppercase tracking-[0.25em] text-neutral-300 font-medium">
-                PLATFORMS WE MANAGE
-              </span>
-            </div>
-
-            {/* Headline */}
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white leading-[1.15]">
-              Expertise across all major{" "}
-              <span
-                className="italic font-serif font-normal inline-block"
-                style={{
-                  background: "linear-gradient(95deg, #FFA870 0%, #FFC199 26%, #FFFFFF 50%, #86EFAC 74%, #4ADE80 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                social networks.
-              </span>
-            </h2>
-
-            <p className="font-['Space_Grotesk',sans-serif] text-xs sm:text-sm text-neutral-400 max-w-sm mt-3 leading-relaxed">
-              Omnichannel strategy, high-converting creative distribution, and algorithmic growth tailored for high-scale brands.
-            </p>
-          </div>
-
-          {/* Bottom Mobile Social Icons Grid */}
-          <div className="flex items-center justify-center gap-4 sm:gap-6 w-full pb-1">
-            {/* X / Twitter */}
+            {/* 4. X (Twitter) */}
             <a
               href={SOCIAL_PLATFORMS.x.url}
               target="_blank"
               rel="noreferrer"
               aria-label={SOCIAL_PLATFORMS.x.name}
-              className="floating-3d-node animate-float-2 relative group cursor-pointer"
+              className="group flex items-center gap-3 p-1 bg-transparent border-0 outline-none active:scale-95 transition-transform"
             >
-              <div className="relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 p-2.5 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-                <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-                <div className="absolute -bottom-2 -right-1 px-1.5 py-0.5 rounded bg-neutral-800 text-[8px] font-mono text-neutral-200 border border-neutral-700 shadow-md whitespace-nowrap inline-flex items-center justify-center">
-                  #1 Trend
+              <div className="relative shrink-0">
+                <div
+                  className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                  style={{ filter: "drop-shadow(0 4px 12px rgba(255, 255, 255, 0.35))" }}
+                >
+                  <svg className="w-7 h-7 fill-white" viewBox="0 0 24 24">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
                 </div>
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-700 text-neutral-200 font-mono text-[8px] font-bold shadow-md ring-2 ring-black/90 pointer-events-none">
+                  #1 Trend
+                </span>
+              </div>
+              <div className="flex flex-col min-w-0 text-left justify-center">
+                <span className="text-xs sm:text-sm font-bold text-white tracking-tight group-hover:text-[#FFA870] transition-colors truncate">
+                  X (Twitter)
+                </span>
+                <span className="text-[10px] sm:text-xs text-neutral-400 font-sans truncate mt-0.5">
+                  Viral Broadcast
+                </span>
               </div>
             </a>
 
-            {/* TikTok */}
+            {/* 5. TikTok */}
             <a
               href={SOCIAL_PLATFORMS.tiktok.url}
               target="_blank"
               rel="noreferrer"
               aria-label={SOCIAL_PLATFORMS.tiktok.name}
-              className="floating-3d-node animate-float-1 relative group cursor-pointer"
+              className="group flex items-center gap-3 p-1 bg-transparent border-0 outline-none active:scale-95 transition-transform"
             >
-              <div className="relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 p-2.5 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-                <svg className="w-6 h-6 fill-white drop-shadow-[2px_0px_0px_rgba(254,44,85,0.8)]" viewBox="0 0 24 24">
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
-                </svg>
-                <div className="absolute -bottom-2 -right-1 px-1.5 py-0.5 rounded bg-gradient-to-r from-[#25F4EE] to-[#FE2C55] text-black text-[8px] font-mono font-bold shadow-md whitespace-nowrap inline-flex items-center justify-center">
+              <div className="relative shrink-0">
+                <div
+                  className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                  style={{ filter: "drop-shadow(0 4px 14px rgba(37, 244, 238, 0.5))" }}
+                >
+                  <svg className="w-7 h-7 fill-white drop-shadow-[2px_0px_0px_rgba(254,44,85,0.8)]" viewBox="0 0 24 24">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1.04-.1z" />
+                  </svg>
+                </div>
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-[#25F4EE] to-[#FE2C55] text-black font-mono text-[8px] font-extrabold shadow-md ring-2 ring-black/90 pointer-events-none">
                   Viral
-                </div>
+                </span>
+              </div>
+              <div className="flex flex-col min-w-0 text-left justify-center">
+                <span className="text-xs sm:text-sm font-bold text-white tracking-tight group-hover:text-[#FFA870] transition-colors truncate">
+                  TikTok
+                </span>
+                <span className="text-[10px] sm:text-xs text-neutral-400 font-sans truncate mt-0.5">
+                  Short-Form Hits
+                </span>
               </div>
             </a>
 
-            {/* Facebook */}
-            <a
-              href={SOCIAL_PLATFORMS.facebook.url}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={SOCIAL_PLATFORMS.facebook.name}
-              className="floating-3d-node animate-float-1 relative group cursor-pointer"
-            >
-              <div className="relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 p-2.5 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-                <svg className="w-7 h-7 fill-[#1877F2]" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-                <div className="absolute -top-2 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-mono text-[8px] font-bold shadow-md whitespace-nowrap inline-flex items-center justify-center">
-                  Ads
-                </div>
-              </div>
-            </a>
-
-            {/* Pinterest */}
+            {/* 6. Pinterest */}
             <a
               href={SOCIAL_PLATFORMS.pinterest.url}
               target="_blank"
               rel="noreferrer"
               aria-label={SOCIAL_PLATFORMS.pinterest.name}
-              className="floating-3d-node animate-float-2 relative group cursor-pointer"
+              className="group flex items-center gap-3 p-1 bg-transparent border-0 outline-none active:scale-95 transition-transform"
             >
-              <div className="relative flex items-center justify-center w-13 h-13 sm:w-14 sm:h-14 p-2.5 rounded-2xl bg-gradient-to-b from-[#1f1f23] to-[#0d0d10] border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)]">
-                <svg className="w-7 h-7 fill-[#E60023]" viewBox="0 0 24 24">
-                  <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
-                </svg>
-                <div className="absolute -top-2 -left-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 text-white font-mono text-[8px] font-bold shadow-md whitespace-nowrap inline-flex items-center justify-center">
-                  Pins
+              <div className="relative shrink-0">
+                <div
+                  className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                  style={{ filter: "drop-shadow(0 4px 14px rgba(230, 0, 35, 0.55))" }}
+                >
+                  <svg className="w-8 h-8 fill-[#E60023]" viewBox="0 0 24 24">
+                    <path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
+                  </svg>
                 </div>
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-rose-600 text-white font-mono text-[8px] font-bold shadow-md ring-2 ring-black/90 pointer-events-none">
+                  Pins
+                </span>
+              </div>
+              <div className="flex flex-col min-w-0 text-left justify-center">
+                <span className="text-xs sm:text-sm font-bold text-white tracking-tight group-hover:text-[#FFA870] transition-colors truncate">
+                  Pinterest
+                </span>
+                <span className="text-[10px] sm:text-xs text-neutral-400 font-sans truncate mt-0.5">
+                  Visual Inspo
+                </span>
               </div>
             </a>
+
+            {/* 7. Facebook (Centered row) */}
+            <div className="col-span-2 flex justify-center w-full pt-1">
+              <a
+                href={SOCIAL_PLATFORMS.facebook.url}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={SOCIAL_PLATFORMS.facebook.name}
+                className="group flex items-center gap-3 p-1 bg-transparent border-0 outline-none active:scale-95 transition-transform"
+              >
+                <div className="relative shrink-0">
+                  <div
+                    className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
+                    style={{ filter: "drop-shadow(0 4px 14px rgba(24, 119, 242, 0.55))" }}
+                  >
+                    <svg className="w-8 h-8 fill-[#1877F2]" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                  </div>
+                  <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-mono text-[8px] font-bold shadow-md ring-2 ring-black/90 pointer-events-none">
+                    Ads
+                  </span>
+                </div>
+                <div className="flex flex-col min-w-0 text-left justify-center">
+                  <span className="text-xs sm:text-sm font-bold text-white tracking-tight group-hover:text-[#FFA870] transition-colors truncate">
+                    Facebook
+                  </span>
+                  <span className="text-[10px] sm:text-xs text-neutral-400 font-sans truncate mt-0.5">
+                    Community & Paid Campaigns
+                  </span>
+                </div>
+              </a>
+            </div>
           </div>
         </div>
 
