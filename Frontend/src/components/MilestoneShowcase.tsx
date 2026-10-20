@@ -14,9 +14,9 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 
-import DigitalMedia1 from "../assets/DigitalMedia/DigitalMedia-1.webp";
+import DigitalMedia1 from "../assets/DigitalMedia/DigitalMedia-1.jpg";
 import DigitalMedia2 from "../assets/DigitalMedia/DigitalMedia-2.webp";
-import DigitalMedia3 from "../assets/DigitalMedia/DigitalMedia-3.webp";
+import DigitalMedia3 from "../assets/DigitalMedia/DigitalMedia-3.jpg";
 import DigitalMedia4 from "../assets/DigitalMedia/DigitalMedia-4.webp";
 import CachedImage from "./CachedImage";
 import LensText from "./LensText";

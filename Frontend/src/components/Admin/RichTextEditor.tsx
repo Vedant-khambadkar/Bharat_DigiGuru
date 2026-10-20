@@ -67,8 +67,8 @@ const CustomImage = Image.extend({
         default: null,
       },
       width: {
-        default: "100%",
-        parseHTML: (element) => element.getAttribute("data-width") || element.style.width || "100%",
+        default: "auto",
+        parseHTML: (element) => element.getAttribute("data-width") || element.style.width || "auto",
         renderHTML: (attributes) => ({
           "data-width": attributes.width,
         }),
@@ -88,8 +88,8 @@ const CustomImage = Image.extend({
         }),
       },
       objectFit: {
-        default: "cover",
-        parseHTML: (element) => element.getAttribute("data-object-fit") || "cover",
+        default: "contain",
+        parseHTML: (element) => element.getAttribute("data-object-fit") || "contain",
         renderHTML: (attributes) => ({
           "data-object-fit": attributes.objectFit,
         }),
@@ -139,14 +139,20 @@ const CustomImage = Image.extend({
       display = "block";
     }
 
+    const widthStyle =
+      width && width !== "auto" && width !== "100%"
+        ? `width: ${width}; max-width: 100%`
+        : width === "100%"
+        ? "width: 100%"
+        : "max-width: 100%; height: auto";
+
     const styles = [
-      `width: ${width}`,
-      `max-width: 100%`,
+      widthStyle,
       `margin: ${margin}`,
       float !== "none" ? `float: ${float}` : "",
       `display: ${display}`,
       aspectRatio !== "auto" ? `aspect-ratio: ${aspectRatio}` : "",
-      `object-fit: ${objectFit}`,
+      `object-fit: ${objectFit || "contain"}`,
       zoom && zoom !== "1" ? `transform: scale(${zoom})` : "",
       `transition: transform 0.25s ease, width 0.25s ease`,
     ].filter(Boolean).join("; ");
@@ -404,7 +410,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         }
 
         if (uploadedUrl) {
-          const initialWidth = total > 1 ? "50%" : "100%";
+          const initialWidth = "auto";
           const initialAlign = total > 1 ? (i % 2 === 0 ? "left" : "right") : "center";
 
           editor
@@ -418,7 +424,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 width: initialWidth,
                 alignment: initialAlign,
                 aspectRatio: "auto",
-                objectFit: "cover",
+                objectFit: "contain",
                 zoom: "1",
               },
             })
@@ -1180,7 +1186,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 {/* Resize Presets & Slider */}
                 <div className="flex items-center gap-1 bg-[#141620] p-1 rounded-xl border border-white/10">
                   <span className="text-[10px] text-neutral-400 px-1 font-bold uppercase">Size:</span>
-                  {["25%", "33%", "50%", "75%", "100%"].map((pct) => (
+                  {["auto", "25%", "33%", "50%", "75%", "100%"].map((pct) => (
                     <button
                       key={pct}
                       type="button"
@@ -1188,14 +1194,19 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
                         e.preventDefault();
                         e.stopPropagation();
                         updateImageAttribute("width", pct);
+                        if (pct === "auto") {
+                          updateImageAttribute("objectFit", "contain");
+                          updateImageAttribute("aspectRatio", "auto");
+                        }
                       }}
                       className={`px-2 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-all ${
-                        selectedImageAttrs.width === pct
+                        selectedImageAttrs.width === pct || (pct === "auto" && (!selectedImageAttrs.width || selectedImageAttrs.width === "auto"))
                           ? "bg-cyan-600 text-white"
                           : "text-neutral-400 hover:text-white hover:bg-white/5"
                       }`}
+                      title={pct === "auto" ? "Original pixel size (1:1)" : `Scale to ${pct} width`}
                     >
-                      {pct}
+                      {pct === "auto" ? "Original" : pct}
                     </button>
                   ))}
 
@@ -1204,7 +1215,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
                       type="range"
                       min="20"
                       max="100"
-                      value={parseInt(selectedImageAttrs.width || "100", 10) || 100}
+                      value={selectedImageAttrs.width === "auto" ? 100 : (parseInt(selectedImageAttrs.width || "100", 10) || 100)}
                       onChange={(e) => updateImageAttribute("width", `${e.target.value}%`)}
                       className="w-16 sm:w-20 accent-cyan-500 cursor-pointer"
                       title="Drag width slider"

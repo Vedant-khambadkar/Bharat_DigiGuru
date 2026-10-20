@@ -221,18 +221,34 @@ export async function processFileForUpload(file: Express.Multer.File): Promise<{
 }> {
   const originalExt = path.extname(file.originalname).toLowerCase();
 
-  // 1. Image Processing -> WebP Conversion
-  const isRasterImage =
-    file.mimetype.startsWith("image/") &&
-    file.mimetype !== "image/svg+xml" &&
-    file.mimetype !== "image/gif";
+  // 1. Image Processing: Convert and store all raster images as high-fidelity .webp
+  const isSvg = file.mimetype === "image/svg+xml" || originalExt === ".svg";
+  const isImage = file.mimetype.startsWith("image/") && !isSvg;
 
-  if (isRasterImage) {
+  if (isImage) {
     try {
-      const webpBuffer = await sharp(file.buffer)
-        .rotate() // Auto-orient image based on EXIF orientation metadata (fixes 90° sideways/rotation issue)
-        .webp({ quality: 85, effort: 4 })
-        .toBuffer();
+      const metadata = await sharp(file.buffer).metadata();
+      const isPngOrGraphic = metadata.format === "png" || (metadata.channels && metadata.channels === 4);
+
+      // Convert to WebP while preserving full pixel quality:
+      // - Lossless WebP for PNGs and transparent graphics (100% pixel-perfect, zero blur or dropped pixels)
+      // - Ultra-high quality (95) with smart subsampling for photos/JPEGs
+      let pipeline = sharp(file.buffer).rotate(); // auto-orient based on EXIF
+
+      if (isPngOrGraphic) {
+        pipeline = pipeline.webp({
+          lossless: true,
+          effort: 4,
+        });
+      } else {
+        pipeline = pipeline.webp({
+          quality: 95,
+          effort: 4,
+          smartSubsample: true,
+        });
+      }
+
+      const webpBuffer = await pipeline.toBuffer();
 
       return {
         buffer: webpBuffer,
@@ -241,7 +257,13 @@ export async function processFileForUpload(file: Express.Multer.File): Promise<{
         size: webpBuffer.length,
       };
     } catch (err: any) {
-      console.warn("⚠️ [SHARP] Failed to convert image to WebP, keeping original format:", err.message);
+      console.warn("⚠️ [SHARP] WebP conversion fallback:", err.message);
+      return {
+        buffer: file.buffer,
+        mimetype: "image/webp",
+        ext: ".webp",
+        size: file.size,
+      };
     }
   }
 

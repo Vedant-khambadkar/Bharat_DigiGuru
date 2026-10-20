@@ -171,12 +171,12 @@ export const WhyWorkWithUs: React.FC = () => {
       className="relative w-full min-h-screen bg-black text-white font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden select-none  flex flex-col justify-center py-10 sm:py-16 lg:py-0"
     >
       <div className="relative z-10 w-full max-w-8xl mx-auto px-4 sm:px-8 md:px-12 py-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-14 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-14 items-start">
 
           {/* =========================================================================
               LEFT COLUMN: Title, Core Values, Review Testimonial
              ========================================================================= */}
-          <div className="why-us-left-col lg:col-span-4 flex flex-col justify-between gap-6 sm:gap-10">
+          <div className="why-us-left-col lg:col-span-4 lg:pt-24 flex flex-col items-start justify-start sm:gap-10">
             <div className="flex flex-col gap-4 sm:gap-6">
               <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-['DM_Sans'] uppercase tracking-tight text-white leading-tight">
                 <LensText text="WHY US" strokeWidth="2px" />
@@ -199,13 +199,7 @@ export const WhyWorkWithUs: React.FC = () => {
             </div>
 
             {/* Testimonial / Review */}
-            <div className="flex flex-col gap-2.5 sm:gap-3.5 max-w-sm bg-neutral-950/60 lg:bg-transparent p-4 sm:p-0 rounded-xl border border-neutral-800/80 lg:border-none">
-
-              <div className="flex flex-col pt-0.5">
-                <span className="text-xs font-bold text-white uppercase">Shubham Singh</span>
-                <span className="text-[11px] text-neutral-400 font-['Space_Grotesk',sans-serif]">CEO & Founder</span>
-              </div>
-            </div>
+          
           </div>
 
           {/* =========================================================================

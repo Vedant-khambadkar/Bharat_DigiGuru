@@ -2135,7 +2135,7 @@ export const ItemEditorModal: React.FC<ItemEditorModalProps> = ({
                                     typeof editingItem.data.content === "string"
                                       ? editingItem.data.content
                                       : "";
-                                  const imgHtml = `<p><img src="${imgUrl}" alt="Article Visual" style="width: 100%; margin: 1.5rem auto; display: block;" /></p>`;
+                                  const imgHtml = `<p><img src="${imgUrl}" alt="Article Visual" style="max-width: 100%; height: auto; margin: 1.5rem auto; display: block; object-fit: contain;" /></p>`;
                                   setEditingItem({
                                     ...editingItem,
                                     data: {

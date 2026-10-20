@@ -396,9 +396,11 @@ body.modal-open [data-nav-header] {
   border: 1px solid rgba(255, 255, 255, 0.12);
   max-width: 100%;
   height: auto;
-  margin: 1.5rem 0;
+  object-fit: contain;
+  margin: 1.5rem auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
   transition: all 0.25s ease-out;
+  display: block;
 }
 
 /* Custom Blog Rich Image Layouts & Alignment */
@@ -407,6 +409,8 @@ body.modal-open [data-nav-header] {
   margin-left: auto !important;
   margin-right: auto !important;
   display: block !important;
+  max-width: 100%;
+  height: auto;
   clear: both;
 }
 
@@ -415,6 +419,8 @@ body.modal-open [data-nav-header] {
   float: left !important;
   margin: 0.5rem 1.5rem 1rem 0 !important;
   display: inline-block !important;
+  max-width: 100%;
+  height: auto;
 }
 
 .blog-rich-content img.blog-img-right,
@@ -422,6 +428,8 @@ body.modal-open [data-nav-header] {
   float: right !important;
   margin: 0.5rem 0 1rem 1.5rem !important;
   display: inline-block !important;
+  max-width: 100%;
+  height: auto;
 }
 
 .blog-rich-content img.blog-img-full,

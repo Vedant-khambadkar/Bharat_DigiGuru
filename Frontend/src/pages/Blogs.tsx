@@ -417,14 +417,18 @@ export const Blogs: React.FC = () => {
               <div className="overflow-y-auto px-4 sm:px-8 md:px-10 py-5 sm:py-8 flex flex-col gap-6 sm:gap-8 text-neutral-200">
                 {/* Cover Media Banner */}
                 {activeBlog.image ? (
-                  <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] rounded-2xl overflow-hidden bg-black/60 border border-white/10 shadow-2xl group shrink-0">
+                  <div className="relative w-full max-h-[560px] rounded-2xl overflow-hidden bg-black/80 border border-white/10 shadow-2xl flex items-center justify-center shrink-0">
+                    {/* Ambient blurred backdrop so letterboxing is seamlessly filled without cropping the image */}
+                    <div
+                      className="absolute inset-0 bg-cover bg-center filter blur-2xl opacity-25 scale-110 pointer-events-none"
+                      style={{ backgroundImage: `url(${activeBlog.image})` }}
+                    />
                     <CachedImage
                       src={activeBlog.image}
                       alt={activeBlog.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="relative z-10 max-h-[560px] w-auto max-w-full h-auto object-contain transition-transform duration-500 rounded-xl"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c0d12] via-transparent to-transparent pointer-events-none opacity-85" />
-                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-10 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] sm:text-xs font-mono text-neutral-300 flex items-center gap-1.5">
+                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 z-20 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] sm:text-xs font-mono text-neutral-300 flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]" />
                       <span>Editorial Visual Asset</span>
                     </div>

@@ -84,9 +84,10 @@ export async function validateAndConvertToWebP(
     const webpBuffer = await sharp(file.buffer)
       .rotate() // auto-orient based on EXIF
       .webp({
-        quality: 82,
+        quality: 95,
         effort: 4,
-        alphaQuality: 90,
+        alphaQuality: 100,
+        lossless: format === "png",
       })
       .toBuffer();
 
