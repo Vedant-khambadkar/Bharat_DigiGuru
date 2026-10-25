@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, lazy, Suspense } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback, lazy, Suspense } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
@@ -25,6 +25,7 @@ import Footer from "./components/Footer";
 import { userService } from "./services/service/userService";
 import { onSocketEvent } from "./utils/socket";
 import { getApiCache, setApiCache } from "./utils/apiCache";
+import { getSectionIdFromPath, getNavTabFromPath, scrollToSection } from "./utils/routes";
 
 // Lazy-load Admin routes & modals so they don't bloat the main landing page bundle
 const AdminAuthModal = lazy(() => import("./components/Admin/AdminAuthModal"));
@@ -43,10 +44,35 @@ const MainLandingPage = () => {
   const boxRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
+  // Check if initial request is deep linking directly to a section (/services, /about, /portfolio, etc.)
+  const initialSectionId = useRef<string | null>(getSectionIdFromPath(window.location.pathname));
+  const isDeepLink = Boolean(initialSectionId.current && initialSectionId.current !== "home-section");
+
+  // Bypass 3D preloader immediately when directly landing on an interior section
+  const [isLoading, setIsLoading] = useState(!isDeepLink);
   const [macReady, setMacReady] = useState(false);
   const [businessmanReady, setBusinessmanReady] = useState(false);
   const [macFailed, setMacFailed] = useState(false);
+
+  // Synchronous pre-paint jump on direct URL entry (/services, /about, etc.)
+  useLayoutEffect(() => {
+    if (!isDeepLink || !initialSectionId.current) return;
+    const targetEl = document.getElementById(initialSectionId.current);
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: "instant" });
+    }
+  }, [isDeepLink]);
+
+  // Ensure hero title elements are primed so if the user scrolls up to Home, it is fully visible
+  useEffect(() => {
+    if (isDeepLink) {
+      window.dispatchEvent(new CustomEvent("start-hero-letters"));
+      const homeSection = document.getElementById("home-section");
+      if (homeSection) {
+        homeSection.style.opacity = "1";
+      }
+    }
+  }, [isDeepLink]);
 
   // Team & Founder Section Visibility State (Persisted in DB & synced in real-time)
   const [teamSectionVisible, setTeamSectionVisible] = useState<boolean>(() => {
@@ -208,7 +234,9 @@ const MainLandingPage = () => {
     if ("scrollRestoration" in history) {
       history.scrollRestoration = "manual";
     }
-    window.scrollTo(0, 0);
+    if (!isDeepLink) {
+      window.scrollTo(0, 0);
+    }
 
     const isTouchDevice =
       typeof window !== "undefined" &&
@@ -301,14 +329,26 @@ const MainLandingPage = () => {
 
     (window as any).lenis = lenis;
 
-    lenis.scrollTo(0, { immediate: true });
-    window.scrollTo(0, 0);
+    let lenisSafetyUnlock: number | undefined;
 
-    // Stop scrolling while initial hero transition runs; guarantee start via timeout
-    lenis.stop();
-    const lenisSafetyUnlock = window.setTimeout(() => {
+    if (!isDeepLink) {
+      lenis.scrollTo(0, { immediate: true });
+      window.scrollTo(0, 0);
+
+      // Stop scrolling while initial hero transition runs; guarantee start via timeout
+      lenis.stop();
+      lenisSafetyUnlock = window.setTimeout(() => {
+        lenis.start();
+      }, 5000);
+    } else {
       lenis.start();
-    }, 5000);
+      if (initialSectionId.current) {
+        const targetEl = document.getElementById(initialSectionId.current);
+        if (targetEl) {
+          lenis.scrollTo(targetEl, { immediate: true });
+        }
+      }
+    }
 
     lenis.on("scroll", () => {
       ScrollTrigger.update();
@@ -322,7 +362,9 @@ const MainLandingPage = () => {
     gsap.ticker.lagSmoothing(500, 33);
 
     const handleBeforeUnload = () => {
-      window.scrollTo(0, 0);
+      if (window.location.pathname === "/") {
+        window.scrollTo(0, 0);
+      }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
 
@@ -379,6 +421,59 @@ const MainLandingPage = () => {
       lenis.destroy();
       delete (window as any).lenis;
     };
+  }, [isDeepLink]);
+
+  // Post-mount settlement for deep links once ScrollTrigger pins & DOM heights calibrate
+  useEffect(() => {
+    if (!isDeepLink || !initialSectionId.current) return;
+    const targetId = initialSectionId.current;
+
+    const settleScroll = (immediate = true) => {
+      const targetEl = document.getElementById(targetId);
+      if (!targetEl) return;
+      const lenis = (window as any).lenis;
+      if (lenis?.scrollTo) {
+        lenis.scrollTo(targetEl, { immediate });
+      } else {
+        targetEl.scrollIntoView({ behavior: immediate ? "instant" : "smooth" });
+      }
+    };
+
+    const rafId = requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+      settleScroll(true);
+    });
+
+    const timer1 = window.setTimeout(() => {
+      ScrollTrigger.refresh();
+      settleScroll(true);
+    }, 120);
+
+    const timer2 = window.setTimeout(() => {
+      settleScroll(true);
+    }, 380);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [isDeepLink]);
+
+  // Popstate listener for browser Back / Forward buttons across sections
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path.startsWith("/admin")) return;
+
+      const targetId = getSectionIdFromPath(path);
+      if (targetId) {
+        scrollToSection(targetId, { immediate: false });
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   // Layout Synchronization: Auto-refresh ScrollTrigger & Lenis only when dynamic content changes genuinely and user is not scrolling
@@ -550,7 +645,10 @@ const MainLandingPage = () => {
       <TopHeader />
 
       {/* Floating Glassmorphism Navbar */}
-      <Navbar teamSectionVisible={teamSectionVisible} />
+      <Navbar
+        activeSection={getNavTabFromPath(window.location.pathname)}
+        teamSectionVisible={teamSectionVisible}
+      />
 
       {/* Main Sections Flow */}
       <main ref={mainContentRef} className="relative z-10 w-full overflow-x-clip">

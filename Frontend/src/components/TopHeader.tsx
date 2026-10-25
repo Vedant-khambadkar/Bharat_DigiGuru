@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 
+import { scrollToSection } from "../utils/routes";
+
 export const TopHeader: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,21 +52,13 @@ export const TopHeader: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Smooth scroll to top when logo is clicked
+  // Smooth scroll to top when logo is clicked and sync URL to /
   const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    const lenis = (window as any).lenis;
-    const homeEl = document.getElementById("home-section");
-
-    if (lenis) {
-      lenis.scrollTo(homeEl || 0, {
-        offset: 0,
-        duration: 1.3,
-        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      });
-    } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    if (window.location.pathname !== "/" && !window.location.pathname.startsWith("/admin")) {
+      window.history.pushState(null, "", "/");
     }
+    scrollToSection("home-section", { immediate: false });
   };
 
   if (isModalOpen) {
@@ -84,7 +78,7 @@ export const TopHeader: React.FC = () => {
         {/* Animated Sticky Brand Logo */}
         <a
           ref={logoRef}
-          href="#home-section"
+          href="/"
           onClick={handleLogoClick}
           className="pointer-events-auto group relative inline-flex items-center gap-3 select-none cursor-pointer transition-transform duration-300 active:scale-95 origin-left"
           style={{

@@ -300,6 +300,7 @@ export const MissionVision: React.FC = () => {
       aria-label="Corporate Vision, Mission, and Strategy Showcase"
       className="relative z-20 w-full h-[100svh] min-h-[600px] overflow-hidden bg-[#050505] text-white select-none isolate font-['DM_Sans']"
     >
+      <div id="mission-vision-section" className="absolute -top-10 left-0 pointer-events-none" />
       {/* Background Video Layers with High-Contrast Vignette Overlays & Persistent Disk/Blob Cache */}
       {SLIDES.map((slide, idx) => (
         <CachedVideoSlide key={slide.id} slide={slide} idx={idx} isVisible={isSectionVisible} />

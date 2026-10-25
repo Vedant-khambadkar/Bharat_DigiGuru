@@ -16,6 +16,7 @@ import {
   ChevronUp,
   Sparkles,
 } from "lucide-react";
+import { scrollToSection } from "../utils/routes";
 
 interface NavbarProps {
   activeSection?: string;
@@ -26,20 +27,21 @@ interface NavItem {
   id: string;
   label: string;
   href: string;
+  path: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: boolean;
 }
 
 const navItems: NavItem[] = [
-  { id: "home", label: "Home", href: "#home-section", icon: Home },
-  { id: "services", label: "Services", href: "#services-section", icon: Layers },
-  { id: "portfolio", label: "Portfolio", href: "#portfolio-section", icon: Briefcase },
-  { id: "about", label: "About", href: "#about-section", icon: User },
-  { id: "analytics", label: "Analytics", href: "#analytics-section", icon: ChartLine },
-  { id: "team", label: "Team", href: "#our-team-section", icon: Users },
-  { id: "whyus", label: "Why Us", href: "#work-with-us-section", icon: Sparkles },
-  { id: "stories", label: "Stories", href: "#stories-section", icon: BookOpen },
-  { id: "contact", label: "Contact", href: "#contact-section", icon: Mail, badge: true },
+  { id: "home", label: "Home", href: "#home-section", path: "/", icon: Home },
+  { id: "services", label: "Services", href: "#services-section", path: "/services", icon: Layers },
+  { id: "portfolio", label: "Portfolio", href: "#portfolio-section", path: "/portfolio", icon: Briefcase },
+  { id: "about", label: "About", href: "#about-section", path: "/about", icon: User },
+  { id: "analytics", label: "Analytics", href: "#analytics-section", path: "/analytics", icon: ChartLine },
+  { id: "team", label: "Team", href: "#our-team-section", path: "/team", icon: Users },
+  { id: "whyus", label: "Why Us", href: "#work-with-us-section", path: "/why-us", icon: Sparkles },
+  { id: "stories", label: "Stories", href: "#stories-section", path: "/stories", icon: BookOpen },
+  { id: "contact", label: "Contact", href: "#contact-section", path: "/contact", icon: Mail, badge: true },
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSectionVisible = true }) => {
@@ -53,6 +55,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSect
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navContainerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
+
+  // Sync active tab whenever activeSection prop changes
+  useEffect(() => {
+    if (activeSection) {
+      setActiveTab(activeSection);
+    }
+  }, [activeSection]);
 
   // Auto Scroll Spy, Modal Event Listeners & Smart Hide/Show on Scroll
   useEffect(() => {
@@ -101,6 +110,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSect
         if (currentScrollY <= 80) {
           setIsNavVisible(true);
           accumulatedDelta = 0;
+          setActiveTab("home");
+          if (window.location.pathname !== "/" && !window.location.pathname.startsWith("/admin")) {
+            window.history.replaceState(null, "", "/");
+          }
         } else if (accumulatedDelta > 25) {
           setIsNavVisible(false);
           accumulatedDelta = 0;
@@ -123,7 +136,16 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSect
               const rect = targetEl.getBoundingClientRect();
               const top = rect.top + window.scrollY;
               if (scrollPos >= top) {
-                setActiveTab((prev) => (prev === item.id ? prev : item.id));
+                setActiveTab((prev) => {
+                  if (prev !== item.id) {
+                    const newPath = item.path;
+                    if (window.location.pathname !== newPath && !window.location.pathname.startsWith("/admin")) {
+                      window.history.replaceState(null, "", newPath);
+                    }
+                    return item.id;
+                  }
+                  return prev;
+                });
                 break;
               }
             }
@@ -142,28 +164,23 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSect
     };
   }, []);
 
-  // Smooth scroll handler using Lenis or native smooth scroll
+  // Smooth scroll handler using Lenis or native smooth scroll with URL synchronization
   const handleLinkClick = React.useCallback((
     e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>,
     href: string,
-    id: string
+    id: string,
+    path?: string
   ) => {
     e.preventDefault();
     setActiveTab(id);
     setMobileMenuOpen(false);
 
-    const lenis = (window as any).lenis;
-    const targetEl = document.querySelector(href);
-
-    if (lenis && targetEl) {
-      lenis.scrollTo(targetEl, {
-        offset: 0,
-        duration: 1.2,
-        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      });
-    } else if (targetEl) {
-      targetEl.scrollIntoView({ behavior: "smooth" });
+    const targetPath = path || (id === "home" ? "/" : `/${id === "whyus" ? "why-us" : id}`);
+    if (window.location.pathname !== targetPath && !window.location.pathname.startsWith("/admin")) {
+      window.history.pushState(null, "", targetPath);
     }
+
+    scrollToSection(href, { immediate: false });
   }, []);
 
   // Close mobile drawer on desktop resize
@@ -239,8 +256,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSect
                 return (
                   <a
                     key={item.id}
-                    href={item.href}
-                    onClick={(e) => handleLinkClick(e, item.href, item.id)}
+                    href={item.path}
+                    onClick={(e) => handleLinkClick(e, item.href, item.id, item.path)}
                     onMouseEnter={() => setHoveredTab(item.id)}
                     onMouseLeave={() => setHoveredTab(null)}
                     className={`relative flex flex-col items-center justify-center px-3.5 lg:px-4 py-1.5 sm:py-2 rounded-full transition-all duration-300 group select-none min-w-[58px] lg:min-w-[64px] ${
@@ -385,8 +402,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSect
                 return (
                   <a
                     key={item.id}
-                    href={item.href}
-                    onClick={(e) => handleLinkClick(e, item.href, item.id)}
+                    href={item.path}
+                    onClick={(e) => handleLinkClick(e, item.href, item.id, item.path)}
                     className={`flex items-center gap-2.5 px-3.5 py-3 rounded-2xl font-mono text-xs uppercase tracking-wider transition-all duration-200 ${
                       isActive
                         ? "bg-white/10 border border-neutral-400/50 text-white font-bold"
@@ -404,8 +421,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection = "home", teamSect
             </div>
 
             <a
-              href="#contact-section"
-              onClick={(e) => handleLinkClick(e, "#contact-section", "contact")}
+              href="/contact"
+              onClick={(e) => handleLinkClick(e, "#contact-section", "contact", "/contact")}
               className="mt-2 text-center py-3.5 rounded-2xl font-mono text-xs font-black uppercase tracking-widest text-black bg-white hover:bg-neutral-200 transition-colors shadow-lg flex items-center justify-center gap-1.5"
             >
               <span>CONNECT WITH DESK</span>

@@ -1,31 +1,15 @@
 import React from "react";
 import { ArrowUpRight, ArrowUp, Mail, MapPin, Globe, Phone } from "lucide-react";
+import { scrollToSection as routesScrollToSection, SECTION_ROUTE_MAP } from "../utils/routes";
 
 export const Footer: React.FC<{ teamSectionVisible?: boolean }> = ({ teamSectionVisible = true }) => {
   const scrollToSection = (id: string) => {
-    if (id === "top" || id === "home-section") {
-      if ((window as any).lenis) {
-        (window as any).lenis.scrollTo(0, {
-          duration: 1.2,
-          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        });
-      } else {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-      return;
+    const targetId = id === "top" ? "home-section" : id;
+    const route = SECTION_ROUTE_MAP[targetId] || (targetId === "home-section" ? "/" : `/${targetId.replace(/-section$/, "")}`);
+    if (window.location.pathname !== route && !window.location.pathname.startsWith("/admin")) {
+      window.history.pushState(null, "", route);
     }
-
-    const el = document.getElementById(id);
-    if (el) {
-      if ((window as any).lenis) {
-        (window as any).lenis.scrollTo(el, {
-          duration: 1.2,
-          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        });
-      } else {
-        el.scrollIntoView({ behavior: "smooth" });
-      }
-    }
+    routesScrollToSection(targetId, { immediate: false });
   };
 
   return (
@@ -38,7 +22,7 @@ export const Footer: React.FC<{ teamSectionVisible?: boolean }> = ({ teamSection
         {/* Left Column: Brand Wordmark & Summary */}
         <div className="lg:col-span-4 flex flex-col gap-4 ">
           <a
-            href="#home-section"
+            href="/"
             onClick={(e) => {
               e.preventDefault();
               scrollToSection("home-section");
