@@ -14,7 +14,6 @@ export const TopHeader: React.FC = () => {
       setIsModalOpen(document.body.classList.contains("modal-open"));
     };
     checkModal();
-
     const handleModalState = (e: any) => {
       if (e?.detail?.isOpen !== undefined) {
         setIsModalOpen(Boolean(e.detail.isOpen));
