@@ -3,6 +3,7 @@ import { useGLTF, useTexture, ContactShadows } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { Shape } from "three";
 import { useHomeScrollProgress } from "./HomeScrollContext";
 
 import { MODEL_URLS } from "../../config/models";
@@ -61,7 +62,7 @@ const smoothstep = (t: number): number => {
 function createRoundedRectGeometry(width: number, height: number, radius: number, segments = 12): THREE.ShapeGeometry {
   const x = -width / 2;
   const y = -height / 2;
-  const shape = new THREE.Shape();
+  const shape = new Shape();
   shape.moveTo(x + radius, y);
   shape.lineTo(x + width - radius, y);
   shape.absarc(x + width - radius, y + radius, radius, -Math.PI / 2, 0, false);
