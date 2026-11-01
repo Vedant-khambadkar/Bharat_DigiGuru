@@ -2,10 +2,10 @@ import { useGLTF, useTexture } from "@react-three/drei";
 import heroImg from "../assets/Picture/screen-texture.webp";
 import keyboardImg from "../assets/Picture/keyboard Texture2.webp";
 import laptopBackImg from "../assets/Picture/laptop-back.webp";
-import InstagramImg from "../assets/Picture/Instagram.webp";
-import YTImg from "../assets/Picture/yt.webp";
-import PinterestImg from "../assets/Picture/Pinterest.webp";
-import TikTokImg from "../assets/Picture/TikTok.webp";
+import InstagramImg from "../assets/Picture/Instagram.png";
+import YTImg from "../assets/Picture/yt.png";
+import PinterestImg from "../assets/Picture/Pinterest.png";
+import TikTokImg from "../assets/Picture/TikTok.png";
 
 const CDN_BASE =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_CLOUDFRONT_URL) ||

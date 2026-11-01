@@ -3,7 +3,7 @@ import React, { useRef, useMemo } from "react";
 import { useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import TikTokImg from "../../assets/Picture/TikTok.webp";
+import TikTokImg from "../../assets/Picture/TikTok.png";
 import { useHomeScrollProgress } from "./HomeScrollContext";
 
 // Tuned parameters for TikTok Card

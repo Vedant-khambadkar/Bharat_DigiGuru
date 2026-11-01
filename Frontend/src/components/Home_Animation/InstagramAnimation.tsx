@@ -3,7 +3,7 @@ import React, { useRef, useMemo } from "react";
 import { useTexture } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import InstagramImg from "../../assets/Picture/Instagram.webp";
+import InstagramImg from "../../assets/Picture/Instagram.png";
 import { useHomeScrollProgress } from "./HomeScrollContext";
 
 const PARAMS = {
