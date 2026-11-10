@@ -10,6 +10,7 @@ import {
   Check,
   Phone,
   Globe,
+  ShieldCheck,
 } from "lucide-react";
 import LensText from "../components/LensText";
 import { userService } from "../services/service/userService";
@@ -38,11 +39,16 @@ export const Contact: React.FC = () => {
     phone: "",
     company: "",
     message: "",
+    website_url_check: "", // Honeypot field for bot detection
   });
+  const [isHumanVerified, setIsHumanVerified] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState(false);
+
+  // Time-trap reference to detect instantaneous bot submissions
+  const formRenderTimeRef = React.useRef<number>(Date.now());
 
   const clientEmail = "contactbharatdigiguru@gmail.com";
 
@@ -57,8 +63,21 @@ export const Contact: React.FC = () => {
 
   const handleSubmit = React.useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setErrorMessage(null);
+
+    // 1. Verification check
+    if (!isHumanVerified) {
+      setErrorMessage("Please complete the human verification check before submitting.");
+      return;
+    }
+
+    // 2. Honeypot check (silent discard for bots)
+    if (formData.website_url_check) {
+      setIsSubmitted(true);
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       await userService.submitInquiry({
@@ -68,6 +87,8 @@ export const Contact: React.FC = () => {
         company: formData.company || "Not Specified",
         services: selectedServices.join(", "),
         message: formData.message,
+        website_url_check: formData.website_url_check,
+        formRenderTime: formRenderTimeRef.current,
       });
 
       socket.emit("inquiry:new", {
@@ -86,10 +107,14 @@ export const Contact: React.FC = () => {
       setIsSubmitted(true);
     } catch (err: any) {
       console.error("Inquiry submission error:", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to submit inquiry. Please try again.";
+      setErrorMessage(msg);
       setIsSubmitting(false);
-      setIsSubmitted(true);
     }
-  }, [formData, selectedServices]);
+  }, [formData, selectedServices, isHumanVerified]);
 
   const handleCopyEmail = React.useCallback(() => {
     navigator.clipboard.writeText(clientEmail);
@@ -145,7 +170,16 @@ export const Contact: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setIsSubmitted(false);
-                    setFormData({ name: "", email: "", phone: "", company: "", message: "" });
+                    setIsHumanVerified(false);
+                    formRenderTimeRef.current = Date.now();
+                    setFormData({
+                      name: "",
+                      email: "",
+                      phone: "",
+                      company: "",
+                      message: "",
+                      website_url_check: "",
+                    });
                   }}
                   className="mt-4 px-6 py-2.5 rounded-lg border border-neutral-700 bg-neutral-900 text-xs uppercase tracking-wider text-neutral-200 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer "
                 >
@@ -251,6 +285,57 @@ export const Contact: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     className="w-full px-4 py-3 rounded-lg bg-neutral-900/80 border border-neutral-800 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-neutral-400 transition-colors resize-none leading-relaxed"
                   />
+                </div>
+
+                {/* Honeypot field: invisible to humans, traps automated spam bots */}
+                <div
+                  style={{
+                    position: "absolute",
+                    opacity: 0,
+                    top: 0,
+                    left: 0,
+                    height: 0,
+                    width: 0,
+                    zIndex: -1,
+                    overflow: "hidden",
+                    pointerEvents: "none",
+                  }}
+                  aria-hidden="true"
+                >
+                  <label htmlFor="website_url_check">Leave this field blank</label>
+                  <input
+                    type="text"
+                    id="website_url_check"
+                    name="website_url_check"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={formData.website_url_check}
+                    onChange={(e) =>
+                      setFormData({ ...formData, website_url_check: e.target.value })
+                    }
+                  />
+                </div>
+
+                {/* Anti-Bot Human Verification */}
+                <div className="flex items-center justify-between p-3.5 rounded-lg bg-neutral-900/90 border border-neutral-800 text-xs">
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isHumanVerified}
+                      onChange={(e) => {
+                        setIsHumanVerified(e.target.checked);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      className="w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-white focus:ring-0 cursor-pointer accent-white"
+                    />
+                    <span className="text-neutral-300 font-medium tracking-wide">
+                      I am not a robot (Anti-Bot Verification)
+                    </span>
+                  </label>
+                  <div className="flex items-center gap-1.5 text-neutral-500 text-[11px] font-mono">
+                    <ShieldCheck className={`w-4 h-4 ${isHumanVerified ? "text-emerald-400" : "text-neutral-500"}`} />
+                    <span>{isHumanVerified ? "Verified" : "Protected"}</span>
+                  </div>
                 </div>
 
                 {errorMessage && (

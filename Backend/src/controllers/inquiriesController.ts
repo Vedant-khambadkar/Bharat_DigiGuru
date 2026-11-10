@@ -3,14 +3,146 @@ import { db } from "../data/db.js";
 import { emitEvent } from "../services/socketService.js";
 import { sendInquiryNotificationEmail } from "../services/emailService.js";
 
+// Helper to verify external captcha if configured
+async function verifyCaptcha(token?: string, ip?: string): Promise<boolean> {
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+  if (turnstileSecret && token) {
+    try {
+      const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          secret: turnstileSecret,
+          response: token,
+          remoteip: ip || "",
+        }),
+      });
+      const data: any = await response.json();
+      return !!data.success;
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  const recaptchaSecret = process.env.RECAPTCHA_SECRET_KEY;
+  if (recaptchaSecret && token) {
+    try {
+      const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          secret: recaptchaSecret,
+          response: token,
+          remoteip: ip || "",
+        }),
+      });
+      const data: any = await response.json();
+      return !!data.success;
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// Bot heuristics & Honeypot detection
+function evaluateSpamHeuristics(data: {
+  name?: string;
+  fullName?: string;
+  email: string;
+  message: string;
+  honeypot?: string;
+  formRenderTime?: number;
+}): { isSpam: boolean; reason?: string } {
+  // 1. Honeypot check: Hidden field filled by bots
+  if (data.honeypot && data.honeypot.trim().length > 0) {
+    return { isSpam: true, reason: "Honeypot field filled" };
+  }
+
+  // 2. Time-trap check: Humans take at least 2.5 seconds to fill the form
+  if (data.formRenderTime) {
+    const elapsed = Date.now() - Number(data.formRenderTime);
+    if (elapsed < 2500) {
+      return { isSpam: true, reason: "Submitted too quickly (<2.5s)" };
+    }
+  }
+
+  const candidateName = (data.name || data.fullName || "").trim();
+  const candidateMsg = (data.message || "").trim();
+
+  // 3. Name check: Bot random alphanumeric strings without whitespace (e.g. LgPHIBhdQNOCQvMzWEAUKhNh)
+  if (candidateName.length > 18 && !candidateName.includes(" ")) {
+    return { isSpam: true, reason: "Random alphanumeric string name" };
+  }
+
+  // 4. Message check: Bots submitting purely digits or quotes around numbers (e.g. "8672433794")
+  if (/^["']?\d{7,15}["']?$/.test(candidateMsg)) {
+    return { isSpam: true, reason: "Numeric-only phone number message payload" };
+  }
+
+  return { isSpam: false };
+}
+
 export const submitInquiry = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, fullName, email, phone, company, services, budget, timeline, message } = req.body;
+    const {
+      name,
+      fullName,
+      email,
+      phone,
+      company,
+      services,
+      budget,
+      timeline,
+      message,
+      website_url_check,
+      _gotcha,
+      formRenderTime,
+      captchaToken,
+    } = req.body;
 
     if (!email || (!name && !fullName) || !message) {
       res.status(400).json({
         success: false,
         message: "Please provide your name, email, and message.",
+      });
+      return;
+    }
+
+    // Client IP for rate-limiting and captcha verification
+    const forwarded = req.headers["x-forwarded-for"];
+    const clientIp =
+      (typeof forwarded === "string" ? forwarded.split(",")[0].trim() : undefined) ||
+      req.socket.remoteAddress ||
+      "";
+
+    // 1. Captcha validation (if configured on backend)
+    const captchaValid = await verifyCaptcha(captchaToken, clientIp);
+    if (!captchaValid) {
+      res.status(400).json({
+        success: false,
+        message: "CAPTCHA verification failed. Please try again.",
+      });
+      return;
+    }
+
+    // 2. Honeypot & Bot Heuristics Evaluation
+    const spamCheck = evaluateSpamHeuristics({
+      name,
+      fullName,
+      email,
+      message,
+      honeypot: website_url_check || _gotcha,
+      formRenderTime: formRenderTime ? Number(formRenderTime) : undefined,
+    });
+
+    if (spamCheck.isSpam) {
+      console.warn(`🛡️ [SPAM BOT BLOCKED]: Reason: "${spamCheck.reason}" | Email: "${email}" | IP: "${clientIp}"`);
+      // Return 200 OK silent discard so bots don't adapt or retry
+      res.status(200).json({
+        success: true,
+        message: "Inquiry submitted successfully. Our team will contact you shortly.",
       });
       return;
     }

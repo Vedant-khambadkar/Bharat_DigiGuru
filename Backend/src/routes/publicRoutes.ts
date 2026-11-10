@@ -6,6 +6,7 @@ import { getTeamMembers, getTeamMemberById, getFounder } from "../controllers/te
 import { getStories, getStoryById } from "../controllers/storyController.js";
 import { getBlogs, getBlogById } from "../controllers/blogsController.js";
 import { submitInquiry } from "../controllers/inquiriesController.js";
+import { inquiryRateLimiter } from "../middleware/rateLimiter.js";
 import { getPresignedUrlHandler, streamMediaHandler } from "../controllers/uploadController.js";
 import { getPublicSettings } from "../controllers/settingsController.js";
 import { getPublicBrandCollaborations } from "../controllers/brandCollaborationsController.js";
@@ -37,8 +38,8 @@ router.get("/stories/:id", getStoryById);
 router.get("/blogs", getBlogs);
 router.get("/blogs/:id", getBlogById);
 
-// 7. Client Inquiries / Contact Form Submission
-router.post("/inquiries/submit", submitInquiry);
+// 7. Client Inquiries / Contact Form Submission (Rate-limited: max 5 submissions / 15 minutes per IP)
+router.post("/inquiries/submit", inquiryRateLimiter(5, 15), submitInquiry);
 
 
 // 4. Secure Media Access / Presigned URLs & Instant Streaming for Private S3 Objects
